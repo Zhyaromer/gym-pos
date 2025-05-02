@@ -8,6 +8,10 @@ import AddMember from './Pages/AddMember'
 import AddEmployee from './Pages/AddEmployee'
 import Employee from './Pages/Employee'
 import SalaryPayments from './Pages/SalaryPayments'
+import Selling from './Pages/Selling'
+import Inventory from './Pages/Inventory'
+import AddInventory from './Pages/AddInventory'
+import Attendence from './Pages/Attendence'
  
 function App() {
   return (
@@ -21,6 +25,9 @@ function App() {
         <Route path="/AddEmployee" element={<AddEmployee />} />
         <Route path="/employees" element={<Employee />} />
         <Route path="/salarypayments" element={<SalaryPayments />} />
+        <Route path="/selling" element={<Selling />} />
+        <Route path="/inventory" element={<Inventory />} />
+        <Route path="/Aatendence" element={<Attendence />} />
       </Routes>
     </Router>
   )

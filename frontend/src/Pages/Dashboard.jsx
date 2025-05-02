@@ -69,25 +69,25 @@ export default function GymDashboard() {
             title: "فرۆشتن",
             icon: <ShoppingCart size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link : "/users"
+            link : "/selling"
         },
         {
             title: "کۆگا",
             icon: <Package size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link : "/users"
+            link : "/inventory"
         },
         {
             title: "زیادکردنی بەرهەم",
             icon: <PlusCircle size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link : "/users"
+            link : "/addinventory"
         },
         {
             title: "خیابات",
             icon: <ClipboardList size={24} />,
             color: "bg-gradient-to-r from-red-500 to-rose-600",
-            link : "/users"
+            link : "/Aatendence"
         },
         {
             title: "خشتەی ڕۆژانە",
