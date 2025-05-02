@@ -57,13 +57,13 @@ export default function GymDashboard() {
             title: "کارمەندەکان",
             icon: <UserCircle size={24} />,
             color: "bg-gradient-to-r from-purple-500 to-pink-600",
-            link : "/users"
+            link : "/employees"
         },
         {
             title: "موچەی کارمەندەکان",
             icon: <DollarSign size={24} />,
             color: "bg-gradient-to-r from-purple-500 to-pink-600",
-            link : "/users"
+            link : "/salarypayments"
         },
         {
             title: "فرۆشتن",

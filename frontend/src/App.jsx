@@ -6,9 +6,10 @@ import Users from './Pages/Users';
 import MembershipCheck from './Pages/MembershipCheck'
 import AddMember from './Pages/AddMember'
 import AddEmployee from './Pages/AddEmployee'
-
+import Employee from './Pages/Employee'
+import SalaryPayments from './Pages/SalaryPayments'
+ 
 function App() {
-
   return (
     <Router>
       <Routes>
@@ -18,6 +19,8 @@ function App() {
         <Route path="/membership-check" element={<MembershipCheck />} />
         <Route path="/AddMember" element={<AddMember />} />
         <Route path="/AddEmployee" element={<AddEmployee />} />
+        <Route path="/employees" element={<Employee />} />
+        <Route path="/salarypayments" element={<SalaryPayments />} />
       </Routes>
     </Router>
   )
