@@ -12,6 +12,10 @@ import Selling from './Pages/Selling'
 import Inventory from './Pages/Inventory'
 import AddInventory from './Pages/AddInventory'
 import Attendence from './Pages/Attendence'
+import Pricing from './Pages/Pricing'
+import PoolTickets from './Pages/PoolTickets'
+import Expenses from './Pages/Expenses'
+import AddingExpenses from './Pages/AddingExpenses'
  
 function App() {
   return (
@@ -27,7 +31,12 @@ function App() {
         <Route path="/salarypayments" element={<SalaryPayments />} />
         <Route path="/selling" element={<Selling />} />
         <Route path="/inventory" element={<Inventory />} />
-        <Route path="/Aatendence" element={<Attendence />} />
+        <Route path="/addinventory" element={<AddInventory />} />
+        <Route path="/attendence" element={<Attendence />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/pooltickets" element={<PoolTickets />} />
+        <Route path="/expenses" element={<Expenses />} />
+        <Route path="/addingexpenses" element={<AddingExpenses />} />
       </Routes>
     </Router>
   )

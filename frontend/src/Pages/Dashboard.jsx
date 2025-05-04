@@ -87,37 +87,37 @@ export default function GymDashboard() {
             title: "خیابات",
             icon: <ClipboardList size={24} />,
             color: "bg-gradient-to-r from-red-500 to-rose-600",
-            link : "/Aatendence"
+            link : "/attendence"
         },
-        {
-            title: "خشتەی ڕۆژانە",
-            icon: <CalendarDays size={24} />,
-            color: "bg-gradient-to-r from-indigo-500 to-violet-600",
-            link : "/users"
-        },
+        // {
+        //     title: "خشتەی ڕۆژانە",
+        //     icon: <CalendarDays size={24} />,
+        //     color: "bg-gradient-to-r from-indigo-500 to-violet-600",
+        //     link : "/users"
+        // },
         {
             title: "نرخەکان",
             icon: <BadgeDollarSign size={24} />,
             color: "bg-gradient-to-r from-teal-500 to-cyan-600",
-            link : "/users"
+            link : "/pricing"
         },
         {
             title: "خەرجیەکان",
             icon: <Coins size={24} />,
             color: "bg-gradient-to-r from-green-500 to-emerald-600",
-            link : "/users"
+            link : "/expenses"
         },
         {
             title: "زیادکردنی خەرجی",
             icon: <Receipt size={24} />,
             color: "bg-gradient-to-r from-green-500 to-emerald-600",
-            link : "/users"
+            link : "/addingexpenses"
         },
         {
             title: "مەلەوانگە",
             icon: <Ticket size={24} />,
             color: "bg-gradient-to-r from-orange-500 to-amber-600",
-            link : "/users"
+            link : "/pooltickets"
         },
         {
             title: "قازانج",
