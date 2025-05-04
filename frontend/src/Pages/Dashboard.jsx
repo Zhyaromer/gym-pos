@@ -123,13 +123,13 @@ export default function GymDashboard() {
             title: "قازانج",
             icon: <TrendingUp size={24} />,
             color: "bg-gradient-to-r from-emerald-500 to-green-600",
-            link : "/users"
+            link : "/profit"
         },
         {
             title: "ڕاپۆرت",
             icon: <FileBarChart size={24} />,
             color: "bg-gradient-to-r from-cyan-500 to-teal-600",
-            link : "/users"
+            link : "/report"
         },
         {
             title: "ئاگادارییەکان",

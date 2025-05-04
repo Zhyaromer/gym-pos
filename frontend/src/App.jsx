@@ -16,6 +16,8 @@ import Pricing from './Pages/Pricing'
 import PoolTickets from './Pages/PoolTickets'
 import Expenses from './Pages/Expenses'
 import AddingExpenses from './Pages/AddingExpenses'
+import ProfitAnalysisPage from './Pages/Profit'
+import CostsAnalysisPage from './Pages/Report'
  
 function App() {
   return (
@@ -37,6 +39,8 @@ function App() {
         <Route path="/pooltickets" element={<PoolTickets />} />
         <Route path="/expenses" element={<Expenses />} />
         <Route path="/addingexpenses" element={<AddingExpenses />} />
+        <Route path="/profit" element={<ProfitAnalysisPage />} />
+        <Route path="/report" element={<CostsAnalysisPage />} />
       </Routes>
     </Router>
   )
