@@ -6,6 +6,7 @@ import {
     Save
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/layout/Nav';
 
 export default function AddInventory() {
     const navigate = useNavigate();
@@ -63,22 +64,7 @@ export default function AddInventory() {
 
     return (
         <div className="min-h-screen bg-gray-50" dir="rtl">
-            {/* Header */}
-            <header className="bg-gradient-to-l from-blue-600 to-indigo-700 text-white shadow-lg">
-                <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                        <Package size={28} />
-                        <h1 className="text-2xl font-bold">زیادکردنی کاڵای نوێ</h1>
-                    </div>
-                    <button
-                        onClick={() => navigate('/inventory')}
-                        className="flex items-center bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
-                    >
-                        <ArrowRight size={16} className="ml-2" />
-                        گەڕانەوە بۆ کۆگا
-                    </button>
-                </div>
-            </header>
+            <Navbar />
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-8">

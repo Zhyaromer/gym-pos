@@ -12,6 +12,7 @@ import {
   Droplets,
   CreditCard
 } from 'lucide-react';
+import Navbar from '../components/layout/Nav';
 
 export default function AddMemberPage() {
   const navigate = useNavigate();
@@ -233,19 +234,7 @@ export default function AddMemberPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      {/* Header */}
-      <header className="bg-gradient-to-l from-blue-600 to-indigo-700 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">سیستەمی بەڕێوەبردنی هۆڵی وەرزشی</h1>
-          <button
-            onClick={handleReturnToOverview}
-            className="flex items-center bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
-          >
-            <ArrowRight size={16} className="ml-2" />
-            گەڕانەوە بۆ لیستی ئەندامان
-          </button>
-        </div>
-      </header>
+            <Navbar/>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">

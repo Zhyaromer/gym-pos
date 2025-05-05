@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { 
+import {
   Clock,
   Calendar,
   Plus,
@@ -16,6 +16,7 @@ import {
   UserCheck,
   UserX
 } from 'lucide-react';
+import Navbar from '../components/layout/Nav';
 
 export default function AttendenceEmployeeAttendancePage() {
   const [user, setUser] = useState({ name: "جۆن دۆ", role: "بەڕێوەبەر" });
@@ -126,8 +127,8 @@ export default function AttendenceEmployeeAttendancePage() {
   ]);
 
   // Filter attendance based on search term and date
-  const filteredAttendance = attendance.filter(record => 
-    (record.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) &&
+  const filteredAttendance = attendance.filter(record =>
+  (record.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) &&
     record.date === currentDate
   ))
 
@@ -140,7 +141,7 @@ export default function AttendenceEmployeeAttendancePage() {
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     // If employee is selected, auto-fill their details
     if (name === 'employeeId') {
       const selectedEmployee = employees.find(emp => emp.id === value);
@@ -155,12 +156,12 @@ export default function AttendenceEmployeeAttendancePage() {
         return;
       }
     }
-    
+
     // Auto-detect late status based on check-in time
     if (name === 'checkInTime' && value) {
       const [hour, minute] = value.split(':').map(Number);
       const isLate = hour > 8 || (hour === 8 && minute > 15); // More than 15 minutes late
-      
+
       setFormData({
         ...formData,
         [name]: value,
@@ -168,7 +169,7 @@ export default function AttendenceEmployeeAttendancePage() {
       });
       return;
     }
-    
+
     setFormData({
       ...formData,
       [name]: value
@@ -211,7 +212,7 @@ export default function AttendenceEmployeeAttendancePage() {
   const handleSubmit = () => {
     if (currentAttendance) {
       // Update existing record
-      const updatedAttendance = attendance.map(record => 
+      const updatedAttendance = attendance.map(record =>
         record.id === currentAttendance.id ? { ...record, ...formData } : record
       );
       setAttendance(updatedAttendance);
@@ -266,37 +267,37 @@ export default function AttendenceEmployeeAttendancePage() {
   // Calculate working hours
   const calculateWorkingHours = (checkIn, checkOut) => {
     if (!checkIn || !checkOut) return '-';
-    
+
     const [inHours, inMinutes] = checkIn.split(':').map(Number);
     const [outHours, outMinutes] = checkOut.split(':').map(Number);
-    
+
     const totalMinutes = (outHours * 60 + outMinutes) - (inHours * 60 + inMinutes);
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    
+
     return `${hours}h ${minutes}m`;
   };
 
   // Calculate late duration
   const calculateLateDuration = (checkInTime) => {
     if (!checkInTime) return null;
-    
+
     // Expected check-in time (8:00 AM)
     const expectedHour = 8;
     const expectedMinute = 0;
-    
+
     const [actualHour, actualMinute] = checkInTime.split(':').map(Number);
-    
+
     const expectedTotalMinutes = expectedHour * 60 + expectedMinute;
     const actualTotalMinutes = actualHour * 60 + actualMinute;
-    
+
     const lateMinutes = actualTotalMinutes - expectedTotalMinutes;
-    
+
     if (lateMinutes <= 0) return null;
-    
+
     const hours = Math.floor(lateMinutes / 60);
     const minutes = lateMinutes % 60;
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     } else {
@@ -307,23 +308,23 @@ export default function AttendenceEmployeeAttendancePage() {
   // Calculate early departure
   const calculateEarlyDeparture = (checkOutTime) => {
     if (!checkOutTime) return null;
-    
+
     // Expected check-out time (16:00 PM)
     const expectedHour = 16;
     const expectedMinute = 0;
-    
+
     const [actualHour, actualMinute] = checkOutTime.split(':').map(Number);
-    
+
     const expectedTotalMinutes = expectedHour * 60 + expectedMinute;
     const actualTotalMinutes = actualHour * 60 + actualMinute;
-    
+
     const earlyMinutes = expectedTotalMinutes - actualTotalMinutes;
-    
+
     if (earlyMinutes <= 0) return null;
-    
+
     const hours = Math.floor(earlyMinutes / 60);
     const minutes = earlyMinutes % 60;
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     } else {
@@ -333,27 +334,7 @@ export default function AttendenceEmployeeAttendancePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation bar */}
-      <nav className="bg-white shadow-sm border-b border-gray-200 p-4">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600">
-              <Dumbbell className="text-white" size={24} />
-            </div>
-            <h1 className="text-xl font-bold text-gray-800">یانەی تەندروستی</h1>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 transition-colors duration-200 rounded-full px-3 py-1 cursor-pointer">
-              <span className="text-sm font-medium text-gray-700">{user.name}</span>
-              <UserCircle className="text-blue-600" size={20} />
-            </div>
-            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-              <LogOut className="text-gray-600 hover:text-red-600" size={18} />
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <div dir='rtl' className="container mx-auto p-4 md:p-6">
         {/* Header */}
@@ -397,7 +378,7 @@ export default function AttendenceEmployeeAttendancePage() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -409,7 +390,7 @@ export default function AttendenceEmployeeAttendancePage() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -534,14 +515,14 @@ export default function AttendenceEmployeeAttendancePage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
                       <div className="flex justify-start space-x-3">
-                        <button 
+                        <button
                           onClick={() => openEditModal(record)}
                           className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50 transition-colors"
                           title="دەستکاری"
                         >
                           <Edit size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => deleteRecord(record.id)}
                           className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors"
                           title="سڕینەوە"
@@ -555,7 +536,7 @@ export default function AttendenceEmployeeAttendancePage() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Empty state */}
           {filteredAttendance.length === 0 && (
             <div className="p-8 text-center">
@@ -599,7 +580,7 @@ export default function AttendenceEmployeeAttendancePage() {
                   </>
                 )}
               </h3>
-              <button 
+              <button
                 onClick={() => setShowModal(false)}
                 className="text-gray-400 hover:text-gray-500 p-1 rounded-full hover:bg-gray-100"
               >
@@ -638,7 +619,7 @@ export default function AttendenceEmployeeAttendancePage() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">بەروار</label>
@@ -663,7 +644,7 @@ export default function AttendenceEmployeeAttendancePage() {
                     </select>
                   </div>
                 </div>
-                
+
                 {formData.status === 'هاتوو' && (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -689,7 +670,7 @@ export default function AttendenceEmployeeAttendancePage() {
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">تێبینی</label>
                       <textarea

@@ -20,6 +20,7 @@ import {
   DollarSign,
   LockIcon
 } from 'lucide-react';
+import Navbar from '../components/layout/Nav';
 
 export default function MembershipCheck() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -200,27 +201,7 @@ export default function MembershipCheck() {
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <Dumbbell size={28} />
-            <h1 className="text-2xl font-bold mr-2">سیستەمی پشکنینی ئەندامێتی</h1>
-          </div>
-          <div className="flex items-center space-x-4 space-x-reverse">
-            <div className="relative ml-4">
-              <Bell size={20} className="cursor-pointer hover:text-blue-200" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">٣</span>
-            </div>
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <span className="font-medium ml-2">بەڕێوەبەری هۆڵ</span>
-              <div className="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center">
-                <User size={16} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+            <Navbar/>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">

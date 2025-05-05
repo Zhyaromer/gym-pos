@@ -17,6 +17,7 @@ import {
     X,
     Camera
 } from 'lucide-react';
+import Navbar from '../components/layout/Nav';
 
 export default function Inventory() {
     // State for inventory items
@@ -209,27 +210,7 @@ export default function Inventory() {
 
     return (
         <div className="min-h-screen bg-gray-50" dir="rtl">
-            {/* Header */}
-            <header className="bg-gradient-to-l from-blue-600 to-indigo-700 text-white shadow-lg">
-                <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                        <Package size={28} />
-                        <h1 className="text-2xl font-bold">بەڕێوەبردنی کۆگا</h1>
-                    </div>
-                    <div className="flex items-center space-x-4 space-x-reverse">
-                        <div className="relative">
-                            <Bell size={20} className="cursor-pointer hover:text-blue-200" />
-                            <span className="absolute -top-1 -left-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">٣</span>
-                        </div>
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                            <div className="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center">
-                                <Dumbbell size={16} />
-                            </div>
-                            <span className="font-medium">بەڕێوەبەری هۆڵ</span>
-                        </div>
-                    </div>
-                </div>
-            </header>
+                  <Navbar/>
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-8">

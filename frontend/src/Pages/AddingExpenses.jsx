@@ -9,10 +9,11 @@ import {
   Save,
   X
 } from 'lucide-react';
+import Navbar from '../components/layout/Nav';
 
 export default function AddExpense() {
   const navigate = useNavigate();
-  
+
   // State for new expense
   const [newExpense, setNewExpense] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -20,14 +21,14 @@ export default function AddExpense() {
     amount: '',
     description: ''
   });
-  
+
   // State for validation
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Categories for selection
   const categories = ['ئامێر', 'خزمەتگوزاری', 'پڕۆتین', 'چاککردنەوە', 'مووچە', 'ڕیکلام', 'کەلوپەل', 'هیتر'];
-  
+
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,7 +36,7 @@ export default function AddExpense() {
       ...newExpense,
       [name]: name === 'amount' ? (value === '' ? '' : parseFloat(value) || 0) : value
     });
-    
+
     // Clear error when field is edited
     if (errors[name]) {
       setErrors({
@@ -44,69 +45,56 @@ export default function AddExpense() {
       });
     }
   };
-  
+
   // Validate form
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!newExpense.date) {
       newErrors.date = 'تکایە بەروار دیاری بکە';
     }
-    
+
     if (!newExpense.category) {
       newErrors.category = 'تکایە جۆر دیاری بکە';
     }
-    
+
     if (!newExpense.amount || newExpense.amount <= 0) {
       newErrors.amount = 'تکایە بڕێکی دروست بنووسە';
     }
-    
+
     if (!newExpense.description.trim()) {
       newErrors.description = 'تکایە وەسفێک بنووسە';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     // Here you would typically save the expense to your database or state
     // For now, we'll simulate a successful save and redirect
-    
+
     setTimeout(() => {
       // In a real app, you would add the expense to your state or database here
       // For example: addExpenseToDatabase(newExpense);
-      
+
       // Then redirect back to expenses page
       navigate('/expenses');
     }, 1000);
   };
-  
+
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
-      {/* Header */}
-      <header className="bg-gradient-to-l from-blue-600 to-indigo-700 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center">
-            <button 
-              onClick={() => navigate('/expenses')}
-              className="p-2 rounded-full hover:bg-white/20 transition-colors mr-2"
-            >
-              <ArrowLeft size={24} />
-            </button>
-            <h1 className="text-2xl font-bold">زیادکردنی خەرجی نوێ</h1>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
@@ -114,7 +102,7 @@ export default function AddExpense() {
             <h2 className="text-xl font-semibold">تۆمارکردنی خەرجی نوێ</h2>
             <p className="text-white/80 text-sm mt-1">تکایە زانیارییەکان بە دروستی پڕ بکەوە</p>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="p-6">
             <div className="space-y-6">
               <div>
@@ -133,7 +121,7 @@ export default function AddExpense() {
                 </div>
                 {errors.date && <p className="mt-1 text-sm text-red-600">{errors.date}</p>}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">جۆر</label>
                 <div className="relative">
@@ -154,7 +142,7 @@ export default function AddExpense() {
                 </div>
                 {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category}</p>}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">بڕ</label>
                 <div className="relative">
@@ -174,7 +162,7 @@ export default function AddExpense() {
                 </div>
                 {errors.amount && <p className="mt-1 text-sm text-red-600">{errors.amount}</p>}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">وەسف</label>
                 <div className="relative">
@@ -193,9 +181,9 @@ export default function AddExpense() {
                 {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
               </div>
             </div>
-            
+
             <div className="mt-8 flex justify-start gap-2">
-            <button
+              <button
                 type="submit"
                 disabled={isSubmitting}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"

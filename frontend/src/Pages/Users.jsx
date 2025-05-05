@@ -15,6 +15,7 @@ import {
   Save,
   X
 } from 'lucide-react';
+import Navbar from '../components/layout/Nav';
 
 export default function GymUsersPage() {
   const [user, setUser] = useState({ name: "جۆن دۆ", role: "بەڕێوەبەر" });
@@ -304,20 +305,7 @@ export default function GymUsersPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-gradient-to-l from-blue-600 to-indigo-700 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">سیستەمی بەڕێوەبردنی هۆڵی وەرزشی</h1>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center">
-                <User size={16} />
-              </div>
-              <span className="font-medium mr-2">{user.name}</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar/>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">

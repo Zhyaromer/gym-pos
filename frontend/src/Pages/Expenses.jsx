@@ -17,6 +17,7 @@ import {
   UserCircle,
   ChevronDown
 } from 'lucide-react';
+import Navbar from '../components/layout/Nav';
 
 export default function Expenses() {
   // State for expenses
@@ -244,27 +245,7 @@ export default function Expenses() {
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
-      {/* Header */}
-      <header className="bg-gradient-to-l from-blue-600 to-indigo-700 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Dumbbell size={28} />
-            <h1 className="text-2xl font-bold mr-2">سیستەمی بەدواداچوونی خەرجییەکانی هۆڵی وەرزشی</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Bell size={20} className="cursor-pointer hover:text-blue-200" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">٣</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center">
-                <UserCircle size={16} />
-              </div>
-              <span className="font-medium mr-2">بەڕێوەبەری هۆڵ</span>
-            </div>
-          </div>
-        </div>
-      </header>
+            <Navbar/>
 
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

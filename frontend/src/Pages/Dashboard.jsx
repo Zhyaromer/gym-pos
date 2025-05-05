@@ -10,11 +10,8 @@ import {
     DollarSign,
     ClipboardList,
     ShoppingCart,
-    CalendarDays,
     Settings,
     Bell,
-    Dumbbell,
-    LogOut,
     BadgeDollarSign,
     FileBarChart,
     TrendingUp,
@@ -23,6 +20,7 @@ import {
     Receipt
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../components/layout/Nav';
 
 export default function GymDashboard() {
     const navigate = useNavigate();
@@ -33,61 +31,61 @@ export default function GymDashboard() {
             title: "زیادکردنی ئەندام",
             icon: <UserPlus size={24} />,
             color: "bg-gradient-to-r from-blue-500 to-indigo-600",
-            link : "/AddMember"
+            link: "/AddMember"
         },
         {
             title: "ئەندامەکان",
             icon: <Users size={24} />,
             color: "bg-gradient-to-r from-blue-500 to-indigo-600",
-            link : "/users"
+            link: "/users"
         },
         {
             title: "گەڕان بە دوای ئەندام",
             icon: <UserSearch size={24} />,
             color: "bg-gradient-to-r from-blue-500 to-indigo-600",
-            link : "/membership-check"
+            link: "/membership-check"
         },
         {
             title: "زیادکردنی کارمەند",
             icon: <UserPlus2 size={24} />,
             color: "bg-gradient-to-r from-purple-500 to-pink-600",
-            link : "/AddEmployee"
+            link: "/AddEmployee"
         },
         {
             title: "کارمەندەکان",
             icon: <UserCircle size={24} />,
             color: "bg-gradient-to-r from-purple-500 to-pink-600",
-            link : "/employees"
+            link: "/employees"
         },
         {
             title: "موچەی کارمەندەکان",
             icon: <DollarSign size={24} />,
             color: "bg-gradient-to-r from-purple-500 to-pink-600",
-            link : "/salarypayments"
+            link: "/salarypayments"
         },
         {
             title: "فرۆشتن",
             icon: <ShoppingCart size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link : "/selling"
+            link: "/selling"
         },
         {
             title: "کۆگا",
             icon: <Package size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link : "/inventory"
+            link: "/inventory"
         },
         {
             title: "زیادکردنی بەرهەم",
             icon: <PlusCircle size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link : "/addinventory"
+            link: "/addinventory"
         },
         {
             title: "خیابات",
             icon: <ClipboardList size={24} />,
             color: "bg-gradient-to-r from-red-500 to-rose-600",
-            link : "/attendence"
+            link: "/attendence"
         },
         // {
         //     title: "خشتەی ڕۆژانە",
@@ -99,70 +97,55 @@ export default function GymDashboard() {
             title: "نرخەکان",
             icon: <BadgeDollarSign size={24} />,
             color: "bg-gradient-to-r from-teal-500 to-cyan-600",
-            link : "/pricing"
+            link: "/pricing"
         },
         {
             title: "خەرجیەکان",
             icon: <Coins size={24} />,
             color: "bg-gradient-to-r from-green-500 to-emerald-600",
-            link : "/expenses"
+            link: "/expenses"
         },
         {
             title: "زیادکردنی خەرجی",
             icon: <Receipt size={24} />,
             color: "bg-gradient-to-r from-green-500 to-emerald-600",
-            link : "/addingexpenses"
+            link: "/addingexpenses"
         },
         {
             title: "مەلەوانگە",
             icon: <Ticket size={24} />,
             color: "bg-gradient-to-r from-orange-500 to-amber-600",
-            link : "/pooltickets"
+            link: "/pooltickets"
         },
         {
             title: "قازانج",
             icon: <TrendingUp size={24} />,
             color: "bg-gradient-to-r from-emerald-500 to-green-600",
-            link : "/profit"
+            link: "/profit"
         },
         {
             title: "ڕاپۆرت",
             icon: <FileBarChart size={24} />,
             color: "bg-gradient-to-r from-cyan-500 to-teal-600",
-            link : "/report"
+            link: "/report"
         },
         {
             title: "ئاگادارییەکان",
             icon: <Bell size={24} />,
             color: "bg-gradient-to-r from-pink-500 to-rose-600",
-            link : "/users"
+            link: "/users"
         },
         {
             title: "ڕێکخستنەکان",
             icon: <Settings size={24} />,
             color: "bg-gradient-to-r from-slate-500 to-gray-600",
-            link : "/users"
+            link: "/users"
         }
     ];
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
-            <nav className="bg-white shadow-md p-4">
-                <div className="container mx-auto flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                        <Dumbbell className="text-blue-600" size={28} />
-                        <h1 className="text-xl font-bold text-gray-800">یانەی تەندروستی</h1>
-                    </div>
-
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 transition-colors duration-200 rounded-lg p-2 cursor-pointer">
-                            <span className="text-sm font-medium text-gray-700">{user.name}</span>
-                            <UserCircle className="text-blue-600" size={24} />
-                        </div>
-                        <LogOut className="text-gray-600 cursor-pointer hover:text-red-600" size={20} />
-                    </div>
-                </div>
-            </nav>
+           <Navbar/>
 
             <div className="container mx-auto p-6">
                 <div className="mb-8 bg-white rounded-xl p-6 shadow-lg text-right">
@@ -174,7 +157,7 @@ export default function GymDashboard() {
                     {dashboardItems.map((item, index) => (
                         <div
                             key={index}
-                            onClick={()=> navigate(item.link)}
+                            onClick={() => navigate(item.link)}
                             className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                         >
                             <div className={`absolute inset-0 ${item.color} opacity-90`}></div>
