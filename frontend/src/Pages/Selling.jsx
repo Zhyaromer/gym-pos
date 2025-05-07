@@ -435,6 +435,22 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
           </div>
         )}
         
+        {/* Barcode - keeping only this, removing QR code */}
+        <div style={{ textAlign: 'center', margin: '10px 0' }}>
+          {/* You can add a barcode library here if needed */}
+          <div style={{
+            margin: '0 auto',
+            padding: '5px 0',
+            borderTop: '1px solid #ccc',
+            borderBottom: '1px solid #ccc',
+            fontSize: '12px',
+            letterSpacing: '2px',
+            fontFamily: 'monospace'
+          }}>
+            *{orderNumber}*
+          </div>
+        </div>
+        
         {/* Footer */}
         <div style={{ 
           textAlign: 'center', 
