@@ -1,16 +1,16 @@
-import { useRef,useState } from 'react';
+import { useRef, useState } from 'react';
 import { Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import {forwardRef } from 'react';
-import { ShoppingCart, CheckCircle, Minus, Plus, X, Percent,Search } from 'lucide-react';
+import { forwardRef } from 'react';
+import { ShoppingCart, CheckCircle, Minus, Plus, X, Percent, Search } from 'lucide-react';
 // Mock product data
 const productData = [
   {
     id: 1,
     name: "پڕۆتینی وەی",
     category: "پڕۆتین",
-    price: 49.99,
+    price: 49.750,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 15,
   },
@@ -18,7 +18,7 @@ const productData = [
     id: 2,
     name: "باندی بەرگری",
     category: "ئامێر",
-    price: 24.99,
+    price: 24.500,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 8,
   },
@@ -26,7 +26,7 @@ const productData = [
     id: 3,
     name: "وەرگری وەرزشی",
     category: "ئەلیکترۆنی",
-    price: 89.99,
+    price: 89.00,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 6,
   },
@@ -34,7 +34,7 @@ const productData = [
     id: 4,
     name: "خاولی جیم",
     category: "ئامێر",
-    price: 12.99,
+    price: 12.500,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 30,
   },
@@ -42,7 +42,7 @@ const productData = [
     id: 5,
     name: "کرێاتین",
     category: "پڕۆتین",
-    price: 29.99,
+    price: 29.25,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 12,
   },
@@ -50,7 +50,7 @@ const productData = [
     id: 6,
     name: "باتڵی ئاو",
     category: "ئامێر",
-    price: 18.99,
+    price: 18.25,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 20,
   },
@@ -58,7 +58,7 @@ const productData = [
     id: 7,
     name: "دەستکێش",
     category: "جلوبەرگ",
-    price: 19.99,
+    price: 19.750,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 10,
   },
@@ -66,7 +66,7 @@ const productData = [
     id: 8,
     name: "پێش وەرزش",
     category: "پڕۆتین",
-    price: 39.99,
+    price: 39.000,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 8,
   },
@@ -74,7 +74,7 @@ const productData = [
     id: 9,
     name: "رۆڵەری فۆم",
     category: "ئامێر",
-    price: 34.99,
+    price: 34.250,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 7,
   },
@@ -82,7 +82,7 @@ const productData = [
     id: 10,
     name: "بارەکانی پڕۆتین (12 دانە)",
     category: "پڕۆتین",
-    price: 24.99,
+    price: 24.000,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 15,
   }
@@ -105,7 +105,7 @@ const ProductCard = ({ product, addToCart }) => {
         </div>
         <h3 className="font-bold text-gray-900 mb-1 text-lg">{product.name}</h3>
         <div className="flex justify-between items-center mb-4">
-          <p className="font-bold text-blue-600 text-xl">{product.price.toFixed(2)} د.ع</p>
+          <p className="font-bold text-blue-600 text-xl">{product.price.toFixed(3)} د.ع</p>
           <span className={`text-xs rounded-full px-3 py-1 ${product.stock > 5 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
             بەردەستە: {product.stock}
           </span>
@@ -136,10 +136,10 @@ const CartItem = ({ item, updateQuantity, removeFromCart }) => {
         <div className="mr-3 flex-grow">
           <h4 className="font-bold text-gray-800">{item.name}</h4>
           <div className="flex items-center justify-between mt-1">
-            <p className="text-blue-600 font-medium">{item.price.toFixed(2)} د.ع</p>
+            <p className="text-blue-600 font-medium">{item.price.toFixed(3)} د.ع</p>
             <div className="flex items-center text-xs bg-blue-50 text-blue-800 px-2 py-0.5 rounded-full">
               <span>کۆ: </span>
-              <span className="mr-1 font-bold">{(item.price * item.quantity).toFixed(2)} د.ع</span>
+              <span className="mr-1 font-bold">{(item.price * item.quantity).toFixed(3)} د.ع</span>
             </div>
           </div>
         </div>
@@ -250,18 +250,18 @@ const EmptyCart = () => {
   );
 };
 
-const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, payment, change }, ref) => {
+const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, payment, change, currencyType = 'iqd', changeType = 'iqd', exchangeRate = 1 }, ref) => {
   const handleDownload = async () => {
     try {
       const receiptElement = ref.current;
-      
+
       // Temporary style adjustments for PDF rendering
       const originalStyles = {
         position: receiptElement.style.position,
         visibility: receiptElement.style.visibility,
         zIndex: receiptElement.style.zIndex,
       };
-      
+
       receiptElement.style.position = 'absolute';
       receiptElement.style.visibility = 'visible';
       receiptElement.style.zIndex = '9999';
@@ -306,9 +306,22 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
     }
   };
 
+  const paymentDisplay = currencyType === 'iqd'
+    ? `${Number(payment).toFixed(3)} د.ع`
+    : `$${Number(payment).toFixed(3)}`;
+
+  const changeAmount = currencyType === 'iqd'
+    ? change
+    : change;
+
+  const changeDisplay = changeType === 'iqd'
+    ? `${Number(changeAmount).toFixed(3)} د.ع`
+    : `$${(changeAmount / exchangeRate).toFixed(3)}`;
+
+
   return (
     <div style={{ position: 'relative' }}>
-      <div 
+      <div
         ref={ref}
         style={{
           width: '80mm',
@@ -325,9 +338,9 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
       >
         {/* Header */}
         <div dir='rtl' style={{ textAlign: 'center', marginBottom: '10px' }}>
-          <h2 style={{ 
-            margin: 0, 
-            fontSize: '20px', 
+          <h2 style={{
+            margin: 0,
+            fontSize: '20px',
             fontWeight: 'bold',
             letterSpacing: '1px',
             color: '#333'
@@ -338,8 +351,8 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
           <p style={{ margin: '3px 0', fontSize: '10px', color: '#666' }}>
             تەلەفۆن: 0750 123 4567
           </p>
-          <div style={{ 
-            borderTop: '1px dashed #ccc', 
+          <div style={{
+            borderTop: '1px dashed #ccc',
             borderBottom: '1px dashed #ccc',
             padding: '5px 0',
             margin: '8px 0'
@@ -355,10 +368,10 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
             </p>
           </div>
         </div>
-        
+
         {/* Items */}
         <div style={{ marginBottom: '10px' }}>
-          <div style={{ 
+          <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             padding: '3px 0',
@@ -370,9 +383,9 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
             <span style={{ width: '30%', textAlign: 'center' }}>دانە</span>
             <span style={{ width: '30%', textAlign: 'center' }}>نرخ</span>
           </div>
-          
+
           {items.map(item => (
-            <div key={item.id} style={{ 
+            <div key={item.id} style={{
               display: 'flex',
               justifyContent: 'space-between',
               padding: '5px 0',
@@ -381,13 +394,13 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
             }}>
               <span style={{ width: '40%' }}>{item.name}</span>
               <span style={{ width: '30%', textAlign: 'center' }}>{item.quantity}</span>
-              <span style={{ width: '30%', textAlign: 'center' }}>{item.price.toFixed(2)}</span>
+              <span style={{ width: '30%', textAlign: 'center' }}>{item.price.toFixed(3)}</span>
             </div>
           ))}
         </div>
-        
+
         {/* Totals */}
-        <div style={{ 
+        <div style={{
           borderTop: '1px dashed #ccc',
           borderBottom: '1px dashed #ccc',
           padding: '8px 0',
@@ -395,16 +408,16 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
             <span>کۆی گشتی:</span>
-            <span>{Number(subtotal).toFixed(2)} د.ع</span>
+            <span>{Number(subtotal).toFixed(3)} د.ع</span>
           </div>
           {discount.applied && (
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
               <span>داشکاندن ({discount.percentage}%):</span>
-              <span>-{Number(discount.amount).toFixed(2)} د.ع</span>
+              <span>-{Number(discount.amount).toFixed(3)} د.ع</span>
             </div>
           )}
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             justifyContent: 'space-between',
             fontWeight: 'bold',
             marginTop: '5px',
@@ -412,70 +425,54 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
             borderTop: '1px dashed #ccc'
           }}>
             <span>کۆی کۆتایی:</span>
-            <span>{Number(total).toFixed(2)} د.ع</span>
+            <span>{Number(total).toFixed(3)} د.ع</span>
           </div>
         </div>
-        
+
         {/* Payment */}
         {payment > 0 && (
-          <div style={{ 
+          <div style={{
             marginBottom: '10px',
             padding: '5px 0',
             borderTop: '1px dashed #ccc',
             borderBottom: '1px dashed #ccc'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>پارەی وەرگیراو:</span>
-              <span>{Number(payment).toFixed(2)} د.ع</span>
+              <span>{paymentDisplay}</span>
+              <span>پارەی وەرگیراو ({currencyType === 'iqd' ? 'د.ع' : '$'}):</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
-              <span>گۆڕاوە:</span>
-              <span>{Number(change).toFixed(2)} د.ع</span>
+              <span>{changeDisplay}</span>
+              <span>گۆڕاوە ({changeType === 'iqd' ? 'د.ع' : '$'}):</span>
             </div>
           </div>
         )}
-        
-        {/* Barcode - keeping only this, removing QR code */}
-        <div style={{ textAlign: 'center', margin: '10px 0' }}>
-          {/* You can add a barcode library here if needed */}
-          <div style={{
-            margin: '0 auto',
-            padding: '5px 0',
-            borderTop: '1px solid #ccc',
-            borderBottom: '1px solid #ccc',
-            fontSize: '12px',
-            letterSpacing: '2px',
-            fontFamily: 'monospace'
-          }}>
-            *{orderNumber}*
-          </div>
-        </div>
-        
+
         {/* Footer */}
-        <div style={{ 
-          textAlign: 'center', 
+        <div style={{
+          textAlign: 'center',
           marginTop: '10px',
           paddingTop: '5px',
           borderTop: '1px dashed #ccc'
         }}>
-          <p style={{ 
-            margin: '5px 0', 
+          <p style={{
+            margin: '5px 0',
             fontSize: '11px',
             fontWeight: 'bold'
           }}>سوپاس بۆ داواکاریەکەت!</p>
-          <p style={{ 
-            margin: '3px 0', 
+          <p style={{
+            margin: '3px 0',
             fontSize: '10px',
             color: '#666'
           }}>بەهیوای بینینت دووبارە</p>
-          <p style={{ 
-            margin: '3px 0', 
+          <p style={{
+            margin: '3px 0',
             fontSize: '9px',
             color: '#999'
           }}>www.jimstore.com</p>
         </div>
       </div>
-      
+
       <button
         onClick={handleDownload}
         style={{
@@ -503,17 +500,44 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
 });
 
 // Cart Summary component with payment input
-const CartSummary = ({ subtotal, discount, total, completeOrder, payment, setPayment, change }) => {
+const CartSummary = ({
+  subtotal,
+  discount,
+  total,
+  completeOrder,
+  payment,
+  setPayment,
+  change,
+  currencyType,
+  setCurrencyType,
+  changeType,
+  setChangeType,
+  exchangeRate,
+  setExchangeRate
+}) => {
+  // Calculate payment in IQD for comparison with total
+  const paymentInIQD = currencyType === 'iqd'
+    ? parseFloat(payment) || 0
+    : (parseFloat(payment) || 0) * exchangeRate;
+
+  // Determine if payment is sufficient
+  const isPaymentSufficient = paymentInIQD >= total;
+
   return (
     <div className="pt-4 border-t border-gray-200">
+      <CurrencyConverter
+        exchangeRate={exchangeRate}
+        setExchangeRate={setExchangeRate}
+      />
+
       <div className="flex justify-between items-center mb-2 bg-gray-50 p-2 rounded-lg">
-        <span className="text-gray-700 font-medium">{subtotal.toFixed(2)} د.ع</span>
+        <span className="text-gray-700 font-medium">{subtotal.toFixed(3)} د.ع</span>
         <span className="text-gray-700">کۆی گشتی</span>
       </div>
 
       {discount.applied && (
         <div className="flex justify-between items-center mb-2 bg-green-50 p-2 rounded-lg">
-          <span className="text-green-700 font-medium">-{discount.amount.toFixed(2)} د.ع</span>
+          <span className="text-green-700 font-medium">-{discount.amount.toFixed(3)} د.ع</span>
           <div className="flex items-center">
             <span className="text-green-700">داشکاندن</span>
             {discount.type === 'percent' && (
@@ -526,39 +550,33 @@ const CartSummary = ({ subtotal, discount, total, completeOrder, payment, setPay
       )}
 
       <div className="flex justify-between items-center mb-4 pt-4 border-t border-gray-200 bg-blue-50 p-3 rounded-lg mt-3">
-        <span className="text-lg font-bold text-blue-700">{total.toFixed(2)} د.ع</span>
+        <span className="text-lg font-bold text-blue-700">{total.toFixed(3)} د.ع</span>
         <span className="text-lg font-bold text-blue-700">کۆی گشتی کۆتایی</span>
       </div>
 
-      {/* Payment Input */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">پارەی وەرگیراو</label>
-        <div className="relative rounded-md shadow-sm">
-          <input
-            type="number"
-            value={payment}
-            onChange={(e) => setPayment(e.target.value)}
-            placeholder="بڕی پارە"
-            className="block w-full pr-12 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          />
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <span className="text-gray-500">د.ع</span>
-          </div>
-        </div>
-        {payment > 0 && (
-          <div className="mt-2 p-2 bg-gray-50 rounded-md">
-            <div className="flex justify-between">
-              <span>گۆڕاوە:</span>
-              <span className="font-bold">{change.toFixed(2)} د.ع</span>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Enhanced Payment Input with currency selection */}
+      <PaymentInput
+        payment={payment}
+        setPayment={setPayment}
+        currencyType={currencyType}
+        setCurrencyType={setCurrencyType}
+        exchangeRate={exchangeRate}
+      />
+
+      {/* Enhanced Change Display with currency selection */}
+      {payment > 0 && paymentInIQD >= total && (
+        <ChangeDisplay
+          change={currencyType === 'iqd' ? paymentInIQD - total : ((paymentInIQD - (total * 100)))/100}
+          changeType={changeType}
+          setChangeType={setChangeType}
+          exchangeRate={exchangeRate}
+        />
+      )}
 
       <button
-        onClick={completeOrder}
-        disabled={total > payment && payment > 0}
-        className={`w-full bg-gradient-to-r from-green-600 to-green-500 text-white py-3 px-4 rounded-lg font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center mb-2 ${(total > payment && payment > 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={() => completeOrder()}
+        disabled={!isPaymentSufficient && payment > 0}
+        className={`w-full bg-gradient-to-r from-green-600 to-green-500 text-white py-3 px-4 rounded-lg font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center mb-2 ${(!isPaymentSufficient && payment > 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <CheckCircle className="h-5 w-5 ml-2" />
         تەواوکردنی داواکاری
@@ -567,7 +585,103 @@ const CartSummary = ({ subtotal, discount, total, completeOrder, payment, setPay
   );
 };
 
-// Main component
+const CurrencyConverter = ({ exchangeRate, setExchangeRate }) => {
+  return (
+    <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+      <h3 className="text-lg font-bold mb-2 text-gray-800">نرخی گۆڕینەوە</h3>
+      <div className="flex items-center">
+        <span className="text-sm text-gray-600 ml-2">1 دۆلار =</span>
+        <input
+          type="number"
+          value={exchangeRate}
+          onChange={(e) => setExchangeRate(Math.max(1, parseFloat(e.target.value) || 0))}
+          className="w-24 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          min="1"
+          step="0.01"
+        />
+        <span className="text-sm text-gray-600 mr-2">د.ع</span>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced payment input with currency selection
+const PaymentInput = ({ payment, setPayment, currencyType, setCurrencyType, exchangeRate }) => {
+  const handleCurrencyChange = (e) => {
+    setCurrencyType(e.target.value);
+  };
+
+  return (
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-1">پارەی وەرگیراو</label>
+      <div className="flex">
+        <div className="relative rounded-md shadow-sm flex-grow">
+          <input
+            type="number"
+            value={payment}
+            onChange={(e) => setPayment(e.target.value)}
+            placeholder="بڕی پارە"
+            className="block w-full pr-12 p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          />
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <span className="text-gray-500">{currencyType === 'iqd' ? 'د.ع' : '$'}</span>
+          </div>
+        </div>
+        <select
+          value={currencyType}
+          onChange={handleCurrencyChange}
+          className="p-3 border border-gray-300 rounded-r-md bg-gray-50 focus:outline-none focus:ring-blue-500 focus:border-blue-500 border-l-0"
+        >
+          <option value="iqd">د.ع</option>
+          <option value="usd">$</option>
+        </select>
+      </div>
+      {payment > 0 && (
+        <div className="mt-2 text-sm text-gray-600">
+          {currencyType === 'usd' ? (
+            <span>≈ {(payment * exchangeRate).toFixed(3)} د.ع</span>
+          ) : (
+            <span>≈ ${(payment / exchangeRate).toFixed(3)} دۆلار</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced change display with currency selection
+const ChangeDisplay = ({ change, changeType, setChangeType, exchangeRate }) => {
+  const handleChangeTypeChange = (e) => {
+    setChangeType(e.target.value);
+  };
+
+  const displayChange = changeType === 'iqd'
+    ? ((change ).toFixed(3))
+    : ((change * 100) / 145).toFixed(3);
+
+  return (
+    <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center">
+          <span className="font-bold">{displayChange}</span>
+          <span className="ml-1">{changeType === 'iqd' ? 'د.ع' : '$'}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="mr-2">گۆڕاوە:</span>
+          <select
+            value={changeType}
+            onChange={handleChangeTypeChange}
+            className="p-1 border border-gray-300 rounded bg-white text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="iqd">د.ع</option>
+            <option value="usd">$</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function GymPOSSalesDashboard() {
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -576,14 +690,17 @@ export default function GymPOSSalesDashboard() {
   const [orderNumber, setOrderNumber] = useState('');
   const [discount, setDiscount] = useState({
     value: '',
-    type: 'percent',
+    type: 'amount',
     applied: false,
     amount: 0
   });
   const [payment, setPayment] = useState(0);
   const receiptRef = useRef();
 
-  // Filter products
+  const [currencyType, setCurrencyType] = useState('iqd'); 
+  const [changeType, setChangeType] = useState('iqd'); 
+  const [exchangeRate, setExchangeRate] = useState(145);
+
   const filteredProducts = productData.filter(product => {
     const matchesSearch = product.name.includes(searchTerm);
     const matchesCategory = selectedCategory === 'هەموو' || product.category === selectedCategory;
@@ -591,7 +708,11 @@ export default function GymPOSSalesDashboard() {
     return matchesSearch && matchesCategory;
   });
 
-  // Add to cart
+  const paymentInIQD = currencyType === 'iqd'
+    ? parseFloat(payment) || 0
+    : (parseFloat(payment) || 0) * exchangeRate;
+
+
   const addToCart = (product) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
@@ -608,7 +729,6 @@ export default function GymPOSSalesDashboard() {
     });
   };
 
-  // Update quantity
   const updateQuantity = (productId, newQuantity) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
@@ -624,15 +744,12 @@ export default function GymPOSSalesDashboard() {
     );
   };
 
-  // Remove from cart
   const removeFromCart = (productId) => {
     setCart(prevCart => prevCart.filter(item => item.id !== productId));
   };
 
-  // Calculate subtotal
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-  // Apply discount
   const applyDiscount = () => {
     if (!discount.value || isNaN(discount.value)) {
       return;
@@ -653,22 +770,18 @@ export default function GymPOSSalesDashboard() {
     });
   };
 
-  // Calculate total
   const total = discount.applied ? subtotal - discount.amount : subtotal;
 
-  // Calculate change
-  const change = payment > total ? payment - total : 0;
+  const change = paymentInIQD > total ? paymentInIQD - total : 0;
 
-  // Complete order
   const completeOrder = () => {
-    if (payment < total && payment > 0) return;
+    if (paymentInIQD < total && paymentInIQD > 0) return;
 
     const randomOrderNum = Math.floor(100000 + Math.random() * 900000).toString();
     setOrderNumber(randomOrderNum);
     setOrderComplete(true);
   };
 
-  // Reset cart
   const resetCart = () => {
     setCart([]);
     setOrderComplete(false);
@@ -676,7 +789,7 @@ export default function GymPOSSalesDashboard() {
     setPayment(0);
     setDiscount({
       value: '',
-      type: 'percent',
+      type: 'amount',
       applied: false,
       amount: 0
     });
@@ -767,14 +880,17 @@ export default function GymPOSSalesDashboard() {
                   ) : orderComplete ? (
                     <div className="text-center">
                       <Receipt
-                        ref={receiptRef}
                         orderNumber={orderNumber}
                         items={cart}
                         subtotal={subtotal}
                         discount={discount}
                         total={total}
-                        payment={parseFloat(payment) || 0}
+                        payment={payment}
                         change={change}
+                        currencyType="iqd"
+                        changeType="iqd"
+                        exchangeRate={1200} 
+                        ref={receiptRef}
                       />
                       <div className="flex gap-2 mt-4 justify-center">
                         <button
@@ -812,6 +928,12 @@ export default function GymPOSSalesDashboard() {
                         payment={parseFloat(payment) || 0}
                         setPayment={(val) => setPayment(val >= 0 ? val : 0)}
                         change={change}
+                        currencyType={currencyType}
+                        setCurrencyType={setCurrencyType}
+                        changeType={changeType}
+                        setChangeType={setChangeType}
+                        exchangeRate={exchangeRate}
+                        setExchangeRate={setExchangeRate}
                       />
                     </>
                   )}
