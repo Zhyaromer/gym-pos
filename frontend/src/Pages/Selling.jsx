@@ -3,7 +3,7 @@ import { Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { forwardRef } from 'react';
-import { ShoppingCart, CheckCircle, Minus, Plus, X, Percent, Search } from 'lucide-react';
+import { ShoppingCart, CheckCircle, Minus, Plus, X, Percent, Search, Tag } from 'lucide-react';
 // Mock product data
 const productData = [
   {
@@ -13,6 +13,7 @@ const productData = [
     price: 49.750,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 15,
+    barcode: "8901234567890"
   },
   {
     id: 2,
@@ -21,6 +22,7 @@ const productData = [
     price: 24.500,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 8,
+    barcode: "8901234567891"
   },
   {
     id: 3,
@@ -29,6 +31,7 @@ const productData = [
     price: 89.00,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 6,
+    barcode: "8901234567892"
   },
   {
     id: 4,
@@ -37,6 +40,7 @@ const productData = [
     price: 12.500,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 30,
+    barcode: "8901234567893"
   },
   {
     id: 5,
@@ -45,6 +49,7 @@ const productData = [
     price: 29.25,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 12,
+    barcode: "8901234567894"
   },
   {
     id: 6,
@@ -53,6 +58,7 @@ const productData = [
     price: 18.25,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 20,
+    barcode: "8901234567895"
   },
   {
     id: 7,
@@ -61,6 +67,7 @@ const productData = [
     price: 19.750,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 10,
+    barcode: "8901234567896"
   },
   {
     id: 8,
@@ -69,6 +76,7 @@ const productData = [
     price: 39.000,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 8,
+    barcode: "8901234567897"
   },
   {
     id: 9,
@@ -77,6 +85,7 @@ const productData = [
     price: 34.250,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 7,
+    barcode: "8901234567898"
   },
   {
     id: 10,
@@ -85,6 +94,7 @@ const productData = [
     price: 24.000,
     image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
     stock: 15,
+    barcode: "8901234567899"
   }
 ];
 
@@ -104,11 +114,14 @@ const ProductCard = ({ product, addToCart }) => {
           />
         </div>
         <h3 className="font-bold text-gray-900 mb-1 text-lg">{product.name}</h3>
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-2">
           <p className="font-bold text-blue-600 text-xl">{product.price.toFixed(3)} د.ع</p>
           <span className={`text-xs rounded-full px-3 py-1 ${product.stock > 5 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
             بەردەستە: {product.stock}
           </span>
+        </div>
+        <div className="text-xs text-gray-500 mb-3 text-center bg-gray-100 py-1 px-2 rounded">
+          بارکۆد: {product.barcode}
         </div>
         <button
           onClick={() => addToCart(product)}
@@ -336,7 +349,6 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
           borderRadius: '4px',
         }}
       >
-        {/* Header */}
         <div dir='rtl' style={{ textAlign: 'center', marginBottom: '10px' }}>
           <h2 style={{
             margin: 0,
@@ -428,25 +440,6 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
             <span>{Number(total).toFixed(3)} د.ع</span>
           </div>
         </div>
-
-        {/* Payment */}
-        {payment > 0 && (
-          <div style={{
-            marginBottom: '10px',
-            padding: '5px 0',
-            borderTop: '1px dashed #ccc',
-            borderBottom: '1px dashed #ccc'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>{paymentDisplay}</span>
-              <span>پارەی وەرگیراو ({currencyType === 'iqd' ? 'د.ع' : '$'}):</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
-              <span>{changeDisplay}</span>
-              <span>گۆڕاوە ({changeType === 'iqd' ? 'د.ع' : '$'}):</span>
-            </div>
-          </div>
-        )}
 
         {/* Footer */}
         <div style={{
@@ -682,6 +675,47 @@ const ChangeDisplay = ({ change, changeType, setChangeType, exchangeRate }) => {
   );
 };
 
+// BarcodeScanner component
+const BarcodeScanner = ({ onScan }) => {
+  const [barcode, setBarcode] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (barcode.trim()) {
+      onScan(barcode);
+      setBarcode('');
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4 mb-6 border border-blue-100">
+      <h3 className="text-lg font-bold mb-3 flex items-center">
+        <Search className="h-5 w-5 ml-2 text-blue-600" />
+        سکان کردنی بارکۆد
+      </h3>
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <input
+          type="text"
+          value={barcode}
+          onChange={(e) => setBarcode(e.target.value)}
+          placeholder="بارکۆد داخڵ بکە یان سکان بکە"
+          className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          autoFocus
+        />
+        <button
+          type="submit"
+          className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-4 py-2 rounded-lg transition-all shadow-md hover:shadow-lg font-medium"
+        >
+          زیادکردن
+        </button>
+      </form>
+      <p className="text-xs text-gray-500 mt-2">
+        بارکۆد داخڵ بکە بۆ زیادکردنی ڕاستەوخۆ بۆ سەبەتە
+      </p>
+    </div>
+  );
+};
+
 export default function GymPOSSalesDashboard() {
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -782,6 +816,15 @@ export default function GymPOSSalesDashboard() {
     setOrderComplete(true);
   };
 
+  const handleBarcodeScan = (barcode) => {
+    const product = productData.find(p => p.barcode === barcode);
+    if (product) {
+      addToCart(product);
+    } else {
+      alert("بارکۆدی داخڵکراو نەدۆزرایەوە!");
+    }
+  };
+
   const resetCart = () => {
     setCart([]);
     setOrderComplete(false);
@@ -808,6 +851,8 @@ export default function GymPOSSalesDashboard() {
               </button>
             </div>
           </div>
+
+          <BarcodeScanner onScan={handleBarcodeScan} />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Product List Section */}

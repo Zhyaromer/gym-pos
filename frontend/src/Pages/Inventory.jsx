@@ -19,8 +19,7 @@ import {
     Barcode,
     Download,
     Printer,
-    RefreshCw,
-    QrCode
+    RefreshCw
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import jsbarcode from 'jsbarcode';
@@ -131,7 +130,7 @@ export default function Inventory() {
     // State for barcode modal
     const [showBarcodeModal, setShowBarcodeModal] = useState(false);
     const [currentBarcode, setCurrentBarcode] = useState('');
-    const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+    const [currentItem, setCurrentItem] = useState(null);
 
     // Categories for filtering
     const categories = ['All', 'Weights', 'Equipment', 'Accessories', 'Supplements'];
@@ -156,16 +155,6 @@ export default function Inventory() {
         // Generate 10 random digits (12 total with prefix)
         const randomDigits = Math.floor(1000000000 + Math.random() * 9000000000).toString().substring(0, 10);
         return `${categoryPrefix}${randomDigits}`;
-    };
-
-    // Generate QR code
-    const generateQrCode = async (text) => {
-        try {
-            const url = await QRCode.toDataURL(text, { width: 200 });
-            setQrCodeDataUrl(url);
-        } catch (err) {
-            console.error('Error generating QR code:', err);
-        }
     };
 
     // Handle file upload
@@ -208,6 +197,7 @@ export default function Inventory() {
             
             // Show barcode modal after adding
             setCurrentBarcode(barcode);
+            setCurrentItem(newItemWithBarcode);
             setShowBarcodeModal(true);
             
             // Reset form
@@ -264,7 +254,7 @@ export default function Inventory() {
         }
     };
 
-    // Initialize barcode and QR code when modal opens
+    // Initialize barcode when modal opens
     useEffect(() => {
         if (showBarcodeModal && currentBarcode) {
             // Generate barcode
@@ -282,9 +272,6 @@ export default function Inventory() {
                     });
                 }
             }, 100);
-            
-            // Generate QR code
-            generateQrCode(currentBarcode);
         }
     }, [showBarcodeModal, currentBarcode]);
 
@@ -301,16 +288,6 @@ export default function Inventory() {
             }
         } catch (error) {
             console.error('Error downloading barcode:', error);
-        }
-    };
-
-    // Download QR code as image
-    const downloadQrCode = () => {
-        if (qrCodeDataUrl) {
-            const link = document.createElement('a');
-            link.download = `qrcode-${currentBarcode}.png`;
-            link.href = qrCodeDataUrl;
-            link.click();
         }
     };
 
@@ -533,6 +510,17 @@ export default function Inventory() {
                                             >
                                                 <X size={16} />
                                             </button>
+                                            <button
+                                                className="p-1 rounded bg-blue-500 text-white hover:bg-blue-600"
+                                                onClick={() => {
+                                                    setCurrentBarcode(editedValues.barcode);
+                                                    setCurrentItem(editedValues);
+                                                    setShowBarcodeModal(true);
+                                                }}
+                                                title="چاپکردنی بارکۆد"
+                                            >
+                                                <Barcode size={16} />
+                                            </button>
                                         </div>
                                     </div>
                                 ) : (
@@ -566,6 +554,7 @@ export default function Inventory() {
                                             <button 
                                                 onClick={() => {
                                                     setCurrentBarcode(item.barcode);
+                                                    setCurrentItem(item);
                                                     setShowBarcodeModal(true);
                                                 }}
                                                 className="text-xs flex items-center text-gray-600 hover:text-blue-600"
@@ -821,9 +810,9 @@ export default function Inventory() {
             {/* Barcode Modal */}
             {showBarcodeModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold">بارکۆد و QR کۆد</h3>
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md print:p-0 print:shadow-none print:bg-transparent print:w-auto">
+                        <div className="flex justify-between items-center mb-4 print:hidden">
+                            <h3 className="text-xl font-bold">بارکۆد</h3>
                             <button 
                                 onClick={() => setShowBarcodeModal(false)}
                                 className="p-1 rounded-full hover:bg-gray-100"
@@ -832,49 +821,36 @@ export default function Inventory() {
                             </button>
                         </div>
                         
-                        <div className="flex flex-col items-center p-4">
-                            {/* Barcode Section */}
-                            <div className="w-full mb-6">
-                                <h4 className="text-center font-medium mb-2">بارکۆد</h4>
-                                <canvas 
-                                    id="barcode-canvas" 
-                                    className="w-full mb-2"
-                                />
-                                <p className="text-center font-mono text-lg">{currentBarcode}</p>
+                        <div className="flex flex-col items-center p-4 print:p-2">
+                            {/* Item Info */}
+                            <div className="text-center mb-4 print:mb-2">
+                                <h4 className="font-bold text-lg print:text-sm">{currentItem?.name || 'Item Name'}</h4>
+                                <p className="text-gray-600 print:text-xs">
+                                    {currentItem?.category === 'Weights' ? 'قورسایی' :
+                                     currentItem?.category === 'Equipment' ? 'ئامێر' :
+                                     currentItem?.category === 'Accessories' ? 'کەرەستە' :
+                                     currentItem?.category === 'Supplements' ? 'تەواوکەر' : currentItem?.category || 'Category'}
+                                </p>
+                                <p className="font-medium print:text-xs">${currentItem?.price?.toFixed(2) || '0.00'}</p>
                             </div>
                             
-                            {/* QR Code Section */}
-                            <div className="w-full mb-6">
-                                <h4 className="text-center font-medium mb-2">QR کۆد</h4>
-                                {qrCodeDataUrl ? (
-                                    <div className="flex flex-col items-center">
-                                        <img 
-                                            src={qrCodeDataUrl} 
-                                            alt="QR Code" 
-                                            className="w-48 h-48 mb-2"
-                                        />
-                                        <p className="text-center font-mono text-sm">{currentBarcode}</p>
-                                    </div>
-                                ) : (
-                                    <div className="text-center text-gray-500">دروستکردنی QR کۆد...</div>
-                                )}
+                            {/* Barcode Section */}
+                            <div className="w-full mb-4 print:mb-2">
+                                <canvas 
+                                    id="barcode-canvas" 
+                                    className="w-full print:w-64 print:h-16"
+                                />
+                                <p className="text-center font-mono text-lg print:text-sm">{currentBarcode}</p>
                             </div>
                             
                             {/* Action Buttons */}
-                            <div className="flex flex-wrap gap-4 justify-center">
+                            <div className="flex flex-wrap gap-4 justify-center print:hidden">
                                 <button
                                     onClick={downloadBarcode}
                                     className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2"
                                 >
                                     <Download size={18} />
                                     داگرتنی بارکۆد
-                                </button>
-                                <button
-                                    onClick={downloadQrCode}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2"
-                                >
-                                    <Download size={18} />
-                                    داگرتنی QR
                                 </button>
                                 <button
                                     onClick={() => window.print()}
