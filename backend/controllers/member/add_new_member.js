@@ -20,6 +20,14 @@ const addNewMember = async (req, res) => {
         return res.status(400).json({ message: "Invalid emergency phone number length or format" });
     }
 
+    if (height && (height < 0)) {
+        return res.status(400).json({ message: "Invalid height value" });
+    }
+
+    if (weight && (weight < 0)) {
+        return res.status(400).json({ message: "Invalid weight value" });
+    }
+
     try {
         const sql = `insert into members (name,gender,phoneNumber,emergencyphoneNumber,height,weight,img) values (?,?,?,?,?,?,?)`;
         const [rows] = await db.query(sql, [name, gender, phoneNumber, emergencyphoneNumber, height ? height : 0, weight ? weight : 0, img ? img : null]);

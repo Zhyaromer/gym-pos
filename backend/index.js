@@ -8,6 +8,7 @@ const passport = require("passport");
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const memberRoute = require('./routes/member/memberRoute')
+const employeeRoute = require('./routes/employee/employeesRoute')
 
 app.use(cors({
     origin : process.env.frontendurl,
@@ -18,6 +19,7 @@ app.use(cookieParser())
 app.use(bodyParser.json())
 
 app.use('/members',memberRoute);
+app.use('/employees',employeeRoute);
 
 app.get('/', (req, res) => res.send('Hello World!'))
 app.listen(port, () => console.log(`server running on port ${port}!`))

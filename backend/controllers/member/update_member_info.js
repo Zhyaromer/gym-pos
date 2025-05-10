@@ -17,16 +17,16 @@ const update_member_info = async (req, res) => {
         return res.status(400).json({ message: "Invalid date range" });
     }
 
-    if (phoneNumber === emergencyphoneNumber) {
-        return res.status(400).json({ message: "Emergency phone number cannot be the same as the main phone number" });
-    }
-
     if (phoneNumber && !/^\d{10,11}$/.test(String(phoneNumber))) {
         return res.status(400).json({ message: "Invalid phone number length or format" });
     }
 
     if (emergencyphoneNumber && !/^\d{10,11}$/.test(String(emergencyphoneNumber))) {
         return res.status(400).json({ message: "Invalid emergency phone number length or format" });
+    }
+
+    if (phoneNumber === emergencyphoneNumber) {
+        return res.status(400).json({ message: "Emergency phone number cannot be the same as the main phone number" });
     }
 
     if (height && (height < 0)) {
