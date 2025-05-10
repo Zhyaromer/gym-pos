@@ -6,7 +6,7 @@ const get_all_members = async (req, res) => {
                     m.m_id,
                     m.name,
                     mp.title AS membership_title,
-                    mp.access_level,
+                    mp.duration,
                     mp.free_pool_entries,
                     amp.start_date,
                     amp.end_date,
@@ -23,7 +23,7 @@ const get_all_members = async (req, res) => {
                 LEFT JOIN 
                     freePoolUsage fpu ON fpu.m_id = m.m_id AND fpu.amp_id = amp.amp_id
                 GROUP BY 
-                    m.m_id, m.name, mp.title, mp.access_level, mp.free_pool_entries,
+                    m.m_id, m.name, mp.title, mp.duration,mp.free_pool_entries,
                     amp.start_date, amp.end_date;`;
         const [results] = await db.query(sql);
 
