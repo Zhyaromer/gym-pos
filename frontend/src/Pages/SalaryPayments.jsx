@@ -31,7 +31,7 @@ export default function SalaryPayments() {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [isPartialPayment, setIsPartialPayment] = useState(false);
   const [notes, setNotes] = useState('');
-  
+
   // Mock employee data
   const [employees, setEmployees] = useState([
     {
@@ -120,9 +120,9 @@ export default function SalaryPayments() {
 
   // Get employees who have payment records for the selected month/year
   const employeesWithPayments = employees.filter(employee => {
-    return paymentRecords.some(record => 
-      record.employeeId === employee.id && 
-      record.year === selectedYear && 
+    return paymentRecords.some(record =>
+      record.employeeId === employee.id &&
+      record.year === selectedYear &&
       record.month === selectedMonth
     );
   });
@@ -138,9 +138,9 @@ export default function SalaryPayments() {
 
   // Get employees without payment records
   const employeesWithoutPayments = employees.filter(employee => {
-    return !paymentRecords.some(record => 
-      record.employeeId === employee.id && 
-      record.year === selectedYear && 
+    return !paymentRecords.some(record =>
+      record.employeeId === employee.id &&
+      record.year === selectedYear &&
       record.month === selectedMonth
     );
   });
@@ -148,9 +148,9 @@ export default function SalaryPayments() {
   // Get payment record for an employee
   const getPaymentRecord = (employeeId) => {
     return paymentRecords.find(
-      record => record.employeeId === employeeId && 
-               record.year === selectedYear && 
-               record.month === selectedMonth
+      record => record.employeeId === employeeId &&
+        record.year === selectedYear &&
+        record.month === selectedMonth
     ) || { status: 'pending', paymentDate: null, amount: 0, amountDisplay: "0 د.ع" };
   };
 
@@ -166,20 +166,20 @@ export default function SalaryPayments() {
       totalAmountRemaining: 0,
       totalPartialRemaining: 0
     };
-  
+
     // Calculate for all active employees
     employees.forEach(employee => {
       if (employee.status !== 'active') return;
-      
+
       stats.totalActiveEmployees++;
       stats.totalSalaryShouldBePaid += employee.salary;
-  
-      const paymentRecord = paymentRecords.find(record => 
-        record.employeeId === employee.id && 
-        record.year === selectedYear && 
+
+      const paymentRecord = paymentRecords.find(record =>
+        record.employeeId === employee.id &&
+        record.year === selectedYear &&
         record.month === selectedMonth
       );
-  
+
       if (!paymentRecord) {
         // No payment record exists (completely unpaid)
         stats.employeesUnpaid++;
@@ -203,7 +203,7 @@ export default function SalaryPayments() {
         }
       }
     });
-  
+
     return stats;
   };
 
@@ -214,14 +214,14 @@ export default function SalaryPayments() {
     setPaymentRecords(prev => {
       const employee = employees.find(e => e.id === employeeId);
       if (!employee) return prev;
-  
+
       // Find existing record if any
       const existingRecord = prev.find(
         record => record.employeeId === employeeId &&
-                 record.year === selectedYear &&
-                 record.month === selectedMonth
+          record.year === selectedYear &&
+          record.month === selectedMonth
       );
-  
+
       if (existingRecord) {
         // Update existing record
         return prev.map(record => {
@@ -244,8 +244,8 @@ export default function SalaryPayments() {
                 status: newStatus,
                 paymentDate: newStatus === 'paid' ? new Date().toISOString() : null,
                 amount: newStatus === 'paid' ? employee.salary : 0,
-                amountDisplay: newStatus === 'paid' 
-                  ? `${employee.salary.toLocaleString()} د.ع` 
+                amountDisplay: newStatus === 'paid'
+                  ? `${employee.salary.toLocaleString()} د.ع`
                   : "0 د.ع",
                 isPartial: false
               };
@@ -263,8 +263,8 @@ export default function SalaryPayments() {
           status: isPartial ? 'partial' : 'paid',
           paymentDate: new Date().toISOString(),
           amount: isPartial ? partialAmount : employee.salary,
-          amountDisplay: isPartial 
-            ? `${partialAmount.toLocaleString()} د.ع` 
+          amountDisplay: isPartial
+            ? `${partialAmount.toLocaleString()} د.ع`
             : `${employee.salary.toLocaleString()} د.ع`,
           isPartial,
           notes: ''
@@ -290,7 +290,7 @@ export default function SalaryPayments() {
     if (!selectedEmployee) return;
 
     const amount = parseInt(paymentAmount) || selectedEmployee.salary;
-    
+
     const newRecord = {
       id: `${selectedEmployee.id}-${selectedYear}-${selectedMonth}-${Date.now()}`,
       employeeId: selectedEmployee.id,
@@ -362,7 +362,7 @@ export default function SalaryPayments() {
   const getPaymentStatusBadge = (status, employeeId) => {
     const employee = employees.find(e => e.id === employeeId);
     const record = getPaymentRecord(employeeId);
-    
+
     switch (status) {
       case 'paid':
         return (
@@ -396,7 +396,7 @@ export default function SalaryPayments() {
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
       {/* Header */}
-      <Navbar/>
+      <Navbar />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
@@ -457,82 +457,82 @@ export default function SalaryPayments() {
             </button>
           </div>
 
-         {/* Updated Summary Cards */}
-<div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-  {/* Total Active Employees */}
-  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">کارمەندانی چالاک</p>
-        <p className="text-2xl font-bold text-blue-700">
-          {paymentStats.totalActiveEmployees}
-        </p>
-      </div>
-      <User size={24} className="text-blue-400" />
-    </div>
-  </div>
-  
-  {/* Total Should Be Paid */}
-  <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">کۆی مووچەی گونجاو</p>
-        <p className="text-2xl font-bold text-purple-700">
-          {paymentStats.totalSalaryShouldBePaid.toLocaleString()} د.ع
-        </p>
-      </div>
-      <PieChart size={24} className="text-purple-400" />
-    </div>
-  </div>
-  
-  {/* Total Paid */}
-  <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">کۆی مووچەی پێدراو</p>
-        <p className="text-2xl font-bold text-green-700">
-          {paymentStats.totalAmountPaid.toLocaleString()} د.ع
-        </p>
-        <p className="text-xs text-gray-500">
-          {paymentStats.employeesPaid} کارمەند
-        </p>
-      </div>
-      <CheckCircle size={24} className="text-green-400" />
-    </div>
-  </div>
-  
-  {/* Partial Payments */}
-  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">بەشێکی پێدراو</p>
-        <p className="text-2xl font-bold text-yellow-700">
-          {paymentStats.totalAmountPartialPaid.toLocaleString()} د.ع
-        </p>
-        <p className="text-xs text-gray-500">
-          {paymentStats.employeesPartial} کارمەند | ماوە: {paymentStats.totalPartialRemaining.toLocaleString()} د.ع
-        </p>
-      </div>
-      <AlertCircle size={24} className="text-yellow-400" />
-    </div>
-  </div>
-  
-  {/* Total Remaining */}
-  <div className="bg-red-50 p-4 rounded-lg border border-red-100">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">کۆی مووچەی ماوە</p>
-        <p className="text-2xl font-bold text-red-700">
-          {paymentStats.totalAmountRemaining.toLocaleString()} د.ع
-        </p>
-        <p className="text-xs text-gray-500">
-          {paymentStats.employeesUnpaid} کارمەند
-        </p>
-      </div>
-      <Clock size={24} className="text-red-400" />
-    </div>
-  </div>
-</div>
+          {/* Updated Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            {/* Total Active Employees */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">کارمەندانی چالاک</p>
+                  <p className="text-2xl font-bold text-blue-700">
+                    {paymentStats.totalActiveEmployees}
+                  </p>
+                </div>
+                <User size={24} className="text-blue-400" />
+              </div>
+            </div>
+
+            {/* Total Should Be Paid */}
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">کۆی مووچەی گونجاو</p>
+                  <p className="text-2xl font-bold text-purple-700">
+                    {paymentStats.totalSalaryShouldBePaid.toLocaleString()} د.ع
+                  </p>
+                </div>
+                <PieChart size={24} className="text-purple-400" />
+              </div>
+            </div>
+
+            {/* Total Paid */}
+            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">کۆی مووچەی پێدراو</p>
+                  <p className="text-2xl font-bold text-green-700">
+                    {paymentStats.totalAmountPaid.toLocaleString()} د.ع
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {paymentStats.employeesPaid} کارمەند
+                  </p>
+                </div>
+                <CheckCircle size={24} className="text-green-400" />
+              </div>
+            </div>
+
+            {/* Partial Payments */}
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">بەشێکی پێدراو</p>
+                  <p className="text-2xl font-bold text-yellow-700">
+                    {paymentStats.totalAmountPartialPaid.toLocaleString()} د.ع
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {paymentStats.employeesPartial} کارمەند | ماوە: {paymentStats.totalPartialRemaining.toLocaleString()} د.ع
+                  </p>
+                </div>
+                <AlertCircle size={24} className="text-yellow-400" />
+              </div>
+            </div>
+
+            {/* Total Remaining */}
+            <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">کۆی مووچەی ماوە</p>
+                  <p className="text-2xl font-bold text-red-700">
+                    {paymentStats.totalAmountRemaining.toLocaleString()} د.ع
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {paymentStats.employeesUnpaid} کارمەند
+                  </p>
+                </div>
+                <Clock size={24} className="text-red-400" />
+              </div>
+            </div>
+          </div>
 
           {/* Detailed Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -540,10 +540,10 @@ export default function SalaryPayments() {
               <h3 className="font-medium text-gray-700 mb-2">ڕێژەی پێدان</h3>
               <div className="flex items-center justify-between">
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-green-600 h-2.5 rounded-full" 
-                    style={{ 
-                      width: `${(paymentStats.totalAmountPaid / paymentStats.totalSalaryShouldBePaid * 100) || 0}%` 
+                  <div
+                    className="bg-green-600 h-2.5 rounded-full"
+                    style={{
+                      width: `${(paymentStats.totalAmountPaid / paymentStats.totalSalaryShouldBePaid * 100) || 0}%`
                     }}
                   ></div>
                 </div>
@@ -555,15 +555,15 @@ export default function SalaryPayments() {
                 {paymentStats.employeesPaid} کارمەند پێدراوە
               </div>
             </div>
-            
+
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
               <h3 className="font-medium text-gray-700 mb-2">ڕێژەی بەشێکی پێدراو</h3>
               <div className="flex items-center justify-between">
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-yellow-500 h-2.5 rounded-full" 
-                    style={{ 
-                      width: `${(paymentStats.totalAmountPartial / paymentStats.totalSalaryShouldBePaid * 100) || 0}%` 
+                  <div
+                    className="bg-yellow-500 h-2.5 rounded-full"
+                    style={{
+                      width: `${(paymentStats.totalAmountPartial / paymentStats.totalSalaryShouldBePaid * 100) || 0}%`
                     }}
                   ></div>
                 </div>
@@ -575,15 +575,15 @@ export default function SalaryPayments() {
                 {paymentStats.employeesPartial} کارمەند بەشێکی پێدراوە
               </div>
             </div>
-            
+
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
               <h3 className="font-medium text-gray-700 mb-2">ڕێژەی چاوەڕوانکراو</h3>
               <div className="flex items-center justify-between">
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-red-500 h-2.5 rounded-full" 
-                    style={{ 
-                      width: `${(paymentStats.totalAmountPending / paymentStats.totalSalaryShouldBePaid * 100) || 0}%` 
+                  <div
+                    className="bg-red-500 h-2.5 rounded-full"
+                    style={{
+                      width: `${(paymentStats.totalAmountPending / paymentStats.totalSalaryShouldBePaid * 100) || 0}%`
                     }}
                   ></div>
                 </div>
@@ -616,7 +616,7 @@ export default function SalaryPayments() {
                 {filteredEmployees.map(employee => {
                   const paymentRecord = getPaymentRecord(employee.id);
                   const remainingAmount = employee.salary - (paymentRecord.amount || 0);
-                  
+
                   return (
                     <tr key={`${employee.id}-${paymentRecord.id}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -660,7 +660,7 @@ export default function SalaryPayments() {
                       <td className="px-6 py-4 whitespace-nowrap text-center space-x-2 space-x-reverse">
                         <div className="flex items-center justify-center space-x-2 space-x-reverse">
                           {getPaymentStatusBadge(paymentRecord.status, employee.id)}
-                          
+
                           <button
                             onClick={() => openEditModal(paymentRecord)}
                             className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-50"
@@ -668,7 +668,7 @@ export default function SalaryPayments() {
                           >
                             <Edit size={16} />
                           </button>
-                          
+
                           <button
                             onClick={() => deletePaymentRecord(paymentRecord.id)}
                             className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50"
@@ -677,7 +677,7 @@ export default function SalaryPayments() {
                             <Trash2 size={16} />
                           </button>
                         </div>
-                        
+
                         {paymentRecord.status !== 'paid' && (
                           <div className="mt-2 flex justify-center">
                             <button
@@ -714,7 +714,7 @@ export default function SalaryPayments() {
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">زیادکردنی تۆماری مووچە</h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowAddModal(false);
                   resetForm();
@@ -817,7 +817,7 @@ export default function SalaryPayments() {
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">دەستکاری تۆماری مووچە</h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowEditModal(false);
                   resetForm();
