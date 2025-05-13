@@ -939,7 +939,19 @@ export default function GymPOSSalesDashboard() {
                       />
                       <div className="flex gap-2 mt-4 justify-center">
                         <button
-                          onClick={resetCart}
+                          onClick={() => {
+                            resetCart();
+                            console.log(`cart`);
+                            console.log(cart);
+                            console.log(`orderNumber ${orderNumber}`);
+                            console.log(`payment ${payment}`);
+                            console.log(`change ${change}`);
+                            console.log(`subtotal ${subtotal.toFixed(3)}`);
+                            console.log(`total ${total.toFixed(3)}`);
+                            console.log(`discount`);
+                            console.log(discount)
+                            // add the buy button to connect to backend here
+                          }}
                           className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white py-2 px-4 rounded-lg font-bold transition-all shadow-md hover:shadow-lg"
                         >
                           درێژەدان بە بازاڕکردن
