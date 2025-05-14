@@ -10,6 +10,7 @@ const bodyParser = require('body-parser');
 const memberRoute = require('./routes/member/memberRoute')
 const employeeRoute = require('./routes/employee/employeesRoute')
 const sallesRoute = require('./routes/sales/salesRoute')
+const inventoryRoute = require('./routes/inventory/inventoryRoute')
 
 app.use(cors({
     origin : process.env.frontendurl,
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use('/members',memberRoute);
 app.use('/employees',employeeRoute);
 app.use('/sales',sallesRoute);
+app.use('/inventory',inventoryRoute);
 
 app.get('/', (req, res) => res.send('Hello World!'))
 app.listen(port, () => console.log(`server running on port ${port}!`))
