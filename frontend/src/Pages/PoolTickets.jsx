@@ -95,8 +95,8 @@ export default function PoolTickets() {
     },
   ]);
 
-  const today = new Date().toISOString().split('T')[0];
-
+  const today = new Date().toLocaleDateString('en-CA');
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterGender, setFilterGender] = useState('All');
