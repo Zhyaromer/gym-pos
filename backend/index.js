@@ -14,6 +14,7 @@ const inventoryRoute = require('./routes/inventory/inventoryRoute')
 const attendenceRoute = require('./routes/attendance/attendenceRoute');
 const expensesRoute = require('./routes/expense/expensesRoute');
 const poolRoute = require('./routes/pool/poolRoute');
+const membership_plansRoute = require('./routes/membership_plans/membership_plansRoute');
 
 app.use(cors({
     origin : process.env.frontendurl,
@@ -30,6 +31,7 @@ app.use('/inventory',inventoryRoute);
 app.use('/attendence',attendenceRoute);
 app.use('/expenses',expensesRoute);
 app.use('/pool',poolRoute);
+app.use('/membership_plans',membership_plansRoute);
 
 app.get('/', (req, res) => res.send('Hello World!'))
 app.listen(port, () => console.log(`server running on port ${port}!`))
