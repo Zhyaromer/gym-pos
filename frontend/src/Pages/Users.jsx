@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   Search,
-  User,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   Edit,
@@ -15,6 +13,7 @@ import {
   Save,
   X
 } from 'lucide-react';
+import axios from 'axios';
 import Navbar from '../components/layout/Nav';
 
 export default function GymUsersPage() {
@@ -26,198 +25,36 @@ export default function GymUsersPage() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [gymUsers, setGymUsers] = useState([]);
 
-  // Mock user data
-  const [gymUsers, setGymUsers] = useState([
-    {
-      id: 1,
-      name: "سارا ئەحمەد",
-      email: "sara@example.com",
-      phone: "0770-123-4567",
-      emergencyPhone: "0750-111-2222",
-      membership: "ساڵانە",
-      startDate: "2025-02-10",
-      endDate: "2026-02-10",
-      avatar: "https://randomuser.me/api/portraits/women/32.jpg",
-      status: "active",
-      gender: "مێ",
-      accessLevel: "ئەندام",
-      createdAt: "2025-02-10",
-      updatedAt: "2025-02-10",
-      height: "165cm",
-      weight: "62kg"
-    },
-    {
-      id: 2,
-      name: "ئاکۆ محەمەد",
-      email: "ako@example.com",
-      phone: "0771-234-5678",
-      emergencyPhone: "0750-222-3333",
-      membership: "مانگانە",
-      startDate: "2025-03-15",
-      endDate: "2025-06-15",
-      avatar: "https://randomuser.me/api/portraits/men/22.jpg",
-      status: "active",
-      gender: "نێر",
-      accessLevel: "ئەندام",
-      createdAt: "2025-03-15",
-      updatedAt: "2025-03-15",
-      height: "178cm",
-      weight: "75kg"
-    },
-    {
-      id: 3,
-      name: "شیلان ڕەزا",
-      email: "shilan@example.com",
-      phone: "0772-345-6789",
-      emergencyPhone: "0750-333-4444",
-      membership: "شەش مانگی",
-      startDate: "2025-01-20",
-      endDate: "2025-07-20",
-      avatar: "https://randomuser.me/api/portraits/women/56.jpg",
-      status: "expired",
-      gender: "مێ",
-      accessLevel: "ئەندام",
-      createdAt: "2025-01-20",
-      updatedAt: "2025-01-20",
-      height: "162cm",
-      weight: "58kg"
-    },
-    {
-      id: 4,
-      name: "سارا ئەحمەد",
-      email: "sara@example.com",
-      phone: "0770-123-4567",
-      emergencyPhone: "0750-111-2222",
-      membership: "ساڵانە",
-      startDate: "2025-02-10",
-      endDate: "2026-02-10",
-      avatar: "https://randomuser.me/api/portraits/women/32.jpg",
-      status: "active",
-      gender: "مێ",
-      accessLevel: "ئەندام",
-      createdAt: "2025-02-10",
-      updatedAt: "2025-02-10",
-      height: "165cm",
-      weight: "62kg"
-    },
-    {
-      id: 5,
-      name: "ئاکۆ محەمەد",
-      email: "ako@example.com",
-      phone: "0771-234-5678",
-      emergencyPhone: "0750-222-3333",
-      membership: "مانگانە",
-      startDate: "2025-03-15",
-      endDate: "2025-06-15",
-      avatar: "https://randomuser.me/api/portraits/men/22.jpg",
-      status: "active",
-      gender: "نێر",
-      accessLevel: "ئەندام",
-      createdAt: "2025-03-15",
-      updatedAt: "2025-03-15",
-      height: "178cm",
-      weight: "75kg"
-    },
-    {
-      id: 6,
-      name: "شیلان ڕەزا",
-      email: "shilan@example.com",
-      phone: "0772-345-6789",
-      emergencyPhone: "0750-333-4444",
-      membership: "شەش مانگی",
-      startDate: "2025-01-20",
-      endDate: "2025-07-20",
-      avatar: "https://randomuser.me/api/portraits/women/56.jpg",
-      status: "expired",
-      gender: "مێ",
-      accessLevel: "ئەندام",
-      createdAt: "2025-01-20",
-      updatedAt: "2025-01-20",
-      height: "162cm",
-      weight: "58kg"
-    },
-    {
-      id: 7,
-      name: "سارا ئەحمەد",
-      email: "sara@example.com",
-      phone: "0770-123-4567",
-      emergencyPhone: "0750-111-2222",
-      membership: "ساڵانە",
-      startDate: "2025-02-10",
-      endDate: "2026-02-10",
-      avatar: "https://randomuser.me/api/portraits/women/32.jpg",
-      status: "active",
-      gender: "مێ",
-      accessLevel: "ئەندام",
-      createdAt: "2025-02-10",
-      updatedAt: "2025-02-10",
-      height: "165cm",
-      weight: "62kg"
-    },
-    {
-      id: 8,
-      name: "ئاکۆ محەمەد",
-      email: "ako@example.com",
-      phone: "0771-234-5678",
-      emergencyPhone: "0750-222-3333",
-      membership: "مانگانە",
-      startDate: "2025-03-15",
-      endDate: "2025-06-15",
-      avatar: "https://randomuser.me/api/portraits/men/22.jpg",
-      status: "active",
-      gender: "نێر",
-      accessLevel: "ئەندام",
-      createdAt: "2025-03-15",
-      updatedAt: "2025-03-15",
-      height: "178cm",
-      weight: "75kg"
-    },
-    {
-      id: 9,
-      name: "شیلان ڕەزا",
-      email: "shilan@example.com",
-      phone: "0772-345-6789",
-      emergencyPhone: "0750-333-4444",
-      membership: "شەش مانگی",
-      startDate: "2025-01-20",
-      endDate: "2025-07-20",
-      avatar: "https://randomuser.me/api/portraits/women/56.jpg",
-      status: "expired",
-      gender: "مێ",
-      accessLevel: "ئەندام",
-      createdAt: "2025-01-20",
-      updatedAt: "2025-01-20",
-      height: "162cm",
-      weight: "58kg"
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const res = await axios.get('http://localhost:3000/members/getmembers')
+        setGymUsers(res.data.results);
+      } catch (error) {
+        console.log(error);
+      }
     }
-  ]);
 
-  // Users per page
-  const usersPerPage = 5;
+    fetchMembers();
+  }, [])
 
-  // Calculate days remaining for each user
-  const calculateDaysRemaining = (endDate) => {
-    const today = new Date();
-    const end = new Date(endDate);
-    const diffTime = end - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
+  const usersPerPage = 12;
 
-  // Filter users based on search term and status
   const filteredUsers = gymUsers.filter(user => {
-    // Search by ID (convert to string), name, or phone
     const matchesSearch =
-      user.id.toString().includes(searchTerm) ||
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone.includes(searchTerm);
+      user?.m_id?.toString()?.includes(searchTerm) ||
+      user?.name?.toLowerCase()?.includes(searchTerm?.toLowerCase()) ||
+      user?.phoneNumber?.includes(searchTerm);
 
-    const matchesStatus =
-      filterStatus === 'all' ||
-      user.status === filterStatus;
+    if (filterStatus === 'active') {
+      return user.remaining_days >= 1;
+    } else if (filterStatus === 'expired') {
+      return user.remaining_days == 0;
+    }
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
@@ -225,89 +62,81 @@ export default function GymUsersPage() {
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
-  // View user profile
   const viewUserProfile = (user) => {
     setSelectedUser(user);
     setShowProfileModal(true);
   };
 
-  // Edit user
   const editUser = (user) => {
     setEditingUser({ ...user });
     setShowEditModal(true);
   };
 
-  // Save edited user
-  const saveEditedUser = () => {
-    setGymUsers(gymUsers.map(user =>
-      user.id === editingUser.id ? editingUser : user
-    ));
-    setShowEditModal(false);
-    // If we were viewing this user's profile, update the selected user too
-    if (selectedUser && selectedUser.id === editingUser.id) {
-      setSelectedUser(editingUser);
+  const saveEditedUser = async () => {
+    const updatedUser = {
+      name: editingUser.name,
+      gender: editingUser.gender,
+      phoneNumber: editingUser.phoneNumber,
+      emergencyphoneNumber: editingUser.emergencyphoneNumber,
+      height: editingUser.height,
+      weight: editingUser.weight,
+    }
+
+    try {
+      const res = await axios.post(`http://localhost:3000/members/updatemember/${editingUser.m_id}`, updatedUser);
+
+      if (res.status === 200) {
+        setGymUsers(gymUsers.map(user =>
+          user.m_id === editingUser.m_id ? editingUser : user
+        ));
+        setShowEditModal(false);
+        if (selectedUser && selectedUser.m_id === editingUser.m_id) {
+          setSelectedUser(editingUser);
+        }
+      } else {
+        console.log('Failed to update user');
+      }
+
+    } catch (error) {
+      console.error('Error updating user:', error);
     }
   };
 
-  // Delete user
-  const deleteUser = (id) => {
+  const deleteUser = async (m_id) => {
     if (window.confirm('دڵنیایت کە دەتەوێت ئەم بەکارهێنەرە بسڕیتەوە؟')) {
-      setGymUsers(gymUsers.filter(user => user.id !== id));
+      try {
+        const res = await axios.delete(`http://localhost:3000/members/deletemember/${m_id}`);
+        if (res.status === 200) {
+          setGymUsers(gymUsers.filter(user => user.m_id !== m_id));
+        } else {
+          console.log('Failed to delete user');
+        }
+      } catch (error) {
+        console.error('Error deleting user:', error);
+      }
     }
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('ku-IQ', options);
   };
 
-  // Handle input change for editing
-  // Handle input change for editing
   const handleEditChange = (e) => {
     const { name, value } = e.target;
 
-    // Create updated user object
     const updatedUser = {
       ...editingUser,
-      [name]: value,
-      updatedAt: new Date().toISOString().split('T')[0]
+      [name]: value
     };
-
-    // If membership type or start date changes, recalculate end date
-    if (name === "membership" || name === "startDate") {
-      const startDate = name === "startDate" ? value : editingUser.startDate;
-      const membershipType = name === "membership" ? value : editingUser.membership;
-
-      // Only calculate if we have both values
-      if (startDate && membershipType) {
-        updatedUser.endDate = calculateEndDate(startDate, membershipType);
-      }
-    }
 
     setEditingUser(updatedUser);
   };
 
-  // Calculate end date based on membership type and start date
-  const calculateEndDate = (startDate, membershipType) => {
-    const date = new Date(startDate);
-
-    if (membershipType === "مانگانە") {
-      date.setMonth(date.getMonth() + 1);
-    } else if (membershipType === "شەش مانگی") {
-      date.setMonth(date.getMonth() + 6);
-    } else if (membershipType === "ساڵانە") {
-      date.setFullYear(date.getFullYear() + 1);
-    }
-
-    return date.toISOString().split('T')[0];
-  };
-
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
-      <Navbar/>
+      <Navbar />
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -334,14 +163,12 @@ export default function GymUsersPage() {
                   <option value="all">هەموو دۆخەکان</option>
                   <option value="active">چالاک</option>
                   <option value="expired">بەسەرچوو</option>
-                  <option value="paused">ڕاگیراو</option>
                 </select>
                 <Filter size={18} className="text-gray-500 mr-2" />
               </div>
             </div>
           </div>
 
-          {/* Users Table */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -352,32 +179,23 @@ export default function GymUsersPage() {
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ئەندامێتی</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">بەرواری دەستپێک</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">بەرواری کۆتایی</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ڕۆژەکانی ماوە</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ڕۆژی ماوە</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">دۆخ</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">کردارەکان</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">کردارەکان</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {currentUsers.map(user => {
-                  const daysRemaining = calculateDaysRemaining(user.endDate);
-
                   return (
-                    <tr key={user.id} className="hover:bg-gray-50">
+                    <tr key={user.m_id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        #{user.id}
+                        #{user.m_id}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-2 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <img
-                              className="h-10 w-10 rounded-full object-cover"
-                              src={user.avatar}
-                              alt={user.name}
-                            />
-                          </div>
                           <div className="mr-4">
                             <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                            <div className="text-sm text-gray-500">{user.phone}</div>
+                            <div className="text-sm text-gray-500">{user.phoneNumber}</div>
                           </div>
                         </div>
                       </td>
@@ -385,41 +203,35 @@ export default function GymUsersPage() {
                         {user.gender}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.membership}
+                        {user.membership_title}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(user.startDate)}
+                        {(new Date(user.start_date).toISOString().split('T')[0])}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(user.endDate)}
+                        {(new Date(user.end_date).toISOString().split('T')[0])}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <Clock size={16} className={`ml-1 ${daysRemaining > 10 ? 'text-green-500' : daysRemaining > 0 ? 'text-yellow-500' : 'text-red-500'}`} />
-                          <span className={`text-sm ${daysRemaining > 10 ? 'text-green-600' : daysRemaining > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
-                            {daysRemaining > 0 ? `${daysRemaining} ڕۆژ` : `${Math.abs(daysRemaining)} ڕۆژ پێش`}
+                          <Clock size={16} className={`ml-1 ${user.remaining_days > 10 ? 'text-green-500' : user.remaining_days > 0 ? 'text-yellow-500' : 'text-red-500'}`} />
+                          <span className={`text-sm ${user.remaining_days > 10 ? 'text-green-600' : user.remaining_days > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
+                            {user.remaining_days > 0 ? `${user.remaining_days} ڕۆژ` : `${Math.abs(user.remaining_days)} ڕۆژ`}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                          ${user.status === 'active' ? 'bg-green-100 text-green-800' :
-                            user.status === 'expired' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'}`}>
-                          {user.status === 'active' ? (
+                        <span className={`w-[100px] px-2 py-1 flex flex-row items-center text-xs leading-5 font-semibold rounded-full 
+                          ${user.remaining_days >= 1 ? 'bg-green-100 text-green-800' :
+                            'bg-red-100 text-red-800'}`}>
+                          {user.remaining_days >= 1 ? (
                             <>
                               <CheckCircle size={14} className="ml-1" />
                               چالاک
                             </>
-                          ) : user.status === 'expired' ? (
+                          ) : (
                             <>
                               <XCircle size={14} className="ml-1" />
                               بەسەرچوو
-                            </>
-                          ) : (
-                            <>
-                              <Clock size={14} className="ml-1" />
-                              ڕاگیراو
                             </>
                           )}
                         </span>
@@ -441,7 +253,7 @@ export default function GymUsersPage() {
                             <Edit size={16} />
                           </button>
                           <button
-                            onClick={() => deleteUser(user.id)}
+                            onClick={() => deleteUser(user.m_id)}
                             className="text-red-600 hover:text-red-900 bg-red-50 p-1.5 rounded-md"
                             title="سڕینەوەی ئەندام"
                           >
@@ -506,23 +318,14 @@ export default function GymUsersPage() {
                 </svg>
               </button>
               <div className="flex items-center">
-                <div className="ml-6">
-                  <img
-                    src={selectedUser.avatar}
-                    alt={selectedUser.name}
-                    className="w-24 h-24 rounded-full border-4 border-white object-cover"
-                  />
-                </div>
                 <div>
                   <h2 className="text-2xl font-bold">{selectedUser.name}</h2>
-                  <p className="text-blue-100">ناسنامەی ئەندام: #{selectedUser.id}</p>
+                  <p className="text-blue-100">ناسنامەی ئەندام : {selectedUser.m_id}#</p>
                   <div className="mt-2">
                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${selectedUser.status === 'active' ? 'bg-green-100 text-green-800' :
-                        selectedUser.status === 'expired' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'}`}>
-                      {selectedUser.status === 'active' ? 'چالاک' :
-                        selectedUser.status === 'expired' ? 'بەسەرچوو' : 'ڕاگیراو'}
+                      ${user.remaining_days >= 1 ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'}`}>
+                      {user.remaining_days >= 1 ? 'چالاک' : 'بەسەرچوو'}
                     </span>
                   </div>
                 </div>
@@ -546,23 +349,18 @@ export default function GymUsersPage() {
                     </div>
 
                     <div>
-                      <p className="text-sm text-gray-500">ئیمەیل</p>
-                      <p className="font-medium">{selectedUser.email}</p>
-                    </div>
-
-                    <div>
                       <p className="text-sm text-gray-500">ژمارەی تەلەفۆن</p>
-                      <p className="font-medium">{selectedUser.phone}</p>
+                      <p className="font-medium">{selectedUser.phoneNumber}</p>
                     </div>
 
                     <div>
                       <p className="text-sm text-gray-500">ژمارەی تەلەفۆنی کاتی نائاسایی</p>
-                      <p className="font-medium">{selectedUser.emergencyPhone}</p>
+                      <p className="font-medium">{selectedUser.emergencyphoneNumber}</p>
                     </div>
 
                     <div>
                       <p className="text-sm text-gray-500">بەرزی / کێش</p>
-                      <p className="font-medium">{selectedUser.height} / {selectedUser.weight}</p>
+                      <p className="font-medium">{selectedUser.height}cm / {selectedUser.weight}kg</p>
                     </div>
                   </div>
                 </div>
@@ -573,31 +371,32 @@ export default function GymUsersPage() {
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm text-gray-500">پلانی ئەندامێتی</p>
-                      <p className="font-medium">{selectedUser.membership}</p>
+                      <p className="font-medium">{selectedUser.membership_title}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm text-gray-500">جۆری ئەندامێتی</p>
+                      <p className="font-medium">{selectedUser.type}</p>
                     </div>
 
                     <div>
                       <p className="text-sm text-gray-500">بەرواری دەستپێک</p>
-                      <p className="font-medium">{formatDate(selectedUser.startDate)}</p>
+                      <p className="font-medium"> {(new Date(selectedUser.start_date).toISOString().split('T')[0])}</p>
                     </div>
 
                     <div>
                       <p className="text-sm text-gray-500">بەرواری کۆتایی</p>
-                      <p className="font-medium">{formatDate(selectedUser.endDate)}</p>
+                      <p className="font-medium"> {(new Date(selectedUser.end_date).toISOString().split('T')[0])}</p>
                     </div>
 
                     <div>
-                      <p className="text-sm text-gray-500">ڕۆژەکانی ماوە</p>
-                      <p className={`font-medium ${calculateDaysRemaining(selectedUser.endDate) > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {calculateDaysRemaining(selectedUser.endDate) > 0
-                          ? `${calculateDaysRemaining(selectedUser.endDate)} ڕۆژ ماوە`
-                          : `${Math.abs(calculateDaysRemaining(selectedUser.endDate))} ڕۆژ پێش بەسەر چووە`}
+                      <p className="text-sm text-gray-500">ڕۆژی ماوە</p>
+                      <p className='flex flex-row items-center mt-1'>
+                        <Clock size={16} className={`ml-1 ${selectedUser.remaining_days > 10 ? 'text-green-500' : selectedUser.remaining_days > 0 ? 'text-yellow-500' : 'text-red-500'}`} />
+                        <span className={`text-sm ${selectedUser.remaining_days > 10 ? 'text-green-600' : selectedUser.remaining_days > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
+                          {selectedUser.remaining_days > 0 ? `${selectedUser.remaining_days} ڕۆژ` : `${Math.abs(selectedUser.remaining_days)} ڕۆژ`}
+                        </span>
                       </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-gray-500">ئاستی دەستگەیشتن</p>
-                      <p className="font-medium">{selectedUser.accessLevel}</p>
                     </div>
                   </div>
                 </div>
@@ -609,32 +408,22 @@ export default function GymUsersPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">دروستکراوە لە</p>
-                    <p className="font-medium">{formatDate(selectedUser.createdAt)}</p>
+                    <p className="font-medium">{formatDate(selectedUser.created_at)}</p>
                   </div>
 
                   <div>
                     <p className="text-sm text-gray-500">دوایین نوێکردنەوە</p>
-                    <p className="font-medium">{formatDate(selectedUser.updatedAt)}</p>
+                    <p className="font-medium">{formatDate(selectedUser.last_updated)}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-end space-x-3">
+              <div className="mt-8 flex justify-start space-x-3">
                 <button
                   onClick={() => setShowProfileModal(false)}
                   className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-colors mx-2"
                 >
                   داخستن
-                </button>
-                <button
-                  onClick={() => {
-                    setShowProfileModal(false);
-                    editUser(selectedUser);
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                >
-                  <Edit size={16} className="ml-1" />
-                  دەستکاری ئەندام
                 </button>
               </div>
             </div>
@@ -654,16 +443,9 @@ export default function GymUsersPage() {
                 <X size={20} />
               </button>
               <div className="flex items-center">
-                <div className="ml-6">
-                  <img
-                    src={editingUser.avatar}
-                    alt={editingUser.name}
-                    className="w-16 h-16 rounded-full border-2 border-white object-cover"
-                  />
-                </div>
                 <div>
                   <h2 className="text-xl font-bold">دەستکاری ئەندام</h2>
-                  <p className="text-blue-100">ناسنامەی ئەندام: #{editingUser.id}</p>
+                  <p className="text-blue-100">ناسنامەی ئەندام: #{editingUser.m_id}</p>
                 </div>
               </div>
             </div>
@@ -682,7 +464,7 @@ export default function GymUsersPage() {
                         name="name"
                         value={editingUser.name}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border focus:outline-none rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
@@ -692,22 +474,11 @@ export default function GymUsersPage() {
                         name="gender"
                         value={editingUser.gender}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border focus:outline-none rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
-                        <option value="نێر">نێر</option>
-                        <option value="مێ">مێ</option>
+                        <option value="پیاو">پیاو</option>
+                        <option value="ئافرەت">ئافرەت</option>
                       </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ئیمەیل</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={editingUser.email}
-                        onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
                     </div>
 
                     <div>
@@ -715,9 +486,9 @@ export default function GymUsersPage() {
                       <input
                         type="text"
                         name="phone"
-                        value={editingUser.phone}
+                        value={editingUser.phoneNumber}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border focus:outline-none rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
@@ -726,9 +497,9 @@ export default function GymUsersPage() {
                       <input
                         type="text"
                         name="emergencyPhone"
-                        value={editingUser.emergencyPhone}
+                        value={editingUser.emergencyphoneNumber}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border focus:outline-none rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
@@ -740,7 +511,7 @@ export default function GymUsersPage() {
                           name="height"
                           value={editingUser.height}
                           onChange={handleEditChange}
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full p-2 border focus:outline-none rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                       <div>
@@ -750,31 +521,35 @@ export default function GymUsersPage() {
                           name="weight"
                           value={editingUser.weight}
                           onChange={handleEditChange}
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full p-2 border focus:outline-none rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Membership Details */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4 border-b pb-2">وردەکاری ئەندامێتی</h3>
 
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">پلانی ئەندامێتی</label>
-                      <select
-                        name="membership"
-                        value={editingUser.membership}
-                        onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="مانگانە">مانگانە</option>
-                        <option value="سێ مانگی">سێ مانگی</option>
-                        <option value="شەش مانگی">شەش مانگی</option>
-                        <option value="ساڵانە">ساڵانە</option>
-                      </select>
+                      <input
+                        type="text"
+                        value={editingUser.membership_title}
+                        className="w-full p-2 border rounded-md focus:ring-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        readOnly
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">جۆری ئەندامێتی</label>
+                      <input
+                        type="text"
+                        value={editingUser.type}
+                        className="w-full p-2 border rounded-md focus:ring-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        readOnly
+                      />
                     </div>
 
                     <div>
@@ -782,9 +557,10 @@ export default function GymUsersPage() {
                       <input
                         type="date"
                         name="startDate"
-                        value={editingUser.startDate}
+                        readOnly
+                        value={(new Date(editingUser.start_date).toISOString().split('T')[0])}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border focus:outline-none rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
@@ -793,56 +569,29 @@ export default function GymUsersPage() {
                       <input
                         type="date"
                         name="endDate"
-                        value={editingUser.endDate}
+                        readOnly
+                        value={(new Date(editingUser.end_date).toISOString().split('T')[0])}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border focus:outline-none rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">دۆخ</label>
-                      <select
-                        name="status"
-                        value={editingUser.status}
-                        onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="active">چالاک</option>
-                        <option value="expired">بەسەرچوو</option>
-                        <option value="paused">ڕاگیراو</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ئاستی دەستگەیشتن</label>
-                      <select
-                        name="accessLevel"
-                        value={editingUser.accessLevel}
-                        onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="ئەندام">ئەندام</option>
-                        <option value="ڕاهێنەر">ڕاهێنەر</option>
-                        <option value="کارمەند">کارمەند</option>
-                      </select>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-colors mx-2"
-                >
-                  پاشگەزبوونەوە
-                </button>
+              <div className="mt-8 flex justify-start space-x-3">
                 <button
                   onClick={saveEditedUser}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
                 >
                   <Save size={16} className="ml-1" />
                   پاشەکەوتکردن
+                </button>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-colors mx-2"
+                >
+                  پاشگەزبوونەوە
                 </button>
               </div>
             </div>
