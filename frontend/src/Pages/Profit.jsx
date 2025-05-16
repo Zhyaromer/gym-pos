@@ -171,6 +171,8 @@ const ProfitAnalysisPage = () => {
       }
     });
 
+    console.log(Object.values(categoryMap))
+
     return {
       labels: Object.keys(categoryMap),
       datasets: [

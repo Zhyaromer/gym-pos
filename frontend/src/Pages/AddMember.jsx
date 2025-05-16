@@ -13,6 +13,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import Navbar from '../components/layout/Nav';
+import axios from 'axios';
 
 export default function AddMemberPage() {
   const navigate = useNavigate();
@@ -21,29 +22,52 @@ export default function AddMemberPage() {
   const fileInputRef = useRef(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
-  
-  // Pricing configuration
-  const prices = {
-    gym: {
-      '1 مانگ': 50000,
-      '3 مانگ': 120000,
-      '6 مانگ': 200000,
-      'ساڵانە': 350000
-    },
-    pool: {
-      '1 مانگ': 60000,
-      '3 مانگ': 150000,
-      '6 مانگ': 250000,
-      'ساڵانە': 400000
-    },
-    both: {
-      '1 مانگ': 80000,
-      '3 مانگ': 200000,
-      '6 مانگ': 350000,
-      'ساڵانە': 600000
-    }
-  };
-  
+
+
+
+  const [plans, setPlans] = useState([]);
+
+  useEffect(() => {
+    const getPlans = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/membership_plans/get_plans");
+
+        const prices = {
+          gym: {},
+          pool: {},
+          both: {}
+        };
+
+        const mapType = (type) => {
+          if (type === "هۆلی وەرزشی") return "gym";
+          if (type === "مەلەوانگە") return "pool";
+          if (type === "مەلەوانگە و هۆلی وەرزشی") return "both";
+          return null;
+        };
+
+        res.data.forEach(plan => {
+          const typeKey = mapType(plan.type);
+          if (!typeKey) return;
+
+          const durationKey = `${plan.duration} مانگ`;
+          const priceValue = parseInt(plan.price.replace('.', '').replace(',', ''));
+
+          if (plan.duration === 12) {
+            prices[typeKey]['ساڵانە'] = priceValue;
+          } else {
+            prices[typeKey][durationKey] = priceValue;
+          }
+        });
+
+        setPlans(prices);
+      } catch (error) {
+        console.error("Error fetching plans:", error);
+      }
+    };
+
+    getPlans();
+  }, []);
+
   // Initial form state
   const [formData, setFormData] = useState({
     name: '',
@@ -52,15 +76,13 @@ export default function AddMemberPage() {
     membership: '1 مانگ',
     startDate: new Date().toISOString().split('T')[0],
     endDate: '',
-    avatarFile: null,
-    gender: 'نێر',
+    gender: 'پیاو',
     accessLevel: '',
     height: '',
     weight: '',
     status: 'active'
   });
 
-  // Calculate end date based on membership type and start date
   const calculateEndDate = (startDate, membershipType) => {
     const date = new Date(startDate);
 
@@ -84,11 +106,10 @@ export default function AddMemberPage() {
       setFormData(prev => ({ ...prev, endDate }));
     }
   }, [formData.startDate, formData.membership]);
-  
-  // Calculate price when membership or access level changes
+
   useEffect(() => {
     if (formData.membership && formData.accessLevel) {
-      const price = prices[formData.accessLevel][formData.membership] || 0;
+      const price = plans[formData.accessLevel][formData.membership] || 0;
       setCalculatedPrice(price);
     } else {
       setCalculatedPrice(0);
@@ -111,37 +132,6 @@ export default function AddMemberPage() {
       });
     }
   };
-  
-  // Handle file input change
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData({
-        ...formData,
-        avatarFile: file
-      });
-      
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-      
-      // Clear error
-      if (formErrors.avatarFile) {
-        setFormErrors({
-          ...formErrors,
-          avatarFile: ''
-        });
-      }
-    }
-  };
-  
-  // Trigger file input click
-  const triggerFileInput = () => {
-    fileInputRef.current.click();
-  };
 
   // Format price with commas
   const formatPrice = (price) => {
@@ -151,58 +141,77 @@ export default function AddMemberPage() {
   // Validate form
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.name.trim()) {
       errors.name = 'ناوی ئەندام پێویستە';
     }
-    
+
     if (!formData.phone.trim()) {
       errors.phone = 'ژمارەی مۆبایل پێویستە';
-    } else if (!/^\d{4}-\d{3}-\d{4}$/.test(formData.phone)) {
-      errors.phone = 'فۆرماتی ژمارەی مۆبایل دەبێت 0770-123-4567 بێت';
+    } else if (!/^\d{10,11}$/.test(formData.phone)) {
+      errors.phone = 'ژمارەی مۆبایل دەبێت 10 یان 11 ژمارە بێت';
     }
-    
-    if (formData.emergencyPhone && !/^\d{4}-\d{3}-\d{4}$/.test(formData.emergencyPhone)) {
-      errors.emergencyPhone = 'فۆرماتی ژمارەی مۆبایل دەبێت 0770-123-4567 بێت';
+
+    if (formData.emergencyPhone && !/^\d{10,11}$/.test(formData.emergencyPhone)) {
+      errors.emergencyPhone = 'ژمارەی فۆرسا دەبێت 10 یان 11 ژمارە بێت';
     }
-    
+
     if (!formData.gender) {
       errors.gender = 'ڕەگەز پێویستە';
     }
-    
+
     if (!formData.membership) {
       errors.membership = 'جۆری ئەندامێتی پێویستە';
     }
-    
+
     if (!formData.accessLevel) {
       errors.accessLevel = 'ئاستی دەستگەیشتن پێویستە';
     }
-    
+
     if (!formData.startDate) {
       errors.startDate = 'بەرواری دەستپێک پێویستە';
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
-      // In a real app, you would send this data to your backend
-      // For now, we'll just show a success message
-      const today = new Date().toISOString().split('T')[0];
-      const newMember = {
-        ...formData,
-        id: Math.floor(Math.random() * 1000) + 10, // Generate random ID
-        createdAt: today,
-        updatedAt: today,
-        price: calculatedPrice
-      };
-      
-      console.log('New member data:', newMember);
+      const formdata = new FormData();
+      formdata.append('name', formData.name);
+      formdata.append('phoneNumber', formData.phone);
+      formdata.append('emergencyphoneNumber', formData.emergencyPhone);
+      formdata.append('startDate', formData.startDate);
+      formdata.append('endDate', formData.endDate);
+      formdata.append('gender', formData.gender);
+      formdata.append('height', formData.height);
+      formdata.append('weight', formData.weight);
+
+      if (formData.membership === '1 مانگ') {
+        formdata.append('membership', "پلانی مانگی");
+      } else if (formData.membership === '3 مانگ') {
+        formdata.append('membership', "پلانی سێ مانگ");
+      } else if (formData.membership === '6 مانگ') {
+        formdata.append('membership', "پلانی شەش مانگ");
+      } else if (formData.membership === 'ساڵانە') {
+        formdata.append('membership', "پلانی ساڵانە");
+      }
+
+      if (formData.accessLevel === "gym") {
+        formdata.append('accessLevel', "هۆلی وەرزشی");
+      } else if (formData.accessLevel === "pool") {
+        formdata.append('accessLevel', "مەلەوانگە");
+      } else if (formData.accessLevel === "both") {
+        formdata.append('accessLevel', "مەلەوانگە و هۆلی وەرزشی");
+      }
+
+      const res = await axios.post("http://localhost:3000/members/addmember", formdata);
+      console.log(res.data);
+
       setShowSuccessModal(true);
     }
   };
@@ -216,8 +225,7 @@ export default function AddMemberPage() {
       membership: '1 مانگ',
       startDate: new Date().toISOString().split('T')[0],
       endDate: calculateEndDate(new Date().toISOString().split('T')[0], '1 مانگ'),
-      avatarFile: null,
-      gender: 'نێر',
+      gender: 'پیاو',
       accessLevel: '',
       height: '',
       weight: '',
@@ -234,13 +242,13 @@ export default function AddMemberPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-            <Navbar/>
+      <Navbar />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-xl p-6 mb-8 border border-gray-200">
           <h2 className="text-xl font-bold mb-6 border-b pb-2 text-indigo-700">زیادکردنی ئەندامی نوێ</h2>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Personal Information Section */}
@@ -249,42 +257,7 @@ export default function AddMemberPage() {
                   <User size={18} className="ml-2 text-indigo-600" />
                   زانیاری کەسی
                 </h3>
-                
-                {/* Avatar Upload */}
-                <div className="flex justify-center mb-6">
-                  <div className="relative">
-                    <div 
-                      className="w-32 h-32 rounded-full overflow-hidden border-4 border-indigo-100 cursor-pointer hover:opacity-90 transition-opacity bg-gray-100 flex items-center justify-center"
-                      onClick={triggerFileInput}
-                    >
-                      {previewImage ? (
-                        <img 
-                          src={previewImage} 
-                          alt="پێشبینینی وێنە" 
-                          className="w-full h-full object-cover" 
-                        />
-                      ) : (
-                        <Upload size={32} className="text-gray-400" />
-                      )}
-                    </div>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    <div 
-                      className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full cursor-pointer hover:bg-indigo-700 transition-colors"
-                      onClick={triggerFileInput}
-                    >
-                      <Upload size={16} />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-center text-sm text-gray-500 -mt-4 mb-4">کلیک بکە بۆ هەڵبژاردنی وێنە</p>
-                
-                {/* Name */}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ناوی تەواو <span className="text-red-500">*</span></label>
                   <div className="relative">
@@ -302,7 +275,7 @@ export default function AddMemberPage() {
                   </div>
                   {formErrors.name && <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>}
                 </div>
-                
+
                 {/* Gender */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ڕەگەز <span className="text-red-500">*</span></label>
@@ -312,12 +285,12 @@ export default function AddMemberPage() {
                     onChange={handleInputChange}
                     className={`pr-4 pl-4 py-2 w-full border ${formErrors.gender ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm`}
                   >
-                    <option value="نێر">نێر</option>
-                    <option value="مێ">مێ</option>
+                    <option value="پیاو">پیاو</option>
+                    <option value="ئافرەت">ئافرەت</option>
                   </select>
                   {formErrors.gender && <p className="mt-1 text-sm text-red-500">{formErrors.gender}</p>}
                 </div>
-                
+
                 {/* Phone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ژمارەی مۆبایل <span className="text-red-500">*</span></label>
@@ -336,7 +309,7 @@ export default function AddMemberPage() {
                   </div>
                   {formErrors.phone && <p className="mt-1 text-sm text-red-500">{formErrors.phone}</p>}
                 </div>
-                
+
                 {/* Emergency Phone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ژمارەی تەلەفۆنی کاتی نائاسایی</label>
@@ -355,7 +328,7 @@ export default function AddMemberPage() {
                   </div>
                   {formErrors.emergencyPhone && <p className="mt-1 text-sm text-red-500">{formErrors.emergencyPhone}</p>}
                 </div>
-                
+
                 {/* Height and Weight */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -382,14 +355,14 @@ export default function AddMemberPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Membership Information Section */}
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-700 flex items-center">
                   <CreditCard size={18} className="ml-2 text-indigo-600" />
                   زانیاری ئەندامێتی
                 </h3>
-                
+
                 {/* Membership Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">جۆری ئەندامێتی <span className="text-red-500">*</span></label>
@@ -406,7 +379,7 @@ export default function AddMemberPage() {
                   </select>
                   {formErrors.membership && <p className="mt-1 text-sm text-red-500">{formErrors.membership}</p>}
                 </div>
-                
+
                 {/* Access Level */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ئاستی دەستگەیشتن <span className="text-red-500">*</span></label>
@@ -441,7 +414,7 @@ export default function AddMemberPage() {
                   </div>
                   {formErrors.accessLevel && <p className="mt-1 text-sm text-red-500">{formErrors.accessLevel}</p>}
                 </div>
-                
+
                 {/* Start Date */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">بەرواری دەستپێک <span className="text-red-500">*</span></label>
@@ -459,7 +432,7 @@ export default function AddMemberPage() {
                   </div>
                   {formErrors.startDate && <p className="mt-1 text-sm text-red-500">{formErrors.startDate}</p>}
                 </div>
-                
+
                 {/* End Date (Calculated automatically) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">بەرواری کۆتایی</label>
@@ -477,7 +450,7 @@ export default function AddMemberPage() {
                   </div>
                   <p className="mt-1 text-sm text-gray-500">بەرواری کۆتایی بەپێی جۆری ئەندامێتی دیاری دەکرێت</p>
                 </div>
-                
+
                 {/* Price Display */}
                 <div className="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
                   <h4 className="text-md font-medium text-indigo-700 mb-2">نرخی ئەندامێتی</h4>
@@ -486,7 +459,7 @@ export default function AddMemberPage() {
                     <span className="text-2xl font-bold text-indigo-700">{formatPrice(calculatedPrice)} IQD</span>
                   </div>
                 </div>
-                
+
                 {/* Submit Button */}
                 <div className="pt-6">
                   <button
@@ -511,9 +484,9 @@ export default function AddMemberPage() {
               <h2 className="text-xl font-bold">سەرکەوتوو بوو!</h2>
               <p className="mt-1">ئەندامی نوێ بە سەرکەوتوویی زیاد کرا.</p>
             </div>
-            
+
             <div className="p-6 space-y-4">
-              
+
               <div className="flex flex-col space-y-2">
                 <button
                   onClick={handleAddAnother}
@@ -522,7 +495,7 @@ export default function AddMemberPage() {
                   <Plus size={18} className="ml-2" />
                   زیادکردنی ئەندامێکی تر
                 </button>
-                
+
                 <button
                   onClick={handleReturnToOverview}
                   className="bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center"
