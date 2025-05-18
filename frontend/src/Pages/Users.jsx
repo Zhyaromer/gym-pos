@@ -304,7 +304,6 @@ export default function GymUsersPage() {
         </div>
       </main>
 
-      {/* User Profile Modal */}
       {showProfileModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden">
@@ -431,7 +430,6 @@ export default function GymUsersPage() {
         </div>
       )}
 
-      {/* Edit User Modal */}
       {showEditModal && editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden">

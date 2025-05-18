@@ -12,6 +12,14 @@ import {
   Scale,
   Ruler,
   Heart,
+  Plus,
+  Gift,
+  Printer,
+  Trash2,
+  GlassWater,
+  DatabaseIcon,
+  Edit,
+  AlertCircle,
   Calendar,
   User2,
   ShieldCheck,
@@ -20,15 +28,18 @@ import {
   DollarSign,
   LockIcon
 } from 'lucide-react';
+import axios from 'axios';
 import Navbar from '../components/layout/Nav';
+import EditMemberModal from '../components/ui/EditMemberModal';
 
 export default function MembershipCheck() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState('id'); // 'id' or 'phone'
+  const [searchType, setSearchType] = useState('id');
   const [searchResult, setSearchResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showRenewalModal, setShowRenewalModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false); // Add this state
   const [renewalData, setRenewalData] = useState({
     membership: 'مانگانە',
     startDate: new Date().toISOString().split('T')[0],
@@ -55,8 +66,7 @@ export default function MembershipCheck() {
     }
   ];
 
-  // Handle search
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchTerm.trim()) {
       setError('تکایە ژمارەی ID یان ژمارەی تەلەفۆن داخڵ بکە');
       setSearchResult(null);
@@ -66,46 +76,35 @@ export default function MembershipCheck() {
     setIsLoading(true);
     setError('');
 
-    // Simulate API call with timeout
-    setTimeout(() => {
-      let result;
+    try {
+      let url = `http://localhost:3000/members/getspecifiedmember?`
       if (searchType === 'id') {
-        result = members.find(member => member.id === searchTerm);
+        url += `m_id=${searchTerm}`
       } else {
-        result = members.find(member => member.phone.replace(/[\s-]/g, '').includes(searchTerm.replace(/[\s-]/g, '')));
+        url += `m_phone=${searchTerm}`
       }
 
-      if (result) {
-        setSearchResult(result);
-      } else {
-        setError('هیچ ئەندامێک بەم زانیاریە نەدۆزرایەوە');
-        setSearchResult(null);
+      const res = await axios.get(url);
+      console.log(res.data.result)
+
+      if (res.status === 200) {
+        setSearchResult(res.data.result[0])
+        setIsLoading(false);
+        setError('');
       }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError('هیچ ئەندامێک بەم زانیاریە نەدۆزرایەوە');
+      setSearchResult(null);
       setIsLoading(false);
-    }, 800); // Simulate network delay
+    }
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('ku', options);
   };
 
-  // Calculate days remaining or days expired
-  const getDaysStatus = (endDate) => {
-    const today = new Date();
-    const end = new Date(endDate);
-    const diffTime = end - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    console.log(`today ${today}`)
-    console.log(`end ${end}`)
-    console.log(`diffTime ${diffTime}`)
-    console.log(`diffDays ${diffDays}`)
-
-    return diffDays;
-  };
-
-  // Calculate end date based on membership type and start date
   const calculateEndDate = (startDate, membershipType) => {
     const date = new Date(startDate);
 
@@ -127,34 +126,34 @@ export default function MembershipCheck() {
     // Get the current membership type from searchResult
     const membershipType = searchResult.membership;
     const startDate = new Date().toISOString().split('T')[0];
-    
+
     // Calculate end date directly using these values
     const endDate = calculateEndDate(startDate, membershipType);
-    
+
     // Set all values at once
     setRenewalData({
       membership: membershipType,
       startDate: startDate,
       endDate: endDate
     });
-    
+
     setShowRenewalModal(true);
   };
 
   // Add this console log to debug the values
   const handleRenewalInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === "membership" || name === "startDate") {
       // Use functional update to ensure we're working with the latest state
       setRenewalData(prev => {
         // Get the updated values using the previous state
         const startDate = name === "startDate" ? value : prev.startDate;
         const membershipType = name === "membership" ? value : prev.membership;
-        
+
         // Calculate the new end date
         const endDate = calculateEndDate(startDate, membershipType);
-        
+
         // Return the new state object
         return {
           ...prev,
@@ -199,9 +198,13 @@ export default function MembershipCheck() {
     alert('ئەندامێتی بە سەرکەوتوویی نوێ کرایەوە');
   };
 
+  const handleMemberUpdate = (updatedMember) => {
+    setSearchResult(updatedMember);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
-            <Navbar/>
+      <Navbar />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
@@ -293,158 +296,230 @@ export default function MembershipCheck() {
 
               <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
                 <div className="p-6">
-                  <div className="flex flex-col md:flex-row">
-                    <div className="md:w-1/4 flex justify-center mb-4 md:mb-0">
-                      <div className="relative">
-                        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-indigo-100">
-                          <img
-                            src={searchResult.avatar}
-                            alt={searchResult.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className={`absolute bottom-0 right-0 w-6 h-6 rounded-full flex items-center justify-center ${searchResult.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}>
-                          {searchResult.status === 'active' ?
-                            <CheckCircle size={14} className="text-white" /> :
-                            <XCircle size={14} className="text-white" />
-                          }
+                  {/* Header Section */}
+                  <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+                    <div>
+                      <h2 className="text-2xl font-bold text-indigo-900">{searchResult.name}</h2>
+                      <p className="text-gray-500 text-sm mt-1">ژمارەی ئەندامێتی: {searchResult.m_id}#</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${searchResult.remaining_days >= 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {searchResult.remaining_days >= 1 ? 'چالاک' : 'بەسەرچوو'}
+                      </div>
+                      <button
+                        onClick={handleOpenRenewalModal}
+                        className="px-4 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm"
+                      >
+                        <RefreshCw size={14} className="ml-2" />
+                        نوێکردنەوە
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Main Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Personal Info Section */}
+                    <div className="space-y-4">
+                      <div className="bg-gray-50 p-4 rounded-lg h-full">
+                        <h4 className="font-medium text-gray-700 mb-3 flex items-center">
+                          <User2 size={16} className="ml-2" />
+                          زانیاری کەسی
+                        </h4>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-xs text-gray-500">ژمارەی مۆبایل</p>
+                            <p className="font-medium">{searchResult.phoneNumber}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">ژمارەی تەلەفۆنی کاتی نائاسایی</p>
+                            <p className="font-medium">{searchResult.emergencyphoneNumber}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">ڕەگەز</p>
+                            <p className="font-medium">{searchResult.gender}</p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <p className="text-xs text-gray-500">بەرزی</p>
+                              <p className="font-medium">cm {searchResult.height}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">کێش</p>
+                              <p className="font-medium">kg {searchResult.weight}</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="md:w-3/4 md:pr-6">
-                      <div className="flex justify-between items-start">
-                        <h2 className="text-2xl font-bold text-indigo-900">{searchResult.name}</h2>
-                        <div className={`px-3 py-1 rounded-full text-sm font-semibold ${searchResult.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {searchResult.status === 'active' ? 'چالاک' : 'بەسەرچوو'}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <CreditCard size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">ژمارەی ئەندامێتی</p>
+                    {/* Membership Info Section */}
+                    <div className="space-y-4">
+                      <div className="bg-gray-50 p-4 rounded-lg h-full">
+                        <h4 className="font-medium text-gray-700 mb-3 flex items-center">
+                          <ShieldCheck size={16} className="ml-2" />
+                          زانیاری ئەندامێتی
+                        </h4>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-xs text-gray-500">پلانی ئەندامێتی</p>
+                            <p className="font-medium">{searchResult.membership_title}</p>
                           </div>
-                          <p className="font-medium text-indigo-900">{searchResult.id}</p>
-                        </div>
-
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <Phone size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">ژمارەی مۆبایل</p>
+                          <div>
+                            <p className="text-xs text-gray-500">جۆری ئەندامێتی</p>
+                            <p className="font-medium">{searchResult.type}</p>
                           </div>
-                          <p className="font-medium text-indigo-900">{searchResult.phone}</p>
-                        </div>
-
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <Heart size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">ژمارەی مۆبایلی تەنگانە</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <p className="text-xs text-gray-500">بەرواری دەستپێکردن</p>
+                              <p className="font-medium text-sm">{formatDate(searchResult.start_date)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">بەرواری کۆتایی</p>
+                              <p className="font-medium text-sm">{formatDate(searchResult.end_date)}</p>
+                            </div>
                           </div>
-                          <p className="font-medium text-indigo-900">{searchResult.emergencyPhone}</p>
-                        </div>
-
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <Dumbbell size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">جۆری ئەندامێتی</p>
-                          </div>
-                          <p className="font-medium text-indigo-900">{searchResult.membership}</p>
-                        </div>
-
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <Calendar size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">بەرواری دەستپێکردن</p>
-                          </div>
-                          <p className="font-medium text-indigo-900">{formatDate(searchResult.startDate)}</p>
-                        </div>
-
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <Calendar size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">بەرواری کۆتایی</p>
-                          </div>
-                          <p className="font-medium text-indigo-900">{formatDate(searchResult.endDate)}</p>
-                        </div>
-
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <User2 size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">ڕەگەز</p>
-                          </div>
-                          <p className="font-medium text-indigo-900">{searchResult.gender}</p>
-                        </div>
-
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <ShieldCheck size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">ئاستی دەستپێڕاگەیشتن</p>
-                          </div>
-                          <p className="font-medium text-indigo-900">{searchResult.accessLevel}</p>
-                        </div>
-
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <Ruler size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">بەرزی</p>
-                          </div>
-                          <p className="font-medium text-indigo-900">{searchResult.height}</p>
-                        </div>
-
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <Scale size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">کێش</p>
-                          </div>
-                          <p className="font-medium text-indigo-900">{searchResult.weight}</p>
-                        </div>
-
-                        <div className="bg-indigo-50 p-3 rounded-lg">
-                          <div className="flex items-center mb-1">
-                            <Clock size={16} className="text-indigo-700 ml-2" />
-                            <p className="text-sm text-indigo-700">باری ئەندامێتی</p>
-                          </div>
-                          <div className="flex items-center mt-1">
-                            {searchResult.status === 'active' ? (
-                              <>
-                                <CheckCircle size={18} className="text-green-500 ml-1" />
-                                <span className="font-medium text-green-600">
-                                  چالاک - {getDaysStatus(searchResult.endDate)} ڕۆژی ماوە
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle size={18} className="text-red-500 ml-1" />
-                                <span className="font-medium text-red-600">
-                                  بەسەرچووە - پێش {Math.abs(getDaysStatus(searchResult.endDate))} ڕۆژ
-                                </span>
-                              </>
-                            )}
+                          <div>
+                            <p className="text-xs text-gray-500">باری ئەندامێتی</p>
+                            <div className="flex items-center">
+                              {searchResult.remaining_days >= 1 ? (
+                                <>
+                                  <CheckCircle size={16} className="text-green-500 ml-1" />
+                                  <span className="font-medium">
+                                    چالاک - {searchResult.remaining_days} ڕۆژی ماوە
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle size={16} className="text-red-500 ml-1" />
+                                  <span className="font-medium text-red-600">
+                                    بەسەرچووە
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="mt-6 flex space-x-3 space-x-reverse">
-                        <button
-                          onClick={handleOpenRenewalModal}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
-                        >
-                          <RefreshCw size={16} className="ml-2" />
-                          نوێکردنەوەی ئەندامێتی
-                        </button>
+                    {/* Pool Info Section */}
+                    <div className="space-y-4">
+                      <div className="bg-gray-50 p-4 rounded-lg h-full">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="font-medium text-gray-700 flex items-center">
+                            <GlassWater size={16} className="ml-2" />
+                            مەلەوانگە
+                          </h4>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleAddPoolEntry('free')}
+                              disabled={(searchResult.remaining_pool_entries == 0) || (searchResult.remaining_days <= 0)}
+                              className={`px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 flex items-center ${(searchResult.remaining_pool_entries == 0) || (searchResult.remaining_days <= 0) ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                            >
+                              مەلە
+                              <Plus size={12} className="mr-1" />
+                            </button>
+                            <button
+                              onClick={() => handleAddFreePool()}
+                              className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 flex items-center"
+                            >
+                              مەلەی خۆرایی ئەندامێتی
+                              <Gift size={12} className="mr-1" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-xs text-gray-500">چوونە ژوورەوەی مەلەوانی</p>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <span className="font-medium">{searchResult.used_pool_entries || 0}</span>
+                                <span className="text-gray-400 mx-2">/</span>
+                                <span className="font-medium">{searchResult.free_pool_entries || 0} مەلەوانگەی خۆرایی</span>
+                              </div>
+                              <span className="text-sm font-medium text-blue-600">
+                                {searchResult.remaining_pool_entries || 0} ماوە
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                              <div
+                                className="bg-blue-600 h-1.5 rounded-full"
+                                style={{
+                                  width: `${Math.min(100, ((searchResult.used_pool_entries || 0) / (searchResult.free_pool_entries || 1)) * 100)}%`
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">ژمارەی چوونە ژوورەوەی مەلەوانی</p>
+                            <div className="bg-gray-100 p-2 rounded mt-1">
+                              <p className="font-medium text-sm break-words text-gray-700">
+                                {searchResult.used_pool_entries} جار بەکارهاتووە
+                              </p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">ژمارەی چوونە ژوورەوەی ماوە</p>
+                            <div className="bg-gray-100 p-2 rounded mt-1">
+                              <p className="font-medium text-sm break-words text-gray-700">
+                                {searchResult.remaining_pool_entries} جار  ماوە
+                              </p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">بەرواری چوونە ژوورەوەکان</p>
+                            <div className="bg-gray-100 p-2 rounded mt-1">
+                              <p className="font-medium text-sm break-words text-gray-700">
+                                {searchResult.pool_entry_dates || 'هیچ بەروارێک نییە'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* System Info Section */}
+                  <div className="mt-4 bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-700 mb-3 flex items-center">
+                      <DatabaseIcon size={16} className="ml-2" />
+                      زانیاری سیستەم
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-500">دروستکراوە لە</p>
+                        <p className="font-medium text-sm"> {new Date(searchResult.created_at).toISOString().split("T")[0]}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">دوایین نوێکردنەوە</p>
+                        <p className="font-medium text-sm">{new Date(searchResult.last_updated).toISOString().split("T")[0]}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex flex-wrap gap-3 justify-start">
+                    <button
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+                      onClick={() => setShowEditModal(true)}
+                    >
+                      <Edit size={16} className="ml-2" />
+                      گۆڕانکاری
+                    </button>
+                    <button
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                    >
+                      <Trash2 size={16} className="ml-2" />
+                      سڕینەوە
+                    </button>
+                  </div>
                 </div>
 
-                {searchResult.status !== 'active' && (
+                {searchResult.remaining_days <= 0 && (
                   <div className="bg-red-50 px-6 py-4 border-t border-red-100">
-                    <div className="flex items-center">
-                      <Clock size={18} className="text-red-500 ml-2" />
+                    <div className="flex justify-center items-center">
+                      <AlertCircle size={18} className="text-red-500 ml-2" />
                       <p className="text-red-700">
-                        <span className="font-semibold">ئەندامێتی بەسەرچووە لە {formatDate(searchResult.endDate)}.</span> تکایە نوێی بکەرەوە بۆ ئەوەی بەردەوام بیت لە بەکارهێنانی هۆڵی وەرزش.
+                        <span className="font-semibold">ئەندامێتی بەسەرچووە لە {formatDate(searchResult.end_date)}</span> تکایە نوێی بکەرەوە بۆ ئەوەی بەردەوام بیت لە بەکارهێنانی هۆڵی وەرزش.
                       </p>
                     </div>
                   </div>
@@ -455,6 +530,7 @@ export default function MembershipCheck() {
         </div>
       </main>
 
+      {/* Renewal Modal */}
       {showRenewalModal && (
         <div dir='rtl' className="fixed inset-0 bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden transform transition-all">
@@ -592,6 +668,15 @@ export default function MembershipCheck() {
             </div>
           </div>
         </div>
+      )}
+
+      {showEditModal && (
+        <EditMemberModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          member={searchResult}
+          onUpdate={handleMemberUpdate}
+        />
       )}
     </div>
   );
