@@ -7,7 +7,6 @@ import {
   Save,
   ArrowRight,
   Plus,
-  Upload,
   Dumbbell,
   Droplets,
   CreditCard
@@ -19,11 +18,7 @@ export default function AddMemberPage() {
   const navigate = useNavigate();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formErrors, setFormErrors] = useState({});
-  const fileInputRef = useRef(null);
-  const [previewImage, setPreviewImage] = useState(null);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
-
-
 
   const [plans, setPlans] = useState([]);
 
@@ -68,7 +63,6 @@ export default function AddMemberPage() {
     getPlans();
   }, []);
 
-  // Initial form state
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -99,7 +93,6 @@ export default function AddMemberPage() {
     return date.toISOString().split('T')[0];
   };
 
-  // Update end date when membership or start date changes
   useEffect(() => {
     if (formData.startDate && formData.membership) {
       const endDate = calculateEndDate(formData.startDate, formData.membership);
@@ -116,7 +109,6 @@ export default function AddMemberPage() {
     }
   }, [formData.membership, formData.accessLevel]);
 
-  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -133,12 +125,10 @@ export default function AddMemberPage() {
     }
   };
 
-  // Format price with commas
   const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
-  // Validate form
   const validateForm = () => {
     const errors = {};
 
@@ -176,7 +166,6 @@ export default function AddMemberPage() {
     return Object.keys(errors).length === 0;
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -235,7 +224,6 @@ export default function AddMemberPage() {
     setCalculatedPrice(0);
   };
 
-  // Handle return to overview
   const handleReturnToOverview = () => {
     navigate('/dashboard');
   };
@@ -244,14 +232,12 @@ export default function AddMemberPage() {
     <div dir="rtl" className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Navbar />
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-xl p-6 mb-8 border border-gray-200">
           <h2 className="text-xl font-bold mb-6 border-b pb-2 text-indigo-700">زیادکردنی ئەندامی نوێ</h2>
 
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Personal Information Section */}
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-700 flex items-center">
                   <User size={18} className="ml-2 text-indigo-600" />
@@ -276,7 +262,6 @@ export default function AddMemberPage() {
                   {formErrors.name && <p className="mt-1 text-sm text-red-500">{formErrors.name}</p>}
                 </div>
 
-                {/* Gender */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ڕەگەز <span className="text-red-500">*</span></label>
                   <select
@@ -291,7 +276,6 @@ export default function AddMemberPage() {
                   {formErrors.gender && <p className="mt-1 text-sm text-red-500">{formErrors.gender}</p>}
                 </div>
 
-                {/* Phone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ژمارەی مۆبایل <span className="text-red-500">*</span></label>
                   <div className="relative">
@@ -310,7 +294,6 @@ export default function AddMemberPage() {
                   {formErrors.phone && <p className="mt-1 text-sm text-red-500">{formErrors.phone}</p>}
                 </div>
 
-                {/* Emergency Phone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ژمارەی تەلەفۆنی کاتی نائاسایی</label>
                   <div className="relative">
@@ -329,7 +312,6 @@ export default function AddMemberPage() {
                   {formErrors.emergencyPhone && <p className="mt-1 text-sm text-red-500">{formErrors.emergencyPhone}</p>}
                 </div>
 
-                {/* Height and Weight */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">بەرزی</label>
@@ -356,14 +338,12 @@ export default function AddMemberPage() {
                 </div>
               </div>
 
-              {/* Membership Information Section */}
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-700 flex items-center">
                   <CreditCard size={18} className="ml-2 text-indigo-600" />
                   زانیاری ئەندامێتی
                 </h3>
 
-                {/* Membership Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">جۆری ئەندامێتی <span className="text-red-500">*</span></label>
                   <select
@@ -476,7 +456,6 @@ export default function AddMemberPage() {
         </div>
       </main>
 
-      {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">

@@ -196,20 +196,20 @@ const EditMemberModal = ({ isOpen, onClose, member, onUpdate }) => {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                هەڵوەشاندنەوە
-              </button>
+            <div className="mt-6 flex justify-start space-x-3">
               <button
                 type="submit"
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
               >
                 <Save size={18} className="ml-2" />
                 هەڵگرتنی گۆڕانکاریەکان
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                هەڵوەشاندنەوە
               </button>
             </div>
           </form>

@@ -1,20 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  User,
   Search,
   CheckCircle,
   XCircle,
   Dumbbell,
-  Bell,
   Phone,
   CreditCard,
   Clock,
-  Scale,
-  Ruler,
-  Heart,
+  Droplets,
   Plus,
   Gift,
-  Printer,
   Trash2,
   GlassWater,
   DatabaseIcon,
@@ -25,7 +20,6 @@ import {
   ShieldCheck,
   X,
   RefreshCw,
-  DollarSign,
   LockIcon
 } from 'lucide-react';
 import axios from 'axios';
@@ -38,13 +32,86 @@ export default function MembershipCheck() {
   const [searchResult, setSearchResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState({});
   const [showRenewalModal, setShowRenewalModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false); // Add this state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [renewalData, setRenewalData] = useState({
-    membership: 'مانگانە',
+    membership: "1 مانگ",
+    accessLevel: 'gym',
     startDate: new Date().toISOString().split('T')[0],
     endDate: ''
   });
+
+  const [plans, setPlans] = useState({
+    gym: {},
+    pool: {},
+    both: {}
+  });
+
+  useEffect(() => {
+    const getPlans = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/membership_plans/get_plans");
+
+        const prices = {
+          gym: {},
+          pool: {},
+          both: {}
+        };
+
+        const mapType = (type) => {
+          if (type === "هۆلی وەرزشی") return "gym";
+          if (type === "مەلەوانگە") return "pool";
+          if (type === "مەلەوانگە و هۆلی وەرزشی") return "both";
+          return null;
+        };
+
+        res.data.forEach(plan => {
+          const typeKey = mapType(plan.type);
+          if (!typeKey) return;
+
+          const durationKey = `${plan.duration} مانگ`;
+          const priceValue = parseInt(plan.price.replace('.', '').replace(',', ''));
+
+          if (plan.duration === 12) {
+            prices[typeKey]['ساڵانە'] = priceValue;
+          } else {
+            prices[typeKey][durationKey] = priceValue;
+          }
+        });
+
+        setPlans(prices);
+      } catch (error) {
+        console.error("Error fetching plans:", error);
+      }
+    };
+
+    getPlans();
+  }, []);
+
+  if (!plans) return <p>... loading</p>; 
+
+  useEffect(() => {
+    if (renewalData?.membership && renewalData?.accessLevel && plans) {
+      const accessLevelKey = renewalData.accessLevel; 
+      if (accessLevelKey && plans[accessLevelKey]) {
+        const price = plans[accessLevelKey][renewalData.membership] || 0;
+        setCalculatedPrice(price);
+      } else {
+        setCalculatedPrice(0);
+      }
+    } else {
+      setCalculatedPrice(0);
+    }
+  }, [renewalData?.membership, renewalData?.accessLevel, plans]);
+
+  useEffect(() => {
+    setRenewalData(prev => ({
+      ...prev,
+      endDate: calculateEndDate(prev.startDate, prev.membership)
+    }));
+  }, []);
 
   const members = [
     {
@@ -66,6 +133,29 @@ export default function MembershipCheck() {
     }
   ];
 
+  const validateForm = () => {
+    const errors = {};
+
+    if (!renewalData.membership) {
+      errors.membership = 'جۆری ئەندامێتی پێویستە';
+    }
+
+    if (!renewalData.accessLevel) {
+      errors.accessLevel = 'ئاستی دەستگەیشتن پێویستە';
+    }
+
+    if (!renewalData.startDate) {
+      errors.startDate = 'بەرواری دەستپێک پێویستە';
+    }
+
+    if (!renewalData.endDate) {
+      errors.startDate = 'بەرواری کۆتایی پێویستە';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
       setError('تکایە ژمارەی ID یان ژمارەی تەلەفۆن داخڵ بکە');
@@ -85,7 +175,6 @@ export default function MembershipCheck() {
       }
 
       const res = await axios.get(url);
-      console.log(res.data.result)
 
       if (res.status === 200) {
         setSearchResult(res.data.result[0])
@@ -108,31 +197,50 @@ export default function MembershipCheck() {
   const calculateEndDate = (startDate, membershipType) => {
     const date = new Date(startDate);
 
-    if (membershipType === "مانگانە") {
-      date.setMonth(date.getMonth() + 1);
-    } else if (membershipType === "سێ مانگی") {
-      date.setMonth(date.getMonth() + 3);
-    } else if (membershipType === "شەش مانگی") {
-      date.setMonth(date.getMonth() + 6);
-    } else if (membershipType === "ساڵانە") {
+    if (membershipType === '1 مانگ') {
+      date.setDate(date.getDate() + 30);
+    } else if (membershipType === '3 مانگ') {
+      date.setDate(date.getDate() + 90);
+    } else if (membershipType === '6 مانگ') {
+      date.setDate(date.getDate() + 180);
+    } else if (membershipType === 'ساڵانە') {
       date.setFullYear(date.getFullYear() + 1);
     }
 
     return date.toISOString().split('T')[0];
   };
 
-  // Handle opening renewal modal
   const handleOpenRenewalModal = () => {
-    // Get the current membership type from searchResult
-    const membershipType = searchResult.membership;
+    // Get the membership type from search result and map it to a valid value
+    let membershipType = '1 مانگ'; // Default value
+    
+    // Map from the search result's membership to the dropdown value
+    if (searchResult.membership_title === 'پلانی مانگی') {
+      membershipType = '1 مانگ';
+    } else if (searchResult.membership_title === 'پلانی سێ مانگ') {
+      membershipType = '3 مانگ';
+    } else if (searchResult.membership_title === 'پلانی شەش مانگ') {
+      membershipType = '6 مانگ';
+    } else if (searchResult.membership_title === 'پلانی ساڵانە') {
+      membershipType = 'ساڵانە';
+    }
+    
     const startDate = new Date().toISOString().split('T')[0];
-
-    // Calculate end date directly using these values
     const endDate = calculateEndDate(startDate, membershipType);
+    
+    // Map the type from searchResult to the correct accessLevel value
+    let accessLevel = 'gym'; // default
+    if (searchResult.type === 'مەلەوانگە') {
+      accessLevel = 'pool';
+    } else if (searchResult.type === 'مەلەوانگە و هۆلی وەرزشی') {
+      accessLevel = 'both';
+    } else if (searchResult.type === 'هۆلی وەرزشی') {
+      accessLevel = 'gym';
+    }
 
-    // Set all values at once
     setRenewalData({
       membership: membershipType,
+      accessLevel: accessLevel,
       startDate: startDate,
       endDate: endDate
     });
@@ -140,21 +248,16 @@ export default function MembershipCheck() {
     setShowRenewalModal(true);
   };
 
-  // Add this console log to debug the values
   const handleRenewalInputChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "membership" || name === "startDate") {
-      // Use functional update to ensure we're working with the latest state
       setRenewalData(prev => {
-        // Get the updated values using the previous state
         const startDate = name === "startDate" ? value : prev.startDate;
         const membershipType = name === "membership" ? value : prev.membership;
 
-        // Calculate the new end date
         const endDate = calculateEndDate(startDate, membershipType);
 
-        // Return the new state object
         return {
           ...prev,
           [name]: value,
@@ -162,51 +265,107 @@ export default function MembershipCheck() {
         };
       });
     } else {
-      // For other fields, just update normally
       setRenewalData(prev => ({
         ...prev,
         [name]: value
       }));
     }
+
+    if (formErrors[name]) {
+      setFormErrors({
+        ...formErrors,
+        [name]: ''
+      });
+    }
   };
 
-  // Handle membership renewal
-  const handleRenewMembership = () => {
-    // In a real app, you would send this data to your backend
-    // For now, we'll just update the local state
-    const updatedMember = {
-      ...searchResult,
-      membership: renewalData.membership,
-      startDate: renewalData.startDate,
-      endDate: renewalData.endDate,
-      status: 'active',
-      updatedAt: new Date().toISOString().split('T')[0]
-    };
+  const handleRenewMembership = async () => {
 
-    // Update the member in the members array
-    const updatedMembers = members.map(member =>
-      member.id === updatedMember.id ? updatedMember : member
-    );
+    if (!validateForm()) {
+      return;
+    }
 
-    // Update the search result
-    setSearchResult(updatedMember);
+    try {
+      let type = '';
+      if (renewalData.accessLevel === "gym") {
+        type = 'هۆلی وەرزشی';
+      } else if (renewalData.accessLevel === "pool") {
+        type = 'مەلەوانگە';
+      } else if (renewalData.accessLevel === "both") {
+        type = 'مەلەوانگە و هۆلی وەرزشی';
+      }
 
-    // Close the modal
-    setShowRenewalModal(false);
+      let membership_title = '';
+      if (renewalData.membership === "1 مانگ") {
+        membership_title = 'پلانی مانگی';
+      } else if (renewalData.membership === "3 مانگ") {
+        membership_title = 'پلانی سێ مانگ';
+      } else if (renewalData.membership === "6 مانگ") {
+        membership_title = 'پلانی شەش مانگ';
+      } else if (renewalData.membership === "ساڵانە") {
+        membership_title = 'پلانی ساڵانە';
+      }
 
-    // Show success message (in a real app, you might want to add a toast notification)
-    alert('ئەندامێتی بە سەرکەوتوویی نوێ کرایەوە');
+      console.log("Renewal data:", renewalData);
+      console.log("Membership title:", membership_title);
+      console.log("Type:", type);
+
+      if (!membership_title) {
+        alert('خشتەی ئەندامێتی دیاری نەکراوە');
+        return;
+      }
+
+      const res = await axios.post(`http://localhost:3000/members/updatemembership/${searchResult.m_id}`,
+        {
+          membership_title: membership_title,
+          start_date: renewalData.startDate,
+          end_date: renewalData.endDate,
+          type: type,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (res.status === 200) {
+        alert('ئەندامێتی بە سەرکەوتوویی نوێ کرایەوە');
+        setShowRenewalModal(false);
+        
+        // Fetch the updated member data from the server
+        let url = `http://localhost:3000/members/getspecifiedmember?`
+        if (searchType === 'id') {
+          url += `m_id=${searchTerm}`
+        } else {
+          url += `m_phone=${searchTerm}`
+        }
+        
+        const updatedMemberRes = await axios.get(url);
+        if (updatedMemberRes.status === 200) {
+          setSearchResult(updatedMemberRes.data.result[0]);
+        }
+      } else {
+        alert('an error happend');
+      }
+    } catch (error) {
+      console.error('Error renewing membership:', error);
+      alert('هەڵەیەک هەڵەیەکی بە سەرکەوتوویی بەسەرچووە');
+    }
   };
 
   const handleMemberUpdate = (updatedMember) => {
     setSearchResult(updatedMember);
   };
 
+  const formatPrice = (price) => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       <Navbar />
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-bold mb-6">پشکنینی باری ئەندامێتی</h2>
@@ -352,7 +511,6 @@ export default function MembershipCheck() {
                       </div>
                     </div>
 
-                    {/* Membership Info Section */}
                     <div className="space-y-4">
                       <div className="bg-gray-50 p-4 rounded-lg h-full">
                         <h4 className="font-medium text-gray-700 mb-3 flex items-center">
@@ -402,9 +560,10 @@ export default function MembershipCheck() {
                       </div>
                     </div>
 
-                    {/* Pool Info Section */}
-                    <div className="space-y-4">
-                      <div className="bg-gray-50 p-4 rounded-lg h-full">
+                    {/*  Info Section */}
+                    {/* ${["مەلەوانگە", "مەلەوانگە و هۆلی وەرزشی"].includes(searchResult.type) ? "hidden" : ""} */}
+                    <div className={`space-y-4`}>
+                    <div className="bg-gray-50 p-4 rounded-lg h-full">
                         <div className="flex justify-between items-center mb-3">
                           <h4 className="font-medium text-gray-700 flex items-center">
                             <GlassWater size={16} className="ml-2" />
@@ -530,7 +689,6 @@ export default function MembershipCheck() {
         </div>
       </main>
 
-      {/* Renewal Modal */}
       {showRenewalModal && (
         <div dir='rtl' className="fixed inset-0 bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden transform transition-all">
@@ -561,37 +719,62 @@ export default function MembershipCheck() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">جۆری ئەندامێتی: <span className="font-medium text-gray-800">{searchResult.membership}</span></p>
-                    <p className="text-sm text-gray-600">بەرواری کۆتایی: <span className="font-medium text-gray-800">{formatDate(searchResult.endDate)}</span></p>
+                    <p className="text-sm text-gray-600">بەرواری کۆتایی: <span className="font-medium text-gray-800">{formatDate(searchResult.end_date)}</span></p>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-xs font-semibold ${searchResult.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {searchResult.status === 'active' ? 'چالاک' : 'بەسەرچوو'}
+                  <div className={`px-3 py-1 rounded-full text-xs font-semibold ${searchResult.remaining_days >= 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {searchResult.remaining_days >= 1 ? 'چالاک' : 'بەسەرچوو'}
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                  <Dumbbell size={16} className="ml-1 text-indigo-600" />
-                  جۆری ئەندامێتی
-                </label>
-                <div className="relative">
-                  <select
-                    name="membership"
-                    value={renewalData.membership}
-                    onChange={handleRenewalInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white"
+                <label className="block text-sm font-medium text-gray-700 mb-1">جۆری ئەندامێتی <span className="text-red-500">*</span></label>
+                <select
+                  name="membership"
+                 value={renewalData.membership || "1 مانگ"}
+                  onChange={handleRenewalInputChange}
+                  className={`pr-4 pl-4 py-2 w-full border ${formErrors.membership ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm`}
+                >
+                  <option value="1 مانگ">1 مانگ</option>
+                  <option value="3 مانگ">3 مانگ</option>
+                  <option value="6 مانگ">6 مانگ</option>
+                  <option value="ساڵانە">ساڵانە</option>
+                </select>
+                {formErrors.membership && <p className="mt-1 text-sm text-red-500">{formErrors.membership}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ئاستی دەستگەیشتن <span className="text-red-500">*</span></label>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => handleRenewalInputChange({ target: { name: 'accessLevel', value: 'gym' } })}
+                    className={`flex flex-col items-center justify-center p-3 rounded-lg border ${renewalData.accessLevel === 'gym' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-300 hover:bg-gray-50'}`}
                   >
-                    <option value="مانگانە">مانگانە</option>
-                    <option value="سێ مانگی">سێ مانگی</option>
-                    <option value="شەش مانگی">شەش مانگی</option>
-                    <option value="ساڵانە">ساڵانە</option>
-                  </select>
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                  </div>
+                    <Dumbbell size={24} className={renewalData.accessLevel === 'gym' ? 'text-indigo-600' : 'text-gray-500'} />
+                    <span className="mt-1 text-sm">هۆڵی وەرزشی</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRenewalInputChange({ target: { name: 'accessLevel', value: 'pool' } })}
+                    className={`flex flex-col items-center justify-center p-3 rounded-lg border ${renewalData.accessLevel === 'pool' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-300 hover:bg-gray-50'}`}
+                  >
+                    <Droplets size={24} className={renewalData.accessLevel === 'pool' ? 'text-indigo-600' : 'text-gray-500'} />
+                    <span className="mt-1 text-sm">مەلەوانگە</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRenewalInputChange({ target: { name: 'accessLevel', value: 'both' } })}
+                    className={`flex flex-col items-center justify-center p-3 rounded-lg border ${renewalData.accessLevel === 'both' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-300 hover:bg-gray-50'}`}
+                  >
+                    <div className="flex">
+                      <Dumbbell size={20} className={renewalData.accessLevel === 'both' ? 'text-indigo-600' : 'text-gray-500'} />
+                      <Droplets size={20} className={renewalData.accessLevel === 'both' ? 'text-indigo-600' : 'text-gray-500'} />
+                    </div>
+                    <span className="mt-1 text-sm">هەردووکیان</span>
+                  </button>
                 </div>
+                {formErrors.accessLevel && <p className="mt-1 text-sm text-red-500">{formErrors.accessLevel}</p>}
               </div>
 
               <div>
@@ -632,24 +815,15 @@ export default function MembershipCheck() {
                 </p>
               </div>
 
-              <div className="bg-green-50 rounded-lg p-3 border border-green-100">
-                <div className="flex items-center mb-1">
-                  <DollarSign size={16} className="text-green-700 ml-2" />
-                  <p className="text-sm font-medium text-green-700">نرخی ئەندامێتی</p>
-                </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-sm text-gray-600">{renewalData.membership}</p>
-                  <p className="font-bold text-green-700 text-lg">
-                    {renewalData.membership === "مانگانە" ? "٥٠,٠٠٠ د.ع" :
-                      renewalData.membership === "سێ مانگی" ? "١٣٥,٠٠٠ د.ع" :
-                        renewalData.membership === "شەش مانگی" ? "٢٥٠,٠٠٠ د.ع" :
-                          "٤٥٠,٠٠٠ د.ع"}
-                  </p>
+              <div className="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                <h4 className="text-md font-medium text-indigo-700 mb-2">نرخی ئەندامێتی</h4>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">کۆی گشتی:</span>
+                  <span className="text-2xl font-bold text-indigo-700">{formatPrice(calculatedPrice)} IQD</span>
                 </div>
               </div>
             </div>
 
-            {/* Footer */}
             <div className="px-6 py-4 bg-gray-50 border-t flex gap-8 space-x-3 space-x-reverse">
               <button
                 onClick={handleRenewMembership}

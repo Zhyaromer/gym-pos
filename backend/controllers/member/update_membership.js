@@ -1,14 +1,16 @@
 const db = require("../../config/mysql/mysqlconfig");
 
 const update_membership = async (req, res) => {
+    console.log(1);
+    console.log(req.body);
     const { m_id } = req.params;
-    const { membership_title, start_date, end_date } = req.body;
+    const { membership_title, start_date, end_date , type } = req.body;
 
     if (!m_id) {
         return res.status(400).json({ error: 'Member ID is required' });
     }
 
-    if (!membership_title || !start_date || !end_date) {
+    if (!membership_title || !start_date || !end_date || !type) {
         return res.status(400).json({ error: 'All fields are required' });
     }
 
@@ -17,7 +19,7 @@ const update_membership = async (req, res) => {
     }
 
     const sql1 = `
-        SELECT mp_id FROM membershipPlan WHERE title = ?
+        SELECT mp_id FROM membershipPlan WHERE title = ? and type =?
     `;
 
     const sqlCheckExisting = `
@@ -34,9 +36,10 @@ const update_membership = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        const [planResult] = await connection.query(sql1, [membership_title]);
+        const [planResult] = await connection.query(sql1, [membership_title , type]);
 
         if (planResult.length === 0) {
+            console.log(`Membership plan not found`);
             await connection.rollback();
             connection.release();
             return res.status(404).json({ error: 'Membership plan not found' });
@@ -44,7 +47,6 @@ const update_membership = async (req, res) => {
 
         const mp_id = planResult[0].mp_id;
 
-        // Check for overlapping plan for this member
         const [existing] = await connection.query(sqlCheckExisting, [m_id, end_date, start_date]);
         if (existing.length > 0) {
             await connection.rollback();

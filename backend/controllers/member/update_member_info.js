@@ -3,7 +3,6 @@ const db = require("../../config/mysql/mysqlconfig");
 const update_member_info = async (req, res) => {
     const { m_id } = req.params;
     const { name, gender, emergencyphoneNumber, phoneNumber, height, weight } = req.body;
-    console.log(req.body);
 
     if (!m_id) {
         return res.status(400).json({ error: 'id is required' });

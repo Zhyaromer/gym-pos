@@ -28,7 +28,7 @@ const get_specified_member = async (req, res) => {
                 mp.free_pool_entries,
                 amp.start_date,
                 amp.end_date,
-                DATEDIFF(amp.end_date, CURDATE()) AS remaining_days,
+                DATEDIFF(amp.end_date, CURDATE()) + 1 AS remaining_days,
                 COUNT(fpu.fpu_id) AS used_pool_entries,
                 (mp.free_pool_entries - COUNT(fpu.fpu_id)) AS remaining_pool_entries,
                 GROUP_CONCAT(DATE(fpu.entery_date) ORDER BY fpu.entery_date SEPARATOR ', ') AS pool_entry_dates
