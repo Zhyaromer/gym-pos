@@ -147,6 +147,10 @@ export default function GymDashboard() {
         <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
            <Navbar/>
 
+           <div>
+            <img src="/imgs/employees/employee_1747749643328.jpg" alt="" />
+           </div>
+
             <div className="container mx-auto p-6">
                 <div className="mb-8 bg-white rounded-xl p-6 shadow-lg text-right">
                     <h1 className="text-3xl font-bold text-gray-800 mb-4">داشبۆردی بەڕێوەبردنی یانەی وەرزشی</h1>

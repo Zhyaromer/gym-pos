@@ -1,6 +1,7 @@
 const express = require('express')
 const app = express()
 const port = 3000
+const path = require('path')
 require("dotenv").config();
 const db = require('./config/mysql/mysqlconfig')
 const cors = require('cors');
@@ -23,6 +24,7 @@ app.use(cors({
 
 app.use(bodyParser.json())
 app.use(express.json());
+app.use('/imgs', express.static(path.join(__dirname, 'imgs')))
 
 app.use('/members',memberRoute);
 app.use('/employees',employeeRoute);

@@ -1,18 +1,21 @@
 const db = require("../../config/mysql/mysqlconfig");
 const bcrypt = require("bcrypt");
+const fs = require("fs");
+const path = require("path");
 
 const add_new_employee = async (req, res) => {
-    const { name, gender, date_of_birth, address, email, password, phoneNumber, emergencyphoneNumber, role, working_date, salary,img } = req.body;
+    const { fullName, gender, dateOfBirth, address, email, password, phoneNumber, secondaryNumber, role, startWorkingDate, salary } = req.body;
 
-    if (!name || !gender || !date_of_birth || !address || !email || !password || !phoneNumber || !role ||
-        !working_date || !salary) {
+    if (!fullName || !gender || !dateOfBirth || !address || !email || !password || !phoneNumber || !role ||
+        !startWorkingDate || !salary) {
+        return res.status(400).json({ message: "All required fields must be provided" });
     }
 
-    if (gender != 'نێر' && gender != 'مێ') {
-        return res.status(200).json({ message: "gender is false" });
+    if (gender != 'پیاو' && gender != 'ئافرەت') {
+        return res.status(400).json({ message: "gender is false" });
     }
 
-    if (date_of_birth > new Date().toISOString().split('T')[0]) {
+    if (dateOfBirth > new Date().toISOString().split('T')[0]) {
         return res.status(400).json({ message: "date of birth is false" });
     }
 
@@ -29,16 +32,35 @@ const add_new_employee = async (req, res) => {
     }
 
     const phoneStr = String(phoneNumber);
-    const emergencyPhoneStr = String(emergencyphoneNumber);
-    if (!/^\d{10,11}$/.test(phoneStr)) {
+    const emergencyPhoneStr = String(secondaryNumber);
+    if (!/^(07|7)\d{8,9}$/.test(phoneStr)) {
         return res.status(400).json({ message: "Invalid phone number length or format" });
     }
-    if (!/^\d{10,11}$/.test(emergencyPhoneStr)) {
+    if (!/^(07|7)\d{8,9}$/.test(emergencyPhoneStr)) {
         return res.status(400).json({ message: "Invalid emergency phone number length or format" });
     }
 
-    if (phoneNumber === emergencyphoneNumber) {
+    if (phoneNumber === secondaryNumber) {
         return res.status(400).json({ message: "Emergency phone number cannot be the same as the main phone number" });
+    }
+
+    let imgPath = null;
+
+    if (req.file) {
+        const uploadsDir = path.join(__dirname, '../../imgs/employees');
+        console.log(`uploadsDir`);
+        console.log(uploadsDir);
+        if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+
+        const fileExt = path.extname(req.file.originalname);
+        const fileName = `employee_${Date.now()}${fileExt}`;
+        const filePath = path.join(uploadsDir, fileName);
+
+        fs.writeFileSync(filePath, req.file.buffer);
+
+        imgPath = `http://localhost:3000/imgs/employees/${fileName}`;
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -49,17 +71,38 @@ const add_new_employee = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const [rows] = await db.query(sql, [name, email, hashedPassword, date_of_birth, gender, phoneNumber, emergencyphoneNumber ?
-            emergencyphoneNumber : null, address, role, salary, working_date, img ? img : null]);
+        const [rows] = await db.query(sql, [
+            fullName, 
+            email, 
+            hashedPassword, 
+            dateOfBirth, 
+            gender, 
+            phoneNumber, 
+            secondaryNumber || null, 
+            address, 
+            role, 
+            salary, 
+            startWorkingDate, 
+            imgPath
+        ]);
 
         if (rows.affectedRows > 0) {
-            return res.status(201).json({ message: "data inserted" });
+            return res.status(201).json({ 
+                message: "Employee added successfully",
+                employee: {
+                    id: rows.insertId,
+                    name: fullName,
+                    email: email,
+                    role: role,
+                    imgUrl: imgPath
+                }
+            });
         } else {
-            return res.status(400).json({ message: "data entery failed" });
+            return res.status(400).json({ message: "Failed to add employee" });
         }
     } catch (err)  {
         console.log(err);
-        return res.status(500).json({ message: "internal error please try again" });
+        return res.status(500).json({ message: "Internal server error, please try again" });
     }
 };
 

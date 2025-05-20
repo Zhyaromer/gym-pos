@@ -9,7 +9,6 @@ const update_membership = require('../../controllers/member/update_membership');
 const add_member_pool = require('../../controllers/member/add_member_pool');
 const upload = require('../../middleware/uploadMiddleware');
 
-
 router.get('/getmembers' , get_all_members);
 router.get('/getspecifiedmember', get_specified_member);
 

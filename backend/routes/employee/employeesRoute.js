@@ -8,11 +8,12 @@ const get_all_employee_paycheck = require("../../controllers/employee/get_all_em
 const paying_employee = require("../../controllers/employee/paying_employee");
 const delete_employee_paycheck = require("../../controllers/employee/delete_employee_paycheck");
 const mark_full_payment = require("../../controllers/employee/mark_full_payment");
+const upload = require('../../middleware/uploadMiddleware');
 
 router.get("/getallemployee", getAllEmployee);
 router.get("/getallemployeepaycheck", get_all_employee_paycheck);
 
-router.post("/addemployee", add_new_employee);
+router.post("/addemployee", upload.single('profileImage'), add_new_employee);
 router.post("/payingemployee/:e_id", paying_employee);
 
 router.patch("/markfullpayment/:e_id/:year/:month", mark_full_payment);

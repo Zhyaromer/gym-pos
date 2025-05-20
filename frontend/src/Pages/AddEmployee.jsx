@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User,
@@ -11,52 +11,84 @@ import {
   Save,
   ArrowRight,
   Plus,
-  Briefcase
+  Briefcase,
+  Eye,
+  EyeOff,
+  X,
+  Image as ImageIcon
 } from 'lucide-react';
 import Navbar from '../components/layout/Nav';
+import axios from 'axios';
 
 export default function AddEmployeePage() {
   const navigate = useNavigate();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [calculatedAge, setCalculatedAge] = useState(null);
-  
-  // Initial form state
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
     phoneNumber: '',
     secondaryNumber: '',
-    gender: 'نێر',
+    gender: 'پیاو',
     role: 'کارمەند',
     startWorkingDate: new Date().toISOString().split('T')[0],
     salary: '',
     address: '',
-    dateOfBirth: ''
+    dateOfBirth: '',
+    profileImage: null
   });
 
-  // Calculate age based on date of birth
   useEffect(() => {
     if (formData.dateOfBirth) {
       const birthDate = new Date(formData.dateOfBirth);
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
       setCalculatedAge(age);
     } else {
       setCalculatedAge(null);
     }
   }, [formData.dateOfBirth]);
 
-  // Handle input changes
+  useEffect(() => {
+    if (formData.password) {
+      let strength = 0;
+      if (formData.password.length >= 8) strength += 1;
+      if (/[A-Z]/.test(formData.password)) strength += 1;
+      if (/\d/.test(formData.password)) strength += 1;
+      if (/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) strength += 1;
+
+      setPasswordStrength(strength);
+    } else {
+      setPasswordStrength(0);
+    }
+  }, [formData.password]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
 
-    // Clear error for this field when user types
+    if (name === 'phoneNumber' || name === 'secondaryNumber') {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
+
     if (formErrors[name]) {
       setFormErrors({
         ...formErrors,
@@ -65,87 +97,150 @@ export default function AddEmployeePage() {
     }
   };
 
-  // Validate form
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.match('image.*')) {
+        setFormErrors({
+          ...formErrors,
+          profileImage: 'تەنیا وێنە ڕێگەپێدراوە'
+        });
+        return;
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+        setFormErrors({
+          ...formErrors,
+          profileImage: 'قەبارەی وێنە دەبێت کەمتر لە 2MB بێت'
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setFormData({
+          ...formData,
+          profileImage: file
+        });
+      };
+      reader.readAsDataURL(file);
+
+      if (formErrors.profileImage) {
+        setFormErrors({
+          ...formErrors,
+          profileImage: ''
+        });
+      }
+    }
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    setFormData({
+      ...formData,
+      profileImage: null
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.fullName.trim()) {
       errors.fullName = 'ناوی تەواو پێویستە';
     }
-    
+
     if (!formData.email.trim()) {
       errors.email = 'ئیمەیڵ پێویستە';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = 'فۆرماتی ئیمەیڵ دروست نییە';
     }
-    
+
     if (!formData.password.trim()) {
       errors.password = 'وشەی نهێنی پێویستە';
-    } else if (formData.password.length < 6) {
-      errors.password = 'وشەی نهێنی دەبێت لانیکەم ٦ پیت بێت';
+    } else if (formData.password.length < 8) {
+      errors.password = 'وشەی نهێنی دەبێت لانیکەم ٨ پیت بێت';
+    } else if (passwordStrength < 3) {
+      errors.password = 'وشەی نهێنی زۆر بەهێز نییە';
     }
-    
+
     if (!formData.phoneNumber.trim()) {
       errors.phoneNumber = 'ژمارەی مۆبایل پێویستە';
-    } else if (!/^\d{4}-\d{3}-\d{4}$/.test(formData.phoneNumber)) {
-      errors.phoneNumber = 'فۆرماتی ژمارەی مۆبایل دەبێت 0770-123-4567 بێت';
+    } else if (!/^(07|7)\d{8,9}$/.test(formData.phoneNumber)) {
+      errors.phoneNumber = 'ژمارەی مۆبایل دەبێت لە 10 یان 11 ژمارە پێکبێت و بە 07 یان 7 دەستپێبکات';
     }
     
-    if (formData.secondaryNumber && !/^\d{4}-\d{3}-\d{4}$/.test(formData.secondaryNumber)) {
-      errors.secondaryNumber = 'فۆرماتی ژمارەی مۆبایل دەبێت 0770-123-4567 بێت';
+    if (formData.secondaryNumber && !/^(07|7)\d{8,9}$/.test(formData.secondaryNumber)) {
+      errors.secondaryNumber = 'ژمارەی دووەمی مۆبایل دەبێت لە 10 یان 11 ژمارە پێکبێت و بە 07 یان 7 دەستپێبکات';
     }
-    
+
     if (!formData.gender) {
       errors.gender = 'ڕەگەز پێویستە';
     }
-    
+
     if (!formData.role) {
       errors.role = 'پلە پێویستە';
     }
-    
+
     if (!formData.startWorkingDate) {
       errors.startWorkingDate = 'بەرواری دەستبەکاربوون پێویستە';
     }
-    
+
     if (!formData.salary) {
       errors.salary = 'مووچە پێویستە';
     } else if (isNaN(formData.salary) || Number(formData.salary) <= 0) {
       errors.salary = 'مووچە دەبێت ژمارەیەکی دروست بێت';
     }
-    
+
     if (!formData.address.trim()) {
       errors.address = 'ناونیشان پێویستە';
     }
-    
+
     if (!formData.dateOfBirth) {
       errors.dateOfBirth = 'بەرواری لەدایکبوون پێویستە';
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
-      // In a real app, you would send this data to your backend
-      // For now, we'll just show a success message
-      const today = new Date().toISOString().split('T')[0];
-      const newEmployee = {
-        ...formData,
-        id: Math.floor(Math.random() * 1000) + 10, // Generate random ID
-        createdAt: today,
-        updatedAt: today
-      };
-      
-      console.log('New employee data:', newEmployee);
-      setShowSuccessModal(true);
+      try {
+        const employeeData = new FormData();
+
+        Object.keys(formData).forEach(key => {
+          if (key === 'profileImage' && formData[key]) {
+            employeeData.append('profileImage', formData[key]);
+          } else {
+            employeeData.append(key, formData[key]);
+          }
+        });
+
+        const res = await axios.post(`http://localhost:3000/employees/addemployee`, employeeData, {
+          headers: {
+            'Content-Type': 'multipart/form-data', 
+          }
+        });
+
+        if (res.status === 201) {
+          setShowSuccessModal(true);
+        }
+      } catch (error) {
+        console.error('Error adding employee:', error);
+        setFormErrors({
+          ...formErrors,
+          general: error.message || 'Failed to add employee. Please try again.'
+        });
+      }
     }
   };
 
-  // Handle adding another employee
   const handleAddAnother = () => {
     setShowSuccessModal(false);
     setFormData({
@@ -154,39 +249,80 @@ export default function AddEmployeePage() {
       password: '',
       phoneNumber: '',
       secondaryNumber: '',
-      gender: 'نێر',
+      gender: 'پیاو',
       role: 'کارمەند',
       startWorkingDate: new Date().toISOString().split('T')[0],
       salary: '',
       address: '',
-      dateOfBirth: ''
+      dateOfBirth: '',
+      profileImage: null
     });
     setCalculatedAge(null);
+    setImagePreview(null);
+    setPasswordStrength(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
-  // Handle return to overview
   const handleReturnToOverview = () => {
     navigate('/dashboard');
   };
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
-      <Navbar/>
+      <Navbar />
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-bold mb-6 border-b pb-2">زیادکردنی کارمەندی نوێ</h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Personal Information Section */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
+          <h2 className="text-2xl font-bold mb-6 pb-4 border-b border-gray-200 text-gray-800">زیادکردنی کارمەندی نوێ</h2>
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                <div className="w-32 h-32 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
+                  {imagePreview ? (
+                    <>
+                      <img src={imagePreview} alt="Profile Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute top-1 left-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      >
+                        <X size={16} />
+                      </button>
+                    </>
+                  ) : (
+                    <ImageIcon size={40} className="text-gray-400" />
+                  )}
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                  id="profileImage"
+                />
+                <label
+                  htmlFor="profileImage"
+                  className="mt-4 inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+                >
+                  <ImageIcon size={16} className="ml-2" />
+                  {imagePreview ? 'گۆڕینی وێنە' : 'وێنەی پڕۆفایل زیادبکە'}
+                </label>
+              </div>
+              {formErrors.profileImage && (
+                <p className="mt-2 text-sm text-red-500">{formErrors.profileImage}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-700 bg-gray-50 p-2 rounded">زانیاری کەسی</h3>
-                
-                {/* Full Name */}
+                <h3 className="text-lg font-semibold text-gray-700 bg-blue-50 p-3 rounded-lg">زانیاری کەسی</h3>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ناوی تەواو <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ناوی تەواو <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <User size={18} className="text-gray-400" />
@@ -196,31 +332,29 @@ export default function AddEmployeePage() {
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      className={`pr-10 pl-4 py-2 w-full border ${formErrors.fullName ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      className={`pr-10 pl-4 py-2.5 w-full border ${formErrors.fullName ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                       placeholder="ناوی تەواو"
                     />
                   </div>
                   {formErrors.fullName && <p className="mt-1 text-sm text-red-500">{formErrors.fullName}</p>}
                 </div>
-                
-                {/* Gender */}
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ڕەگەز <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ڕەگەز <span className="text-red-500">*</span></label>
                   <select
                     name="gender"
                     value={formData.gender}
                     onChange={handleInputChange}
-                    className={`pr-4 pl-4 py-2 w-full border ${formErrors.gender ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    className={`pr-4 pl-4 py-2.5 w-full border ${formErrors.gender ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                   >
-                    <option value="نێر">نێر</option>
-                    <option value="مێ">مێ</option>
+                    <option value="پیاو">پیاو</option>
+                    <option value="ئافرەت">ئافرەت</option>
                   </select>
                   {formErrors.gender && <p className="mt-1 text-sm text-red-500">{formErrors.gender}</p>}
                 </div>
-                
-                {/* Date of Birth */}
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">بەرواری لەدایکبوون <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">بەرواری لەدایکبوون <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <Calendar size={18} className="text-gray-400" />
@@ -230,7 +364,8 @@ export default function AddEmployeePage() {
                       name="dateOfBirth"
                       value={formData.dateOfBirth}
                       onChange={handleInputChange}
-                      className={`pr-10 pl-4 py-2 w-full border ${formErrors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      max={new Date().toISOString().split('T')[0]}
+                      className={`pr-10 pl-4 py-2.5 w-full border ${formErrors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                     />
                   </div>
                   {formErrors.dateOfBirth && <p className="mt-1 text-sm text-red-500">{formErrors.dateOfBirth}</p>}
@@ -238,10 +373,9 @@ export default function AddEmployeePage() {
                     <p className="mt-1 text-sm text-gray-600">تەمەن: {calculatedAge} ساڵ</p>
                   )}
                 </div>
-                
-                {/* Address */}
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ناونیشان <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ناونیشان <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <MapPin size={18} className="text-gray-400" />
@@ -251,21 +385,19 @@ export default function AddEmployeePage() {
                       name="address"
                       value={formData.address}
                       onChange={handleInputChange}
-                      className={`pr-10 pl-4 py-2 w-full border ${formErrors.address ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      className={`pr-10 pl-4 py-2.5 w-full border ${formErrors.address ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                       placeholder="ناونیشانی نیشتەجێبوون"
                     />
                   </div>
                   {formErrors.address && <p className="mt-1 text-sm text-red-500">{formErrors.address}</p>}
                 </div>
               </div>
-              
-              {/* Contact Information Section */}
+
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-700 bg-gray-50 p-2 rounded">زانیاری پەیوەندی</h3>
-                
-                {/* Email */}
+                <h3 className="text-lg font-semibold text-gray-700 bg-blue-50 p-3 rounded-lg">زانیاری پەیوەندی</h3>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ئیمەیڵ <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ئیمەیڵ <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <Mail size={18} className="text-gray-400" />
@@ -275,35 +407,60 @@ export default function AddEmployeePage() {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className={`pr-10 pl-4 py-2 w-full border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      className={`pr-10 pl-4 py-2.5 w-full border ${formErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                       placeholder="example@email.com"
                     />
                   </div>
                   {formErrors.email && <p className="mt-1 text-sm text-red-500">{formErrors.email}</p>}
                 </div>
-                
-                {/* Password */}
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">وشەی نهێنی <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">وشەی نهێنی <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <Lock size={18} className="text-gray-400" />
                     </div>
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className={`pr-10 pl-4 py-2 w-full border ${formErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                      placeholder="******"
+                      className={`pr-10 pl-4 py-2.5 w-full border ${formErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                      placeholder="لانیکەم ٨ پیت"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
+                  {formData.password && (
+                    <div className="mt-2">
+                      <div className="flex items-center space-x-1">
+                        <div className={`h-1.5 rounded-full flex-1 ${passwordStrength >= 1 ? (passwordStrength >= 3 ? 'bg-green-500' : passwordStrength >= 2 ? 'bg-yellow-500' : 'bg-red-500') : 'bg-gray-200'}`}></div>
+                        <div className={`h-1.5 rounded-full flex-1 ${passwordStrength >= 2 ? (passwordStrength >= 3 ? 'bg-green-500' : 'bg-yellow-500') : 'bg-gray-200'}`}></div>
+                        <div className={`h-1.5 rounded-full flex-1 ${passwordStrength >= 3 ? 'bg-green-500' : 'bg-gray-200'}`}></div>
+                        <div className={`h-1.5 rounded-full flex-1 ${passwordStrength >= 4 ? 'bg-green-500' : 'bg-gray-200'}`}></div>
+                      </div>
+                      <p className="text-xs mt-1 text-gray-500">
+                        {passwordStrength === 0 && 'وشەی نهێنی زۆر بەهێز نییە'}
+                        {passwordStrength === 1 && 'وشەی نهێنی لاوازە'}
+                        {passwordStrength === 2 && 'وشەی نهێنی مامناوەندە'}
+                        {passwordStrength === 3 && 'وشەی نهێنی بەهێزە'}
+                        {passwordStrength >= 4 && 'وشەی نهێنی زۆر بەهێزە'}
+                      </p>
+                    </div>
+                  )}
                   {formErrors.password && <p className="mt-1 text-sm text-red-500">{formErrors.password}</p>}
+                  <p className="text-xs mt-1 text-gray-500">
+                    پێویستە لانیکەم ٨ پیت، یەک پیتی گەورە، یەک ژمارە و یەک سیمبوول(هێما)
+                  </p>
                 </div>
-                
-                {/* Phone Number */}
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ژمارەی مۆبایل <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ژمارەی مۆبایل <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <Phone size={18} className="text-gray-400" />
@@ -311,18 +468,18 @@ export default function AddEmployeePage() {
                     <input
                       type="text"
                       name="phoneNumber"
-                      value={formData.phoneNumber}
+                      value={(formData.phoneNumber)}
                       onChange={handleInputChange}
-                      className={`pr-10 pl-4 py-2 w-full border ${formErrors.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                      placeholder="0770-123-4567"
+                      className={`pr-10 pl-4 py-2.5 w-full border ${formErrors.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                      placeholder="07701234567"
+                      maxLength={11}
                     />
                   </div>
                   {formErrors.phoneNumber && <p className="mt-1 text-sm text-red-500">{formErrors.phoneNumber}</p>}
                 </div>
-                
-                {/* Secondary Phone */}
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ژمارەی مۆبایلی دووەم</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ژمارەی مۆبایلی دووەم</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <Phone size={18} className="text-gray-400" />
@@ -330,25 +487,24 @@ export default function AddEmployeePage() {
                     <input
                       type="text"
                       name="secondaryNumber"
-                      value={formData.secondaryNumber}
+                      value={(formData.secondaryNumber)}
                       onChange={handleInputChange}
-                      className={`pr-10 pl-4 py-2 w-full border ${formErrors.secondaryNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                      placeholder="0770-123-4567"
+                      className={`pr-10 pl-4 py-2.5 w-full border ${formErrors.secondaryNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                      placeholder="07701234567"
+                      maxLength={11}
                     />
                   </div>
                   {formErrors.secondaryNumber && <p className="mt-1 text-sm text-red-500">{formErrors.secondaryNumber}</p>}
                 </div>
               </div>
             </div>
-            
-            {/* Employment Information Section */}
+
             <div className="pt-4">
-              <h3 className="text-lg font-semibold text-gray-700 bg-gray-50 p-2 rounded mb-6">زانیاری کارکردن</h3>
-              
+              <h3 className="text-lg font-semibold text-gray-700 bg-blue-50 p-3 rounded-lg mb-6">زانیاری کارکردن</h3>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Role */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">پلە <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">پلە <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <Briefcase size={18} className="text-gray-400" />
@@ -357,7 +513,7 @@ export default function AddEmployeePage() {
                       name="role"
                       value={formData.role}
                       onChange={handleInputChange}
-                      className={`pr-10 pl-4 py-2 w-full border ${formErrors.role ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      className={`pr-10 pl-4 py-2.5 w-full border ${formErrors.role ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                     >
                       <option value="کارمەند">کارمەند</option>
                       <option value="بەڕێوەبەر">بەڕێوەبەر</option>
@@ -369,10 +525,9 @@ export default function AddEmployeePage() {
                   </div>
                   {formErrors.role && <p className="mt-1 text-sm text-red-500">{formErrors.role}</p>}
                 </div>
-                
-                {/* Start Working Date */}
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">بەرواری دەستبەکاربوون <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">بەرواری دەستبەکاربوون <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <Calendar size={18} className="text-gray-400" />
@@ -382,15 +537,15 @@ export default function AddEmployeePage() {
                       name="startWorkingDate"
                       value={formData.startWorkingDate}
                       onChange={handleInputChange}
-                      className={`pr-10 pl-4 py-2 w-full border ${formErrors.startWorkingDate ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      max={new Date().toISOString().split('T')[0]}
+                      className={`pr-10 pl-4 py-2.5 w-full border ${formErrors.startWorkingDate ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                     />
                   </div>
                   {formErrors.startWorkingDate && <p className="mt-1 text-sm text-red-500">{formErrors.startWorkingDate}</p>}
                 </div>
-                
-                {/* Salary */}
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">مووچە <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">مووچە <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <DollarSign size={18} className="text-gray-400" />
@@ -400,7 +555,7 @@ export default function AddEmployeePage() {
                       name="salary"
                       value={formData.salary}
                       onChange={handleInputChange}
-                      className={`pr-10 pl-4 py-2 w-full border ${formErrors.salary ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      className={`pr-10 pl-4 py-2.5 w-full border ${formErrors.salary ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                       placeholder="500000"
                       min="0"
                       step="1000"
@@ -410,12 +565,11 @@ export default function AddEmployeePage() {
                 </div>
               </div>
             </div>
-            
-            {/* Submit Button */}
+
             <div className="pt-6 border-t mt-8">
               <button
                 type="submit"
-                className="w-full bg-gradient-to-l from-blue-600 to-indigo-700 text-white py-3 rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors flex items-center justify-center"
+                className="w-full bg-gradient-to-l from-blue-600 to-indigo-700 text-white py-3 rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-colors flex items-center justify-center shadow-md hover:shadow-lg"
               >
                 <Save size={18} className="ml-2" />
                 تۆمارکردنی کارمەندی نوێ
@@ -425,29 +579,27 @@ export default function AddEmployeePage() {
         </div>
       </main>
 
-      {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+        <div className="fixed inset-0 backdrop-blur-xs bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-gray-200">
             <div className="bg-gradient-to-l from-green-500 to-emerald-600 p-6 text-white">
               <h2 className="text-xl font-bold">سەرکەوتوو بوو!</h2>
               <p className="mt-1">کارمەندی نوێ بە سەرکەوتوویی زیاد کرا.</p>
             </div>
-            
+
             <div className="p-6 space-y-4">
-              
-              <div className="flex flex-col space-y-2">
+              <div className="flex flex-col space-y-3">
                 <button
                   onClick={handleAddAnother}
-                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  className="bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center shadow hover:shadow-md"
                 >
-                  <Plus size={18} className="ml-2" />
                   زیادکردنی کارمەندێکی تر
+                  <Plus size={18} />
                 </button>
-                
+
                 <button
                   onClick={handleReturnToOverview}
-                  className="bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center"
+                  className="bg-gray-100 text-gray-800 py-2.5 px-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center border border-gray-200 hover:border-gray-300"
                 >
                   <ArrowRight size={18} className="ml-2" />
                   گەڕانەوە بۆ سەرەتا
