@@ -20,13 +20,16 @@ import {
   ShieldCheck,
   X,
   RefreshCw,
-  LockIcon
+  LockIcon,
+  AlertTriangle
 } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/layout/Nav';
 import EditMemberModal from '../components/ui/EditMemberModal';
+import { useNavigate } from 'react-router-dom';
 
 export default function MembershipCheck() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchType, setSearchType] = useState('id');
   const [searchResult, setSearchResult] = useState(null);
@@ -42,6 +45,17 @@ export default function MembershipCheck() {
     startDate: new Date().toISOString().split('T')[0],
     endDate: ''
   });
+  const [showPoolEntryModal, setShowPoolEntryModal] = useState(false);
+  const [dateTime, setDateTime] = useState(() => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset();
+    const localDate = new Date(now.getTime() - offset * 60000);
+    return localDate.toISOString().slice(0, 16);
+  });
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const openModal = () => setIsOpen(true);
+  const closeModal = () => setIsOpen(false);
 
   const [plans, setPlans] = useState({
     gym: {},
@@ -83,18 +97,18 @@ export default function MembershipCheck() {
 
         setPlans(prices);
       } catch (error) {
-        console.error("Error fetching plans:", error);
+        alert('هەڵەیەک ڕوویدا');
       }
     };
 
     getPlans();
   }, []);
 
-  if (!plans) return <p>... loading</p>; 
+  if (!plans) return <p>... loading</p>;
 
   useEffect(() => {
     if (renewalData?.membership && renewalData?.accessLevel && plans) {
-      const accessLevelKey = renewalData.accessLevel; 
+      const accessLevelKey = renewalData.accessLevel;
       if (accessLevelKey && plans[accessLevelKey]) {
         const price = plans[accessLevelKey][renewalData.membership] || 0;
         setCalculatedPrice(price);
@@ -112,26 +126,6 @@ export default function MembershipCheck() {
       endDate: calculateEndDate(prev.startDate, prev.membership)
     }));
   }, []);
-
-  const members = [
-    {
-      id: '1',
-      name: "سارا ئەحمەد",
-      phone: "0770-123-4567",
-      emergencyPhone: "0750-111-2222",
-      membership: "مانگانە",
-      startDate: "2025-05-02",
-      endDate: "2025-06-02",
-      avatar: "https://randomuser.me/api/portraits/women/32.jpg",
-      status: "active",
-      gender: "مێ",
-      accessLevel: "ئەندام",
-      createdAt: "2025-02-10",
-      updatedAt: "2025-02-10",
-      height: "165cm",
-      weight: "62kg"
-    }
-  ];
 
   const validateForm = () => {
     const errors = {};
@@ -182,7 +176,6 @@ export default function MembershipCheck() {
         setError('');
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
       setError('هیچ ئەندامێک بەم زانیاریە نەدۆزرایەوە');
       setSearchResult(null);
       setIsLoading(false);
@@ -211,10 +204,8 @@ export default function MembershipCheck() {
   };
 
   const handleOpenRenewalModal = () => {
-    // Get the membership type from search result and map it to a valid value
-    let membershipType = '1 مانگ'; // Default value
-    
-    // Map from the search result's membership to the dropdown value
+    let membershipType = '1 مانگ';
+
     if (searchResult.membership_title === 'پلانی مانگی') {
       membershipType = '1 مانگ';
     } else if (searchResult.membership_title === 'پلانی سێ مانگ') {
@@ -224,12 +215,11 @@ export default function MembershipCheck() {
     } else if (searchResult.membership_title === 'پلانی ساڵانە') {
       membershipType = 'ساڵانە';
     }
-    
+
     const startDate = new Date().toISOString().split('T')[0];
     const endDate = calculateEndDate(startDate, membershipType);
-    
-    // Map the type from searchResult to the correct accessLevel value
-    let accessLevel = 'gym'; // default
+
+    let accessLevel = 'gym';
     if (searchResult.type === 'مەلەوانگە') {
       accessLevel = 'pool';
     } else if (searchResult.type === 'مەلەوانگە و هۆلی وەرزشی') {
@@ -306,10 +296,6 @@ export default function MembershipCheck() {
         membership_title = 'پلانی ساڵانە';
       }
 
-      console.log("Renewal data:", renewalData);
-      console.log("Membership title:", membership_title);
-      console.log("Type:", type);
-
       if (!membership_title) {
         alert('خشتەی ئەندامێتی دیاری نەکراوە');
         return;
@@ -332,15 +318,14 @@ export default function MembershipCheck() {
       if (res.status === 200) {
         alert('ئەندامێتی بە سەرکەوتوویی نوێ کرایەوە');
         setShowRenewalModal(false);
-        
-        // Fetch the updated member data from the server
+
         let url = `http://localhost:3000/members/getspecifiedmember?`
         if (searchType === 'id') {
           url += `m_id=${searchTerm}`
         } else {
           url += `m_phone=${searchTerm}`
         }
-        
+
         const updatedMemberRes = await axios.get(url);
         if (updatedMemberRes.status === 200) {
           setSearchResult(updatedMemberRes.data.result[0]);
@@ -349,7 +334,6 @@ export default function MembershipCheck() {
         alert('an error happend');
       }
     } catch (error) {
-      console.error('Error renewing membership:', error);
       alert('هەڵەیەک هەڵەیەکی بە سەرکەوتوویی بەسەرچووە');
     }
   };
@@ -360,6 +344,47 @@ export default function MembershipCheck() {
 
   const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
+  const confirmPoolEntry = async () => {
+    try {
+      const res = await axios.post(`http://localhost:3000/members/addmemberpool`, {
+        member_id: searchResult.m_id,
+        entery_date: dateTime,
+        member_plan_id: searchResult.amp_id,
+        remaining_pool_entries: searchResult.remaining_pool_entries
+      });
+
+      if (res.status === 200) {
+        alert('چوونە ژوورەوەی مەلەوانگە بە سەرکەوتوویی تۆمارکرا');
+        setShowPoolEntryModal(false);
+
+        const updatedRes = await axios.get(`http://localhost:3000/members/getspecifiedmember?m_id=${searchResult.m_id}`);
+        setSearchResult(updatedRes.data.result[0]);
+      }
+    } catch (error) {
+      alert('هەڵە ڕوویدا لە تۆمارکردنی چوونە ژوورەوە');
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+
+    try {
+      const res = await axios.delete(`http://localhost:3000/members/deletemember/${searchResult.m_id}`)
+
+      if (res.status === 200) {
+        alert('بەسەرکەوتوویی سڕایەوە');
+        navigate('/membership-check');
+      } else {
+        alert('هەڵە ڕوویدا لە سڕینەوە');
+      }
+    } catch (error) {
+      alert('هەڵە ڕوویدا لە سڕینەوە');
+    } finally {
+      setIsDeleting(false);
+      closeModal();
+    }
   };
 
   return (
@@ -455,7 +480,6 @@ export default function MembershipCheck() {
 
               <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
                 <div className="p-6">
-                  {/* Header Section */}
                   <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
                     <div>
                       <h2 className="text-2xl font-bold text-indigo-900">{searchResult.name}</h2>
@@ -467,17 +491,16 @@ export default function MembershipCheck() {
                       </div>
                       <button
                         onClick={handleOpenRenewalModal}
-                        className="px-4 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm"
+                        disabled={searchResult.remaining_days >= 1}
+                        className={`px-4 py-1 rounded-lg transition-colors flex items-center text-sm ${searchResult.remaining_days >= 1 ? 'bg-gray-200 text-gray-700 cursor-not-allowed' : 'bg-green-600 text-white cursor-pointer hover:bg-green-700'}`}
                       >
-                        <RefreshCw size={14} className="ml-2" />
                         نوێکردنەوە
+                        <RefreshCw size={14} className="mr-2" />
                       </button>
                     </div>
                   </div>
 
-                  {/* Main Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Personal Info Section */}
+                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${["مەلەوانگە", "مەلەوانگە و هۆلی وەرزشی"].includes(searchResult.type) ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
                     <div className="space-y-4">
                       <div className="bg-gray-50 p-4 rounded-lg h-full">
                         <h4 className="font-medium text-gray-700 mb-3 flex items-center">
@@ -560,10 +583,8 @@ export default function MembershipCheck() {
                       </div>
                     </div>
 
-                    {/*  Info Section */}
-                    {/* ${["مەلەوانگە", "مەلەوانگە و هۆلی وەرزشی"].includes(searchResult.type) ? "hidden" : ""} */}
-                    <div className={`space-y-4`}>
-                    <div className="bg-gray-50 p-4 rounded-lg h-full">
+                    <div className={`space-y-4 ${["مەلەوانگە", "مەلەوانگە و هۆلی وەرزشی"].includes(searchResult.type) ? "hidden" : ""}`}>
+                      <div className="bg-gray-50 p-4 rounded-lg h-full">
                         <div className="flex justify-between items-center mb-3">
                           <h4 className="font-medium text-gray-700 flex items-center">
                             <GlassWater size={16} className="ml-2" />
@@ -571,7 +592,7 @@ export default function MembershipCheck() {
                           </h4>
                           <div className="flex gap-2">
                             <button
-                              onClick={() => handleAddPoolEntry('free')}
+                              onClick={() => setShowPoolEntryModal(true)}
                               disabled={(searchResult.remaining_pool_entries == 0) || (searchResult.remaining_days <= 0)}
                               className={`px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 flex items-center ${(searchResult.remaining_pool_entries == 0) || (searchResult.remaining_days <= 0) ? 'bg-gray-400 cursor-not-allowed' : ''}`}
                             >
@@ -579,7 +600,6 @@ export default function MembershipCheck() {
                               <Plus size={12} className="mr-1" />
                             </button>
                             <button
-                              onClick={() => handleAddFreePool()}
                               className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 flex items-center"
                             >
                               مەلەی خۆرایی ئەندامێتی
@@ -625,20 +645,49 @@ export default function MembershipCheck() {
                               </p>
                             </div>
                           </div>
+
                           <div>
-                            <p className="text-xs text-gray-500">بەرواری چوونە ژوورەوەکان</p>
-                            <div className="bg-gray-100 p-2 rounded mt-1">
-                              <p className="font-medium text-sm break-words text-gray-700">
-                                {searchResult.pool_entry_dates || 'هیچ بەروارێک نییە'}
-                              </p>
+                            <p className="text-xs text-gray-500 mb-1">بەرواری چوونە ژوورەوەکان</p>
+                            <div className="bg-gray-100 p-3 rounded shadow-sm">
+                              {searchResult.pool_entry_dates ? (
+                                <div className="space-y-2 text-sm text-gray-700">
+                                  {searchResult.pool_entry_dates
+                                    .split(',')
+                                    .map(date => date.trim())
+                                    .map((date, index) => {
+                                      const formatted = new Date(date).toLocaleDateString('ku-IQ', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                      });
+                                      return { index: index + 1, date: formatted };
+                                    })
+                                    .reduce((rows, _item, index, arr) => {
+                                      if (index % 2 === 0) rows.push(arr.slice(index, index + 2));
+                                      return rows;
+                                    }, [])
+                                    .map((pair, rowIndex) => (
+                                      <div key={rowIndex} className="flex gap-4">
+                                        {pair.map(item => (
+                                          <div key={item.index} className="flex items-start gap-1">
+                                            <span className="font-semibold">{item.index}.</span>
+                                            <span>{item.date}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-400 text-sm">هیچ بەروارێک نییە</p>
+                              )}
                             </div>
                           </div>
+
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* System Info Section */}
                   <div className="mt-4 bg-gray-50 p-4 rounded-lg">
                     <h4 className="font-medium text-gray-700 mb-3 flex items-center">
                       <DatabaseIcon size={16} className="ml-2" />
@@ -661,14 +710,15 @@ export default function MembershipCheck() {
                       className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
                       onClick={() => setShowEditModal(true)}
                     >
-                      <Edit size={16} className="ml-2" />
                       گۆڕانکاری
+                      <Edit size={16} className="mr-2" />
                     </button>
                     <button
+                      onClick={openModal}
                       className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
                     >
-                      <Trash2 size={16} className="ml-2" />
                       سڕینەوە
+                      <Trash2 size={16} className="mr-2" />
                     </button>
                   </div>
                 </div>
@@ -731,7 +781,7 @@ export default function MembershipCheck() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">جۆری ئەندامێتی <span className="text-red-500">*</span></label>
                 <select
                   name="membership"
-                 value={renewalData.membership || "1 مانگ"}
+                  value={renewalData.membership || "1 مانگ"}
                   onChange={handleRenewalInputChange}
                   className={`pr-4 pl-4 py-2 w-full border ${formErrors.membership ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm`}
                 >
@@ -852,6 +902,125 @@ export default function MembershipCheck() {
           onUpdate={handleMemberUpdate}
         />
       )}
+
+      {showPoolEntryModal && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold">
+                  {searchResult.type !== "مەلەوانگە" || "مەلەوانگە و هۆلی وەرزشی" ? 'چوونە ژوورەوەی مەلەی خۆرایی' : 'چوونە ژوورەوەی مەلە'}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowPoolEntryModal(false);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <p className="mb-2">ئەندام: <span className="font-semibold">{searchResult.name}</span></p>
+                <p>ژمارەی ئەندامێتی: <span className="font-semibold">{searchResult.m_id}</span></p>
+                <p>ژمارەی پلانی ئەندامێتی: <span className="font-semibold">{searchResult.amp_id}</span></p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  بەرواری چوونەژورەوە
+                </label>
+                <input
+                  type="datetime-local"
+                  value={dateTime}
+                  onChange={(e) => setDateTime(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-4 py-2 text-lg"
+                />
+              </div>
+
+              <div className="flex justify-start gap-3">
+                <button
+                  onClick={confirmPoolEntry}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                >
+                  پەسەندکردن
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPoolEntryModal(false);
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                >
+                  هەڵوەشاندنەوە
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOpen && (
+        <div className="fixed inset-0 backdrop-blur-xs bg-opacity-50 z-10 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center">
+            <div
+              className="fixed inset-0 transition-opacity bg-opacity-75"
+              onClick={closeModal}
+            ></div>
+
+            <div className="relative z-20 w-full max-w-md p-6 mx-auto bg-white rounded-lg shadow-xl">
+              <div className="absolute top-0 left-0 pt-4 pl-4">
+                <button
+                  onClick={closeModal}
+                  className="text-gray-400 bg-white rounded-md hover:text-gray-500 focus:outline-none"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+
+              <div className="mt-3 text-center">
+                <h3 className="text-lg font-medium text-gray-900">ئایا دڵنیای لە سڕینەوەی ئەم ئەندامە</h3>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    ئایا دڵنیایت دەتەوێت <span className="font-bold">"{searchResult.name}"</span> بسڕیتەوە؟ ئەم کردارە ناتوانرێت پاشگەز بکرێتەوە.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3">
+                <button
+                  onClick={closeModal}
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                  هەڵوەشاندنەوە
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="w-4 h-4 ml-2 animate-spin" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      سڕینەوە...
+                    </span>
+                  ) : (
+                    'سڕینەوە'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

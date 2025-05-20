@@ -26,6 +26,7 @@ const get_specified_member = async (req, res) => {
                 mp.title AS membership_title,
                 mp.type,
                 mp.free_pool_entries,
+                amp.amp_id,
                 amp.start_date,
                 amp.end_date,
                 DATEDIFF(amp.end_date, CURDATE()) + 1 AS remaining_days,
@@ -46,13 +47,13 @@ const get_specified_member = async (req, res) => {
             JOIN membershipPlan mp ON amp.mp_id = mp.mp_id
             LEFT JOIN freePoolUsage fpu ON fpu.m_id = m.m_id AND fpu.amp_id = amp.amp_id`;
 
-        const groupBy = `
+    const groupBy = `
             GROUP BY 
                 m.m_id, m.name, m.gender, m.created_at,
                 m.last_updated, m.img, m.emergencyphoneNumber,
                 m.phoneNumber, m.height, m.weight,
                 mp.title, mp.type, mp.free_pool_entries,
-                amp.start_date, amp.end_date`;
+                 amp.amp_id,amp.start_date, amp.end_date`;
 
     try {
         let result;
@@ -70,7 +71,6 @@ const get_specified_member = async (req, res) => {
 
         return res.status(200).json({ result });
     } catch (error) {
-        console.error(error); 
         return res.status(500).json({ error: 'Internal server error' });
     }
 };

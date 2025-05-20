@@ -1,8 +1,6 @@
 const db = require("../../config/mysql/mysqlconfig");
 
 const update_membership = async (req, res) => {
-    console.log(1);
-    console.log(req.body);
     const { m_id } = req.params;
     const { membership_title, start_date, end_date , type } = req.body;
 
@@ -32,6 +30,10 @@ const update_membership = async (req, res) => {
         VALUES (?, ?, ?, ?)
     `;
 
+    const sql3 = `
+    update members set last_updated =? where m_id =?
+    `;
+
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
@@ -39,7 +41,6 @@ const update_membership = async (req, res) => {
         const [planResult] = await connection.query(sql1, [membership_title , type]);
 
         if (planResult.length === 0) {
-            console.log(`Membership plan not found`);
             await connection.rollback();
             connection.release();
             return res.status(404).json({ error: 'Membership plan not found' });
@@ -62,11 +63,18 @@ const update_membership = async (req, res) => {
             return res.status(500).json({ error: 'Failed to insert membership plan' });
         }
 
+        const [updateResult] = await connection.query(sql3, [new Date(), m_id]);
+
+        if (updateResult.affectedRows === 0) {
+            await connection.rollback();
+            connection.release();
+            return res.status(500).json({ error: 'Failed to update last_updated' });
+        }
+
         await connection.commit();
         connection.release();
         return res.status(200).json({ message: 'Membership updated successfully' });
     } catch (err) {
-        console.error(err);
         await connection.rollback();
         connection.release();
         return res.status(500).json({ error: 'Internal server error' });
