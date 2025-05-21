@@ -4,72 +4,36 @@ import {
   User,
   Calendar,
   CheckCircle,
-  XCircle,
-  DollarSign,
   Clock,
   CheckSquare,
   AlertCircle,
   Plus,
   Save,
   X,
-  Edit,
   Trash2,
-  PieChart
+  PieChart,
+  RefreshCw
 } from 'lucide-react';
 import Navbar from '../components/layout/Nav';
+import axios from 'axios';
 
 export default function SalaryPayments() {
   const [user, setUser] = useState({ name: "جۆن دۆ", role: "بەڕێوەبەر" });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [paymentRecords, setPaymentRecords] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [selectedRecord, setSelectedRecord] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [isPartialPayment, setIsPartialPayment] = useState(false);
   const [notes, setNotes] = useState('');
+  const [stats, setStatss] = useState([]);
+  const [unpaidemployees, setUnpaidemployees] = useState([]);
+  const [pair_or_partial_employees, setPair_or_partial_employees] = useState([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Mock employee data
-  const [employees, setEmployees] = useState([
-    {
-      id: 1,
-      fullName: "سارا ئەحمەد",
-      email: "sara@example.com",
-      phoneNumber: "0770-123-4567",
-      role: "ڕاهێنەر",
-      salary: 750000, // Stored as number for calculations
-      salaryDisplay: "750,000 د.ع",
-      avatar: "https://randomuser.me/api/portraits/women/32.jpg",
-      status: "active"
-    },
-    {
-      id: 2,
-      fullName: "ئاکۆ محەمەد",
-      email: "ako@example.com",
-      phoneNumber: "0771-234-5678",
-      role: "کارمەند",
-      salary: 500000,
-      salaryDisplay: "500,000 د.ع",
-      avatar: "https://randomuser.me/api/portraits/men/22.jpg",
-      status: "active"
-    },
-    {
-      id: 3,
-      fullName: "شیلان ڕەزا",
-      email: "shilan@example.com",
-      phoneNumber: "0772-345-6789",
-      role: "کارمەند",
-      salary: 450000,
-      salaryDisplay: "450,000 د.ع",
-      avatar: "https://randomuser.me/api/portraits/women/56.jpg",
-      status: "active"
-    }
-  ]);
-
-  // Generate years for dropdown
   const generateYears = () => {
     const currentYear = new Date().getFullYear();
     const years = [];
@@ -79,74 +43,44 @@ export default function SalaryPayments() {
     return years;
   };
 
-  // Month names in Kurdish
   const monthNames = [
     "کانوونی دووەم", "شوبات", "ئازار", "نیسان", "ئایار", "حوزەیران",
     "تەمموز", "ئاب", "ئەیلوول", "تشرینی یەکەم", "تشرینی دووەم", "کانوونی یەکەم"
   ];
 
-  // Fetch payment records when year/month changes
   useEffect(() => {
-    // Mock data with partial payment example
-    const mockRecords = [
-      {
-        id: `1-${selectedYear}-${selectedMonth}`,
-        employeeId: 1,
-        year: selectedYear,
-        month: selectedMonth,
-        status: 'paid',
-        paymentDate: new Date(selectedYear, selectedMonth, 15).toISOString(),
-        amount: 750000,
-        amountDisplay: "750,000 د.ع",
-        isPartial: false,
-        notes: 'تم الدفع كامل'
-      },
-      {
-        id: `2-${selectedYear}-${selectedMonth}`,
-        employeeId: 2,
-        year: selectedYear,
-        month: selectedMonth,
-        status: 'partial',
-        paymentDate: new Date(selectedYear, selectedMonth, 10).toISOString(),
-        amount: 250000,
-        amountDisplay: "250,000 د.ع",
-        isPartial: true,
-        notes: 'الدفع الجزئي الأول'
+    console.log(selectedMonth)
+  }, [selectedMonth])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      setIsLoading(true);
+      try {
+        const res = await axios.get(`http://localhost:3000/employees/getallemployeepaycheck?year=${selectedYear}&month=${selectedMonth}`)
+        setStatss(res.data.summary)
+        setUnpaidemployees(res.data.details.unpaid);
+        setPair_or_partial_employees(res.data.details.paid_or_partially_paid);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
       }
-    ];
+    }
+    fetchStats();
+  }, [selectedYear, selectedMonth, refreshTrigger]);
 
-    setPaymentRecords(mockRecords);
-  }, [selectedYear, selectedMonth]);
-
-  // Get employees who have payment records for the selected month/year
-  const employeesWithPayments = employees.filter(employee => {
-    return paymentRecords.some(record =>
-      record.employeeId === employee.id &&
-      record.year === selectedYear &&
-      record.month === selectedMonth
-    );
-  });
-
-  // Filter employees with payments based on search term
-  const filteredEmployees = employeesWithPayments.filter(employee => {
+  const filteredEmployees = pair_or_partial_employees.filter(employee => {
     return (
-      employee.id.toString().includes(searchTerm) ||
-      employee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.phoneNumber.includes(searchTerm)
+      employee.e_id.toString().includes(searchTerm) ||
+      employee.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
-  // Get employees without payment records
-  const employeesWithoutPayments = employees.filter(employee => {
-    return !paymentRecords.some(record =>
-      record.employeeId === employee.id &&
-      record.year === selectedYear &&
-      record.month === selectedMonth
-    );
-  });
-
-  // Get payment record for an employee
   const getPaymentRecord = (employeeId) => {
+    if (!Array.isArray(paymentRecords)) {
+      return { status: 'pending', paymentDate: null, amount: 0, amountDisplay: "0 د.ع" };
+    }
+
     return paymentRecords.find(
       record => record.employeeId === employeeId &&
         record.year === selectedYear &&
@@ -154,224 +88,94 @@ export default function SalaryPayments() {
     ) || { status: 'pending', paymentDate: null, amount: 0, amountDisplay: "0 د.ع" };
   };
 
-  const calculatePaymentStats = () => {
-    let stats = {
-      totalActiveEmployees: 0,
-      employeesPaid: 0,
-      employeesPartial: 0,
-      employeesUnpaid: 0,
-      totalSalaryShouldBePaid: 0,
-      totalAmountPaid: 0,
-      totalAmountPartialPaid: 0,
-      totalAmountRemaining: 0,
-      totalPartialRemaining: 0
-    };
+  const togglePaymentStatus = async (employeeId) => {
+    setIsLoading(true);
+    const employee = pair_or_partial_employees.find(e => e.e_id === employeeId);
+    if (!employee) return;
 
-    // Calculate for all active employees
-    employees.forEach(employee => {
-      if (employee.status !== 'active') return;
+    try {
+      const res = await axios.patch(`http://localhost:3000/employees/markfullpayment/${employee.e_id}/${employee.year}/${employee.month}`);
 
-      stats.totalActiveEmployees++;
-      stats.totalSalaryShouldBePaid += employee.salary;
-
-      const paymentRecord = paymentRecords.find(record =>
-        record.employeeId === employee.id &&
-        record.year === selectedYear &&
-        record.month === selectedMonth
-      );
-
-      if (!paymentRecord) {
-        // No payment record exists (completely unpaid)
-        stats.employeesUnpaid++;
-        stats.totalAmountRemaining += employee.salary;
-      } else {
-        if (paymentRecord.status === 'paid') {
-          // Fully paid
-          stats.employeesPaid++;
-          stats.totalAmountPaid += paymentRecord.amount;
-        } else if (paymentRecord.status === 'partial') {
-          // Partial payment
-          stats.employeesPartial++;
-          stats.totalAmountPartialPaid += paymentRecord.amount;
-          const remaining = employee.salary - paymentRecord.amount;
-          stats.totalPartialRemaining += remaining;
-          stats.totalAmountRemaining += remaining;
-        } else {
-          // Payment record exists but status is pending (unpaid)
-          stats.employeesUnpaid++;
-          stats.totalAmountRemaining += employee.salary;
-        }
+      if (res.status === 200) {
+        alert("payment marked as fully paid");
+        setRefreshTrigger(prev => prev + 1);
       }
-    });
-
-    return stats;
+    } catch (error) {
+      alert("error marking payment as fully paid");
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const paymentStats = calculatePaymentStats();
-
-  // Toggle payment status
-  const togglePaymentStatus = (employeeId, isPartial = false, partialAmount = 0) => {
-    setPaymentRecords(prev => {
-      const employee = employees.find(e => e.id === employeeId);
-      if (!employee) return prev;
-
-      // Find existing record if any
-      const existingRecord = prev.find(
-        record => record.employeeId === employeeId &&
-          record.year === selectedYear &&
-          record.month === selectedMonth
-      );
-
-      if (existingRecord) {
-        // Update existing record
-        return prev.map(record => {
-          if (record.id === existingRecord.id) {
-            if (isPartial) {
-              // Handle partial payment
-              return {
-                ...record,
-                status: 'partial',
-                amount: partialAmount,
-                amountDisplay: `${partialAmount.toLocaleString()} د.ع`,
-                paymentDate: new Date().toISOString(),
-                isPartial: true
-              };
-            } else {
-              // Toggle between paid/pending
-              const newStatus = record.status === 'paid' ? 'pending' : 'paid';
-              return {
-                ...record,
-                status: newStatus,
-                paymentDate: newStatus === 'paid' ? new Date().toISOString() : null,
-                amount: newStatus === 'paid' ? employee.salary : 0,
-                amountDisplay: newStatus === 'paid'
-                  ? `${employee.salary.toLocaleString()} د.ع`
-                  : "0 د.ع",
-                isPartial: false
-              };
-            }
-          }
-          return record;
-        });
-      } else {
-        // Create new record
-        const newRecord = {
-          id: `${employeeId}-${selectedYear}-${selectedMonth}-${Date.now()}`,
-          employeeId,
-          year: selectedYear,
-          month: selectedMonth,
-          status: isPartial ? 'partial' : 'paid',
-          paymentDate: new Date().toISOString(),
-          amount: isPartial ? partialAmount : employee.salary,
-          amountDisplay: isPartial
-            ? `${partialAmount.toLocaleString()} د.ع`
-            : `${employee.salary.toLocaleString()} د.ع`,
-          isPartial,
-          notes: ''
-        };
-        return [...prev, newRecord];
-      }
-    });
-  };
-
-  // Open edit modal
-  const openEditModal = (record) => {
-    const employee = employees.find(emp => emp.id === record.employeeId);
-    setSelectedRecord(record);
-    setSelectedEmployee(employee);
-    setPaymentAmount(record.amount.toString());
-    setIsPartialPayment(record.isPartial || false);
-    setNotes(record.notes || '');
-    setShowEditModal(true);
-  };
-
-  // Create a new payment record
-  const createPaymentRecord = () => {
+  const createPaymentRecord = async () => {
     if (!selectedEmployee) return;
-
+    setIsLoading(true);
     const amount = parseInt(paymentAmount) || selectedEmployee.salary;
 
-    const newRecord = {
-      id: `${selectedEmployee.id}-${selectedYear}-${selectedMonth}-${Date.now()}`,
-      employeeId: selectedEmployee.id,
+    //fix later
+    const formData = {
       year: selectedYear,
       month: selectedMonth,
-      status: isPartialPayment ? 'partial' : 'pending',
-      paymentDate: null,
-      amount: amount,
-      amountDisplay: amount.toLocaleString() + " د.ع",
+      paymentDate: new Date().toISOString().split('T')[0],
+      paid_amount: amount,
+      amount: selectedEmployee.amount_due,
       isPartial: isPartialPayment,
       notes: notes
     };
 
-    setPaymentRecords(prev => [...prev, newRecord]);
-    setShowAddModal(false);
-    resetForm();
-  };
+    try {
+      const res = await axios.post(`http://localhost:3000/employees/payingemployee/${selectedEmployee.e_id}`, formData)
 
-  // Update payment record
-  const updatePaymentRecord = () => {
-    if (!selectedRecord) return;
-
-    const amount = parseInt(paymentAmount) || selectedEmployee.salary;
-
-    setPaymentRecords(prev => {
-      return prev.map(record => {
-        if (record.id === selectedRecord.id) {
-          return {
-            ...record,
-            amount: amount,
-            amountDisplay: amount.toLocaleString() + " د.ع",
-            isPartial: isPartialPayment,
-            notes: notes,
-            status: isPartialPayment ? 'partial' : record.status
-          };
-        }
-        return record;
-      });
-    });
-
-    setShowEditModal(false);
-    resetForm();
-  };
-
-  // Delete payment record
-  const deletePaymentRecord = (recordId) => {
-    if (window.confirm('دڵنیای لە سڕینەوەی ئەم تۆمارە؟')) {
-      setPaymentRecords(prev => prev.filter(record => record.id !== recordId));
+      if (res.status === 200) {
+        setShowAddModal(false);
+        resetForm();
+        setRefreshTrigger(prev => prev + 1);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Reset form fields
+  const deletePaymentRecord = async (recordId) => {
+    const employee = pair_or_partial_employees.find(e => e.e_id === recordId);
+    if (window.confirm('دڵنیای لە سڕینەوەی ئەم تۆمارە؟')) {
+      setIsLoading(true);
+      try {
+        const res = await axios.delete(`http://localhost:3000/employees/deleteemployeepaycheck/${employee.ep_id}`);
+        if (res.status === 200) {
+          alert("payment record deleted");
+          setRefreshTrigger(prev => prev + 1);
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
   const resetForm = () => {
     setSelectedEmployee(null);
-    setSelectedRecord(null);
     setPaymentAmount('');
     setIsPartialPayment(false);
     setNotes('');
   };
 
-  // Format date for display
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('ku-IQ', options);
-  };
-
-  // Get payment status badge
   const getPaymentStatusBadge = (status, employeeId) => {
-    const employee = employees.find(e => e.id === employeeId);
-    const record = getPaymentRecord(employeeId);
+    const employee = filteredEmployees.find(e => e.e_id === employeeId);
 
     switch (status) {
-      case 'paid':
+      case 'Fully Paid':
         return (
           <span className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle size={14} className="ml-1" />
             پێدراوە
           </span>
         );
-      case 'partial':
+      case 'Partially Paid':
         return (
           <div className="flex flex-col space-y-1">
             <span className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
@@ -379,7 +183,7 @@ export default function SalaryPayments() {
               بەشێکی پێدراوە
             </span>
             <span className="text-xs text-gray-500">
-              ماوە: {(employee.salary - record.amount).toLocaleString()} د.ع
+              ماوە: {(employee.amount_due / 1).toLocaleString()} د.ع
             </span>
           </div>
         );
@@ -395,10 +199,8 @@ export default function SalaryPayments() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
-      {/* Header */}
       <Navbar />
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -416,117 +218,113 @@ export default function SalaryPayments() {
                 <Search size={18} className="absolute right-3 top-2.5 text-gray-400" />
               </div>
 
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <div className="flex items-center">
-                  <Calendar size={18} className="text-gray-500 ml-2" />
-                  <select
-                    className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  >
-                    {generateYears().map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="flex items-center space-x-2">
+                <select
+                  className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                >
+                  {generateYears().map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+                <Calendar size={18} className={`text-gray-500`} />
 
-                <div className="flex items-center">
-                  <Calendar size={18} className="text-gray-500 ml-2" />
-                  <select
-                    className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                  >
-                    {monthNames.map((month, index) => (
-                      <option key={index} value={index}>{month}</option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                >
+                  {monthNames.map((month, index) => (
+                    <option key={index + 1} value={index + 1}>{month}</option>
+                  ))}
+                </select>
+                <Calendar size={18} className={`text-gray-500`} />
               </div>
             </div>
           </div>
 
-          {/* Add Payment Record Button */}
+          {isLoading && (
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-6 flex items-center justify-center">
+              <RefreshCw size={20} className="animate-spin text-blue-500 mr-2" />
+              <span>چاوەڕوان بە...</span>
+            </div>
+          )}
+
           <div className="mb-6">
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex items-center px-2 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              <Plus size={16} className="ml-2" />
               زیادکردنی تۆماری مووچە
+              <Plus size={16} className="mr-2" />
             </button>
           </div>
 
-          {/* Updated Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-            {/* Total Active Employees */}
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">کارمەندانی چالاک</p>
                   <p className="text-2xl font-bold text-blue-700">
-                    {paymentStats.totalActiveEmployees}
+                    {stats.total_employees_count}
                   </p>
                 </div>
                 <User size={24} className="text-blue-400" />
               </div>
             </div>
 
-            {/* Total Should Be Paid */}
             <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">کۆی مووچەی گونجاو</p>
                   <p className="text-2xl font-bold text-purple-700">
-                    {paymentStats.totalSalaryShouldBePaid.toLocaleString()} د.ع
+                    {(stats?.total_salary_amount / 1)?.toLocaleString()} د.ع
                   </p>
                 </div>
                 <PieChart size={24} className="text-purple-400" />
               </div>
             </div>
 
-            {/* Total Paid */}
             <div className="bg-green-50 p-4 rounded-lg border border-green-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">کۆی مووچەی پێدراو</p>
                   <p className="text-2xl font-bold text-green-700">
-                    {paymentStats.totalAmountPaid.toLocaleString()} د.ع
+                    {(stats?.total_paid_amount / 1)?.toLocaleString()} د.ع
                   </p>
                   <p className="text-xs text-gray-500">
-                    {paymentStats.employeesPaid} کارمەند
+                    {stats.paid_employees_count} کارمەند
                   </p>
                 </div>
                 <CheckCircle size={24} className="text-green-400" />
               </div>
             </div>
 
-            {/* Partial Payments */}
             <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">بەشێکی پێدراو</p>
                   <p className="text-2xl font-bold text-yellow-700">
-                    {paymentStats.totalAmountPartialPaid.toLocaleString()} د.ع
+                    {(stats.partially_paid_amount / 1)?.toLocaleString()} د.ع
                   </p>
                   <p className="text-xs text-gray-500">
-                    {paymentStats.employeesPartial} کارمەند | ماوە: {paymentStats.totalPartialRemaining.toLocaleString()} د.ع
+                    {stats.partially_paid_count} کارمەند
                   </p>
                 </div>
                 <AlertCircle size={24} className="text-yellow-400" />
               </div>
             </div>
 
-            {/* Total Remaining */}
             <div className="bg-red-50 p-4 rounded-lg border border-red-100">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">کۆی مووچەی ماوە</p>
                   <p className="text-2xl font-bold text-red-700">
-                    {paymentStats.totalAmountRemaining.toLocaleString()} د.ع
+                    {(stats.unpaid_salary_amount / 1)?.toLocaleString()} د.ع
                   </p>
                   <p className="text-xs text-gray-500">
-                    {paymentStats.employeesUnpaid} کارمەند
+                    {stats.unpaid_employees_count} کارمەند
                   </p>
                 </div>
                 <Clock size={24} className="text-red-400" />
@@ -534,7 +332,6 @@ export default function SalaryPayments() {
             </div>
           </div>
 
-          {/* Detailed Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
               <h3 className="font-medium text-gray-700 mb-2">ڕێژەی پێدان</h3>
@@ -543,16 +340,16 @@ export default function SalaryPayments() {
                   <div
                     className="bg-green-600 h-2.5 rounded-full"
                     style={{
-                      width: `${(paymentStats.totalAmountPaid / paymentStats.totalSalaryShouldBePaid * 100) || 0}%`
+                      width: `${(stats.total_paid_amount / stats.total_salary_amount * 100) || 0}%`
                     }}
                   ></div>
                 </div>
                 <span className="text-sm font-medium text-gray-700 ml-2">
-                  {Math.round((paymentStats.totalAmountPaid / paymentStats.totalSalaryShouldBePaid * 100) || 0)}%
+                  {Math.round((stats.total_paid_amount / stats.total_salary_amount * 100) || 0)}%
                 </span>
               </div>
               <div className="mt-2 text-sm text-gray-500">
-                {paymentStats.employeesPaid} کارمەند پێدراوە
+                {stats.paid_employees_count} کارمەند پێدراوە
               </div>
             </div>
 
@@ -563,41 +360,40 @@ export default function SalaryPayments() {
                   <div
                     className="bg-yellow-500 h-2.5 rounded-full"
                     style={{
-                      width: `${(paymentStats.totalAmountPartial / paymentStats.totalSalaryShouldBePaid * 100) || 0}%`
+                      width: `${((stats.partially_paid_amount / stats.total_salary_amount) * 100) || 0}%`
                     }}
                   ></div>
                 </div>
                 <span className="text-sm font-medium text-gray-700 ml-2">
-                  {Math.round((paymentStats.totalAmountPartial / paymentStats.totalSalaryShouldBePaid * 100) || 0)}%
+                  {Math.round(((stats.partially_paid_amount / stats.total_salary_amount) * 100) || 0)}%
                 </span>
               </div>
               <div className="mt-2 text-sm text-gray-500">
-                {paymentStats.employeesPartial} کارمەند بەشێکی پێدراوە
+                {stats.partially_paid_count} کارمەند بەشێکی پێدراوە
               </div>
             </div>
 
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-              <h3 className="font-medium text-gray-700 mb-2">ڕێژەی چاوەڕوانکراو</h3>
+              <h3 className="font-medium text-gray-700 mb-2">ڕێژەی مووچەی ماوە</h3>
               <div className="flex items-center justify-between">
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
                     className="bg-red-500 h-2.5 rounded-full"
                     style={{
-                      width: `${(paymentStats.totalAmountPending / paymentStats.totalSalaryShouldBePaid * 100) || 0}%`
+                      width: `${((stats.unpaid_employees_count / stats.total_employees_count) * 100) || 0}%`
                     }}
                   ></div>
                 </div>
                 <span className="text-sm font-medium text-gray-700 ml-2">
-                  {Math.round((paymentStats.totalAmountPending / paymentStats.totalSalaryShouldBePaid * 100) || 0)}%
+                  {Math.round((stats.unpaid_employees_count / stats.total_employees_count) * 100) || 0}%
                 </span>
               </div>
               <div className="mt-2 text-sm text-gray-500">
-                {paymentStats.employeesPending} کارمەند چاوەڕوانکراو
+                {stats.unpaid_employees_count} کارمەند مووچەیان ماوە
               </div>
             </div>
           </div>
 
-          {/* Employees Table */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -614,25 +410,24 @@ export default function SalaryPayments() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredEmployees.map(employee => {
-                  const paymentRecord = getPaymentRecord(employee.id);
-                  const remainingAmount = employee.salary - (paymentRecord.amount || 0);
+                  const paymentRecord = getPaymentRecord(employee?.e_id);
 
                   return (
-                    <tr key={`${employee.id}-${paymentRecord.id}`} className="hover:bg-gray-50">
+                    <tr key={`${employee.e_id}-${paymentRecord.e_id}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        #{employee.id}
+                        #{employee.e_id}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
                             <img
                               className="h-10 w-10 rounded-full object-cover"
-                              src={employee.avatar}
-                              alt={employee.fullName}
+                              src={employee.img}
+                              alt={employee.name}
                             />
                           </div>
                           <div className="mr-4">
-                            <div className="text-sm font-medium text-gray-900">{employee.fullName}</div>
+                            <div className="text-sm font-medium text-gray-900">{employee.name}</div>
                             <div className="text-sm text-gray-500">{employee.phoneNumber}</div>
                           </div>
                         </div>
@@ -641,36 +436,32 @@ export default function SalaryPayments() {
                         {employee.role}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {employee.salaryDisplay}
+                        {(employee.salary / 1).toLocaleString()} د.ع
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {paymentRecord.amountDisplay || "0 د.ع"}
-                        {paymentRecord.isPartial && (
+                        {((employee.paid_amount / 1).toLocaleString() + " د.ع") || "0 د.ع"}
+                        {!employee.has_paid_full && (
                           <span className="text-xs text-yellow-600 block">
-                            ماوە: {remainingAmount.toLocaleString()} د.ع
+                            ماوە: {(employee.amount_due / 1).toLocaleString()} د.ع
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(paymentRecord.paymentDate)}
+                        {new Date(employee.paid_date).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'numeric',
+                          year: 'numeric',
+                        })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
-                        {paymentRecord.notes || '-'}
+                        {employee.note || '-'}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-center space-x-2 space-x-reverse">
                         <div className="flex items-center justify-center space-x-2 space-x-reverse">
-                          {getPaymentStatusBadge(paymentRecord.status, employee.id)}
-
+                          {getPaymentStatusBadge(employee.payment_status, employee.e_id)}
                           <button
-                            onClick={() => openEditModal(paymentRecord)}
-                            className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-50"
-                            title="دەستکاری"
-                          >
-                            <Edit size={16} />
-                          </button>
-
-                          <button
-                            onClick={() => deletePaymentRecord(paymentRecord.id)}
+                            onClick={() => deletePaymentRecord(employee.e_id)}
                             className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50"
                             title="سڕینەوە"
                           >
@@ -678,10 +469,10 @@ export default function SalaryPayments() {
                           </button>
                         </div>
 
-                        {paymentRecord.status !== 'paid' && (
+                        {employee.payment_status !== 'Fully Paid' && (
                           <div className="mt-2 flex justify-center">
                             <button
-                              onClick={() => togglePaymentStatus(employee.id)}
+                              onClick={() => togglePaymentStatus(employee.e_id)}
                               className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
                             >
                               <CheckSquare size={14} className="ml-1" />
@@ -697,7 +488,6 @@ export default function SalaryPayments() {
             </table>
           </div>
 
-          {/* No Results */}
           {filteredEmployees.length === 0 && (
             <div className="text-center py-10">
               <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
@@ -708,9 +498,8 @@ export default function SalaryPayments() {
         </div>
       </main>
 
-      {/* Add Payment Record Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">زیادکردنی تۆماری مووچە</h3>
@@ -729,18 +518,18 @@ export default function SalaryPayments() {
               <label className="block text-sm font-medium text-gray-700 mb-1">کارمەند</label>
               <select
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={selectedEmployee ? selectedEmployee.id : ''}
+                value={selectedEmployee ? selectedEmployee.e_id : ''}
                 onChange={(e) => {
                   const employeeId = parseInt(e.target.value);
-                  const employee = employees.find(emp => emp.id === employeeId);
+                  const employee = unpaidemployees.find(emp => emp.e_id === employeeId);
                   setSelectedEmployee(employee);
                   setPaymentAmount(employee ? employee.salary.toString() : '');
                 }}
               >
                 <option value="">کارمەندێک هەڵبژێرە</option>
-                {employeesWithoutPayments.map(employee => (
-                  <option key={employee.id} value={employee.id}>
-                    {employee.fullName} - {employee.role}
+                {unpaidemployees.map(employee => (
+                  <option key={employee.e_id} value={employee.e_id}>
+                    {employee.name} - {employee.role}
                   </option>
                 ))}
               </select>
@@ -760,7 +549,7 @@ export default function SalaryPayments() {
               </div>
               {selectedEmployee && (
                 <p className="text-xs text-gray-500 mt-1">
-                  مووچەی گونجاو: {selectedEmployee.salaryDisplay}
+                  مووچەی گونجاو: {(selectedEmployee.salary / 1)?.toLocaleString()} د.ع
                 </p>
               )}
             </div>
@@ -788,7 +577,15 @@ export default function SalaryPayments() {
               />
             </div>
 
-            <div className="flex justify-end space-x-2 space-x-reverse">
+            <div className="flex justify-start gap-2">
+              <button
+                onClick={createPaymentRecord}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
+                disabled={!selectedEmployee}
+              >
+                پاشەکەوتکردن
+                <Save size={16} className="mr-1" />
+              </button>
               <button
                 onClick={() => {
                   setShowAddModal(false);
@@ -797,109 +594,6 @@ export default function SalaryPayments() {
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >
                 هەڵوەشاندنەوە
-              </button>
-              <button
-                onClick={createPaymentRecord}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
-                disabled={!selectedEmployee}
-              >
-                <Save size={16} className="ml-1" />
-                پاشەکەوتکردن
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Payment Record Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">دەستکاری تۆماری مووچە</h3>
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  resetForm();
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">کارمەند</label>
-              <div className="p-2 bg-gray-100 rounded-md">
-                <div className="flex items-center">
-                  <img
-                    className="h-10 w-10 rounded-full object-cover"
-                    src={selectedEmployee?.avatar}
-                    alt={selectedEmployee?.fullName}
-                  />
-                  <div className="mr-4">
-                    <div className="text-sm font-medium text-gray-900">{selectedEmployee?.fullName}</div>
-                    <div className="text-sm text-gray-500">
-                      {selectedEmployee?.role} - {selectedEmployee?.salaryDisplay}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">بڕی مووچە</label>
-              <div className="relative">
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                  placeholder="بڕی مووچە بنووسە"
-                />
-                <span className="absolute right-3 top-2 text-gray-500">د.ع</span>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="flex items-center space-x-2 space-x-reverse">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  checked={isPartialPayment}
-                  onChange={(e) => setIsPartialPayment(e.target.checked)}
-                />
-                <span className="text-sm text-gray-700">ئەمە مووچەی بەشێکیە</span>
-              </label>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">تێبینی</label>
-              <textarea
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={3}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="تێبینی بنووسە (ئارەزوومەندە)"
-              />
-            </div>
-
-            <div className="flex justify-end space-x-2 space-x-reverse">
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  resetForm();
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                هەڵوەشاندنەوە
-              </button>
-              <button
-                onClick={updatePaymentRecord}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
-              >
-                <Save size={16} className="ml-1" />
-                نوێکردنەوەی تۆمار
               </button>
             </div>
           </div>

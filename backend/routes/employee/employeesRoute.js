@@ -10,16 +10,16 @@ const delete_employee_paycheck = require("../../controllers/employee/delete_empl
 const mark_full_payment = require("../../controllers/employee/mark_full_payment");
 const upload = require('../../middleware/uploadMiddleware');
 
-router.get("/getallemployee", getAllEmployee);
-router.get("/getallemployeepaycheck", get_all_employee_paycheck);
+router.get("/getallemployee", getAllEmployee);//
+router.get("/getallemployeepaycheck", get_all_employee_paycheck);//
 
-router.post("/addemployee", upload.single('profileImage'), add_new_employee);
-router.post("/payingemployee/:e_id", paying_employee);
+router.post("/addemployee", upload.single('profileImage'), add_new_employee);//
+router.post("/payingemployee/:e_id", paying_employee);//
 
-router.patch("/markfullpayment/:e_id/:year/:month", mark_full_payment);
-router.patch("/updateemployee/:e_id", upload.single('img'), update_employee_info);
+router.patch("/markfullpayment/:e_id/:year/:month", mark_full_payment);//
+router.patch("/updateemployee/:e_id", upload.single('img'), update_employee_info);//
 
-router.delete("/deleteemployee/:e_id", delete_employee);
+router.delete("/deleteemployee/:e_id", delete_employee);//
 router.delete("/deleteemployeepaycheck/:ep_id", delete_employee_paycheck);
 
 module.exports = router;

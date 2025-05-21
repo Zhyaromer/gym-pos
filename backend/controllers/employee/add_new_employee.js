@@ -48,8 +48,6 @@ const add_new_employee = async (req, res) => {
 
     if (req.file) {
         const uploadsDir = path.join(__dirname, '../../imgs/employees');
-        console.log(`uploadsDir`);
-        console.log(uploadsDir);
         if (!fs.existsSync(uploadsDir)) {
             fs.mkdirSync(uploadsDir, { recursive: true });
         }
@@ -101,7 +99,6 @@ const add_new_employee = async (req, res) => {
             return res.status(400).json({ message: "Failed to add employee" });
         }
     } catch (err)  {
-        console.log(err);
         return res.status(500).json({ message: "Internal server error, please try again" });
     }
 };

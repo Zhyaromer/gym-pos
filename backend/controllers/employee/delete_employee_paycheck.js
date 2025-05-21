@@ -27,7 +27,6 @@ const delete_employee_paycheck = async (req, res) => {
         await connection.commit();
         return res.status(200).json({ message: 'Employee paycheck deleted successfully' });
     } catch (err) {
-        console.error(err);
         await connection.rollback();
         return res.status(500).json({ error: 'Internal server error' });
     } finally {

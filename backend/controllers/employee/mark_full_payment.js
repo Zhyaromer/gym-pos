@@ -70,7 +70,6 @@ const mark_full_payment = async (req, res) => {
         await connection.commit();
         return res.status(200).json({ message: 'Employee payment marked as full paid successfully' });
     } catch (error) {
-        console.error('Error marking employee payment as full paid:', error);
         connection.rollback();
         return res.status(500).json({ message: 'Internal Server Error', error: error.message });
     } finally {

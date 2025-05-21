@@ -16,7 +16,6 @@ const delete_employee = async (req, res) => {
 
         return res.status(200).json({ message: 'employee deleted successfully' });
     } catch (err) {
-        console.error(err);
         return res.status(500).json({ error: 'Internal server error' });
     }
 };

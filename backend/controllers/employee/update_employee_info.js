@@ -95,7 +95,6 @@ const update_employee_info = async (req, res) => {
             return res.status(400).json({ message: "Data update failed" });
         }
     } catch (error) {
-        console.error(error);
         return res.status(500).json({ message: "Internal error, please try again" });
     }
 };

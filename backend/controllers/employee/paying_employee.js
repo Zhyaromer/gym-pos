@@ -60,7 +60,6 @@ const paying_employee = async (req, res) => {
       return res.status(200).json({ message: "Payment processed successfully" });
    } catch (error) {
       await connection.rollback();
-      console.error("Payment processing error:", error);
       return res.status(500).json({ message: "Payment processing failed" });
    } finally {
       connection.release();
