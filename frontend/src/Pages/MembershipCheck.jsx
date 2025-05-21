@@ -26,6 +26,7 @@ import {
 import axios from 'axios';
 import Navbar from '../components/layout/Nav';
 import EditMemberModal from '../components/ui/EditMemberModal';
+import DeleteConfirmationModal from '../components/ui/DeleteConfirmationModal';
 import { useNavigate } from 'react-router-dom';
 
 export default function MembershipCheck() {

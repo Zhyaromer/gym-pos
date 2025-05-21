@@ -17,7 +17,7 @@ router.post("/addemployee", upload.single('profileImage'), add_new_employee);
 router.post("/payingemployee/:e_id", paying_employee);
 
 router.patch("/markfullpayment/:e_id/:year/:month", mark_full_payment);
-router.patch("/updateemployee/:e_id", update_employee_info);
+router.patch("/updateemployee/:e_id", upload.single('img'), update_employee_info);
 
 router.delete("/deleteemployee/:e_id", delete_employee);
 router.delete("/deleteemployeepaycheck/:ep_id", delete_employee_paycheck);

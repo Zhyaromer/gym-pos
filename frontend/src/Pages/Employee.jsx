@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Search,
   User,
@@ -8,8 +8,6 @@ import {
   Edit,
   Trash2,
   Eye,
-  CheckCircle,
-  XCircle,
   Filter,
   Save,
   X,
@@ -18,6 +16,8 @@ import {
   Cake
 } from 'lucide-react';
 import Navbar from '../components/layout/Nav';
+import axios from 'axios';
+import DeleteConfirmationModal from '../components/ui/DeleteConfirmationModal';
 
 export default function EmployeesPage() {
   const [user, setUser] = useState({ name: "جۆن دۆ", role: "بەڕێوەبەر" });
@@ -29,56 +29,27 @@ export default function EmployeesPage() {
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [filterRole, setFilterRole] = useState('all');
 
-  // Mock employee data
-  const [employees, setEmployees] = useState([
-    {
-      id: 1,
-      fullName: "سارا ئەحمەد",
-      email: "sara@example.com",
-      phoneNumber: "0770-123-4567",
-      secondaryNumber: "0750-111-2222",
-      gender: "مێ",
-      role: "ڕاهێنەر",
-      startWorkingDate: "2023-02-10",
-      salary: "750,000 د.ع",
-      address: "هەولێر، کەرەنتینا",
-      dateOfBirth: "1990-05-15",
-      avatar: "https://randomuser.me/api/portraits/women/32.jpg",
-      status: "active"
-    },
-    {
-      id: 2,
-      fullName: "ئاکۆ محەمەد",
-      email: "ako@example.com",
-      phoneNumber: "0771-234-5678",
-      secondaryNumber: "0750-222-3333",
-      gender: "نێر",
-      role: "کارمەند",
-      startWorkingDate: "2024-01-15",
-      salary: "500,000 د.ع",
-      address: "هەولێر، ئەنکاو",
-      dateOfBirth: "1995-08-22",
-      avatar: "https://randomuser.me/api/portraits/men/22.jpg",
-      status: "active"
-    },
-    {
-      id: 3,
-      fullName: "شیلان ڕەزا",
-      email: "shilan@example.com",
-      phoneNumber: "0772-345-6789",
-      secondaryNumber: "0750-333-4444",
-      gender: "مێ",
-      role: "کارمەند",
-      startWorkingDate: "2024-03-20",
-      salary: "450,000 د.ع",
-      address: "هەولێر، شەقڵاوە",
-      dateOfBirth: "1998-11-10",
-      avatar: "https://randomuser.me/api/portraits/women/56.jpg",
-      status: "inactive"
-    }
-  ]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [employees, setEmployees] = useState([]);
 
-  // Calculate age from date of birth
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await axios.get(`http://localhost:3000/employees/getallemployee`)
+
+        if (res.status == 200) {
+          setEmployees(res.data);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    fetchEmployees();
+  }, [])
+
   const calculateAge = (dateOfBirth) => {
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
@@ -92,7 +63,6 @@ export default function EmployeesPage() {
     return age;
   };
 
-  // Calculate years of service
   const calculateYearsOfService = (startDate) => {
     const today = new Date();
     const start = new Date(startDate);
@@ -106,65 +76,147 @@ export default function EmployeesPage() {
     return years;
   };
 
-  // Employees per page
-  const employeesPerPage = 5;
+  const employeesPerPage = 10;
 
-  // Filter employees based on search term and role
-  const filteredEmployees = employees.filter(employee => {
+  const filteredEmployees = employees?.filter(employee => {
+    if (!employee || typeof employee !== 'object') return false;
+
     const matchesSearch =
-      employee.id.toString().includes(searchTerm) ||
-      employee.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.phoneNumber.includes(searchTerm);
+      (employee.e_id ? employee.e_id.toString().includes(searchTerm) : false) ||
+      (employee.name ? employee.name.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+      (employee.phoneNumber ? employee.phoneNumber.includes(searchTerm) : false);
 
     const matchesRole =
       filterRole === 'all' ||
-      employee.role === filterRole;
+      (employee.role ? employee.role === filterRole : false);
 
     return matchesSearch && matchesRole;
   });
 
-  const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
+  const totalPages = Math.ceil(filteredEmployees?.length / employeesPerPage);
   const indexOfLastEmployee = currentPage * employeesPerPage;
   const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
-  const currentEmployees = filteredEmployees.slice(indexOfFirstEmployee, indexOfLastEmployee);
+  const currentEmployees = filteredEmployees?.slice(indexOfFirstEmployee, indexOfLastEmployee);
 
-  // View employee profile
   const viewEmployeeProfile = (employee) => {
     setSelectedEmployee(employee);
     setShowProfileModal(true);
   };
 
-  // Edit employee
   const editEmployee = (employee) => {
     setEditingEmployee({ ...employee });
     setShowEditModal(true);
   };
 
-  // Save edited employee
-  const saveEditedEmployee = () => {
-    setEmployees(employees.map(employee =>
-      employee.id === editingEmployee.id ? editingEmployee : employee
-    ));
-    setShowEditModal(false);
-    if (selectedEmployee && selectedEmployee.id === editingEmployee.id) {
-      setSelectedEmployee(editingEmployee);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+
+      setEditingEmployee({
+        ...editingEmployee,
+        img: URL.createObjectURL(file)
+      });
     }
   };
 
-  // Delete employee
-  const deleteEmployee = (id) => {
-    if (window.confirm('دڵنیایت کە دەتەوێت ئەم کارمەندە بسڕیتەوە؟')) {
-      setEmployees(employees.filter(employee => employee.id !== id));
+  const saveEditedEmployee = async () => {
+
+    if (!editingEmployee) return;
+
+    console.log(editingEmployee);
+
+    if (!editingEmployee.name || !editingEmployee.address || !editingEmployee.gender || !editingEmployee.date_of_birth ||
+      !editingEmployee.phoneNumber || !editingEmployee.email || !editingEmployee.salary || !editingEmployee.role) {
+      alert('all fields are required')
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('e_id', editingEmployee.e_id);
+      formData.append('name', editingEmployee.name);
+      formData.append('address', editingEmployee.address);
+      formData.append('gender', editingEmployee.gender);
+      formData.append('date_of_birth', editingEmployee.date_of_birth);
+      formData.append('phoneNumber', editingEmployee.phoneNumber);
+      formData.append('salary', editingEmployee.salary);
+      formData.append('role', editingEmployee.role);
+      formData.append('working_date', editingEmployee.working_date);
+      formData.append('email', editingEmployee.email);
+
+      if (editingEmployee.emergencyphoneNumber) {
+        formData.append('emergencyphoneNumber', editingEmployee.emergencyphoneNumber);
+      }
+
+      if (imageFile) {
+        formData.append('img', imageFile);
+      }
+
+      const res = await axios.patch(`http://localhost:3000/employees/updateemployee/${editingEmployee.e_id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      if (res.status == 200) {
+        alert('saved successfully')
+        setEmployees(employees?.map(employee =>
+          employee.e_id === editingEmployee.e_id ? editingEmployee : employee
+        ));
+        setShowEditModal(false);
+        if (selectedEmployee && selectedEmployee.e_id === editingEmployee.e_id) {
+          setSelectedEmployee(editingEmployee);
+        }
+
+        setImageFile(null);
+        setImagePreview(null);
+      }
+    } catch (error) {
+      console.error(error);
+
     }
   };
 
-  // Format date for display
+  const initiateDeleteEmployee = (employee) => {
+    setEmployeeToDelete(employee);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteEmployee = async () => {
+    if (!employeeToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await axios.delete(`http://localhost:3000/employees/deleteemployee/${employeeToDelete.e_id}`);
+
+      if (res.status === 200) {
+        setEmployees(employees?.filter(employee => employee.e_id !== employeeToDelete.e_id));
+        alert('کارمەند بە سەرکەوتوویی سڕایەوە');
+      }
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      alert('هەڵەیەک ڕوویدا لە کاتی سڕینەوەی کارمەند');
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setEmployeeToDelete(null);
+    }
+  };
+
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('ku-IQ', options);
   };
 
-  // Handle input change for editing
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditingEmployee({
@@ -174,8 +226,7 @@ export default function EmployeesPage() {
   };
 
   const calculateTotalMonthlySalary = () => {
-    return employees.reduce((total, employee) => {
-      // Extract numeric value from salary string (remove non-numeric characters)
+    return employees?.reduce((total, employee) => {
       const salaryValue = parseInt(employee.salary.replace(/[^0-9]/g, ''));
       return total + salaryValue;
     }, 0);
@@ -183,9 +234,8 @@ export default function EmployeesPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
-            <Navbar/>
+      <Navbar />
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -226,7 +276,7 @@ export default function EmployeesPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500">کۆی کارمەندان</p>
-                    <p className="text-2xl font-bold text-blue-700">{employees.length}</p>
+                    <p className="text-2xl font-bold text-blue-700">{employees?.length}</p>
                   </div>
                   <User size={24} className="text-blue-400" />
                 </div>
@@ -237,7 +287,7 @@ export default function EmployeesPage() {
                   <div>
                     <p className="text-sm text-gray-500">کۆی مووچەی مانگانە</p>
                     <p className="text-2xl font-bold text-green-700">
-                      {calculateTotalMonthlySalary().toLocaleString()} د.ع
+                      {(calculateTotalMonthlySalary() / 1000).toLocaleString()} د.ع
                     </p>
                   </div>
                   <DollarSign size={24} className="text-green-400" />
@@ -249,7 +299,7 @@ export default function EmployeesPage() {
                   <div>
                     <p className="text-sm text-gray-500">کۆی مووچەی ساڵانە (١٢ مانگ)</p>
                     <p className="text-2xl font-bold text-purple-700">
-                      {(calculateTotalMonthlySalary() * 12).toLocaleString()} د.ع
+                      {((calculateTotalMonthlySalary() * 12) / 1000)?.toLocaleString()} د.ع
                     </p>
                   </div>
                   <Calendar size={24} className="text-purple-400" />
@@ -258,7 +308,6 @@ export default function EmployeesPage() {
             </div>
           </div>
 
-          {/* Employees Table */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -270,31 +319,30 @@ export default function EmployeesPage() {
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">مووچە</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ساڵی خزمەت</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تەمەن</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">دۆخ</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">کردارەکان</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {currentEmployees.map(employee => {
-                  const age = calculateAge(employee.dateOfBirth);
-                  const yearsOfService = calculateYearsOfService(employee.startWorkingDate);
+                {currentEmployees?.map(employee => {
+                  const age = calculateAge(employee.date_of_birth);
+                  const yearsOfService = calculateYearsOfService(employee.working_date);
 
                   return (
-                    <tr key={employee.id} className="hover:bg-gray-50">
+                    <tr key={employee.e_id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        #{employee.id}
+                        #{employee.e_id}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
                             <img
                               className="h-10 w-10 rounded-full object-cover"
-                              src={employee.avatar}
-                              alt={employee.fullName}
+                              src={employee.img}
+                              alt={employee.name}
                             />
                           </div>
                           <div className="mr-4">
-                            <div className="text-sm font-medium text-gray-900">{employee.fullName}</div>
+                            <div className="text-sm font-medium text-gray-900">{employee.name}</div>
                             <div className="text-sm text-gray-500">{employee.phoneNumber}</div>
                           </div>
                         </div>
@@ -306,29 +354,13 @@ export default function EmployeesPage() {
                         {employee.role}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {employee.salary}
+                        {Number(employee.salary).toLocaleString('en-US')} د.ع
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {yearsOfService} ساڵ
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {age} ساڵ
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                          ${employee.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {employee.status === 'active' ? (
-                            <>
-                              <CheckCircle size={14} className="ml-1" />
-                              چالاک
-                            </>
-                          ) : (
-                            <>
-                              <XCircle size={14} className="ml-1" />
-                              ناچالاک
-                            </>
-                          )}
-                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
                         <div className="flex justify-start space-x-2">
@@ -347,7 +379,7 @@ export default function EmployeesPage() {
                             <Edit size={16} />
                           </button>
                           <button
-                            onClick={() => deleteEmployee(employee.id)}
+                            onClick={() => initiateDeleteEmployee(employee)}
                             className="text-red-600 hover:text-red-900 bg-red-50 p-1.5 rounded-md"
                             title="سڕینەوەی کارمەند"
                           >
@@ -362,11 +394,10 @@ export default function EmployeesPage() {
             </table>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-6">
               <div className="text-sm text-gray-500">
-                پیشاندانی {indexOfFirstEmployee + 1} تا {Math.min(indexOfLastEmployee, filteredEmployees.length)} لە {filteredEmployees.length} کارمەند
+                پیشاندانی {indexOfFirstEmployee + 1} تا {Math.min(indexOfLastEmployee, filteredEmployees?.length)} لە {filteredEmployees?.length} کارمەند
               </div>
               <div className="flex space-x-1">
                 <button
@@ -376,7 +407,7 @@ export default function EmployeesPage() {
                 >
                   <ChevronRight size={16} />
                 </button>
-                {[...Array(totalPages)].map((_, i) => (
+                {[...Array(totalPages)]?.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
@@ -398,9 +429,8 @@ export default function EmployeesPage() {
         </div>
       </main>
 
-      {/* Employee Profile Modal */}
       {showProfileModal && selectedEmployee && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden">
             <div className="bg-gradient-to-l from-blue-600 to-indigo-700 p-6 text-white relative">
               <button
@@ -412,20 +442,15 @@ export default function EmployeesPage() {
               <div className="flex items-center">
                 <div className="ml-6">
                   <img
-                    src={selectedEmployee.avatar}
-                    alt={selectedEmployee.fullName}
+                    src={selectedEmployee.img}
+                    alt={selectedEmployee.name}
                     className="w-24 h-24 rounded-full border-4 border-white object-cover"
                   />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">{selectedEmployee.fullName}</h2>
-                  <p className="text-blue-100">ناسنامەی کارمەند: #{selectedEmployee.id}</p>
-                  <div className="mt-2">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${selectedEmployee.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {selectedEmployee.status === 'active' ? 'چالاک' : 'ناچالاک'}
-                    </span>
-                  </div>
+                  <h2 className="text-2xl font-bold">{selectedEmployee.name}</h2>
+                  <p className="text-blue-100">ناسنامەی کارمەند: #{selectedEmployee.e_id}</p>
+
                 </div>
               </div>
             </div>
@@ -438,7 +463,7 @@ export default function EmployeesPage() {
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm text-gray-500">ناوی تەواو</p>
-                      <p className="font-medium">{selectedEmployee.fullName}</p>
+                      <p className="font-medium">{selectedEmployee.name}</p>
                     </div>
 
                     <div>
@@ -458,7 +483,7 @@ export default function EmployeesPage() {
 
                     <div>
                       <p className="text-sm text-gray-500">ژمارەی تەلەفۆنی کاتی نائاسایی</p>
-                      <p className="font-medium">{selectedEmployee.secondaryNumber}</p>
+                      <p className="font-medium">{selectedEmployee.emergencyphoneNumber}</p>
                     </div>
 
                     <div className="flex items-center">
@@ -466,7 +491,7 @@ export default function EmployeesPage() {
                       <div>
                         <p className="text-sm text-gray-500">بەرواری لەدایکبوون</p>
                         <p className="font-medium">
-                          {formatDate(selectedEmployee.dateOfBirth)} ({calculateAge(selectedEmployee.dateOfBirth)} ساڵ)
+                          {formatDate(selectedEmployee.date_of_birth)} ({calculateAge(selectedEmployee.date_of_birth)} ساڵ)
                         </p>
                       </div>
                     </div>
@@ -494,34 +519,25 @@ export default function EmployeesPage() {
                       <DollarSign size={16} className="text-gray-400 ml-1" />
                       <div>
                         <p className="text-sm text-gray-500">مووچە</p>
-                        <p className="font-medium">{selectedEmployee.salary}</p>
+                        <p className="font-medium">
+                          {Number(selectedEmployee.salary).toLocaleString('en-US')} د.ع
+                        </p>
+
                       </div>
                     </div>
 
                     <div>
                       <p className="text-sm text-gray-500">بەرواری دەستپێکردن</p>
                       <p className="font-medium">
-                        {formatDate(selectedEmployee.startWorkingDate)} ({calculateYearsOfService(selectedEmployee.startWorkingDate)} ساڵ خزمەت)
+                        {formatDate(selectedEmployee.working_date)} ({selectedEmployee.working_years} ساڵ خزمەت)
                       </p>
                     </div>
 
-                    <div>
-                      <p className="text-sm text-gray-500">دۆخ</p>
-                      <p className={`font-medium ${selectedEmployee.status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
-                        {selectedEmployee.status === 'active' ? 'چالاک' : 'ناچالاک'}
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowProfileModal(false)}
-                  className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-colors mx-2"
-                >
-                  داخستن
-                </button>
+              <div className="mt-8 flex justify-start space-x-3">
                 <button
                   onClick={() => {
                     setShowProfileModal(false);
@@ -532,16 +548,21 @@ export default function EmployeesPage() {
                   <Edit size={16} className="ml-1" />
                   دەستکاری کارمەند
                 </button>
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-colors mx-2"
+                >
+                  داخستن
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit Employee Modal */}
       {showEditModal && editingEmployee && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden">
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-auto max-h-[90vh]">
             <div className="bg-gradient-to-l from-blue-600 to-indigo-700 p-6 text-white relative">
               <button
                 onClick={() => setShowEditModal(false)}
@@ -549,121 +570,125 @@ export default function EmployeesPage() {
               >
                 <X size={20} />
               </button>
-              <div className="flex items-center">
-                <div className="ml-6">
-                  <img
-                    src={editingEmployee.avatar}
-                    alt={editingEmployee.fullName}
-                    className="w-16 h-16 rounded-full border-2 border-white object-cover"
-                  />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">دەستکاری کارمەند</h2>
-                  <p className="text-blue-100">ناسنامەی کارمەند: #{editingEmployee.id}</p>
-                </div>
-              </div>
+              <h2 className="text-2xl font-bold">دەستکاری کارمەند</h2>
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[70vh]">
+            <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Personal Information */}
+                <div className="col-span-2 flex flex-col items-center mb-4">
+                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 mb-2">
+                    <img
+                      src={imagePreview || editingEmployee.img || "https://via.placeholder.com/150"}
+                      alt={editingEmployee.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <span>هەڵبژاردنی وێنە</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
+                  </label>
+                </div>
+
                 <div>
                   <h3 className="text-lg font-semibold mb-4 border-b pb-2">زانیاری کەسی</h3>
-
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ناوی تەواو</label>
+                      <label className="block text-sm text-gray-700 mb-1">ناوی تەواو</label>
                       <input
                         type="text"
-                        name="fullName"
-                        value={editingEmployee.fullName}
+                        name="name"
+                        value={editingEmployee.name || ''}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ڕەگەز</label>
+                      <label className="block text-sm text-gray-700 mb-1">ڕەگەز</label>
                       <select
                         name="gender"
-                        value={editingEmployee.gender}
+                        value={editingEmployee.gender || ''}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
-                        <option value="نێر">نێر</option>
-                        <option value="مێ">مێ</option>
+                        <option value="پیاو">پیاو</option>
+                        <option value="ئافرەت">ئافرەت</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ئیمەیل</label>
+                      <label className="block text-sm text-gray-700 mb-1">ئیمەیل</label>
                       <input
                         type="email"
                         name="email"
-                        value={editingEmployee.email}
+                        value={editingEmployee.email || ''}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ژمارەی تەلەفۆن</label>
+                      <label className="block text-sm text-gray-700 mb-1">ژمارەی تەلەفۆن</label>
                       <input
                         type="text"
                         name="phoneNumber"
-                        value={editingEmployee.phoneNumber}
+                        value={editingEmployee.phoneNumber || ''}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ژمارەی تەلەفۆنی کاتی نائاسایی</label>
+                      <label className="block text-sm text-gray-700 mb-1">ژمارەی تەلەفۆنی کاتی نائاسایی</label>
                       <input
                         type="text"
-                        name="secondaryNumber"
-                        value={editingEmployee.secondaryNumber}
+                        name="emergencyphoneNumber"
+                        value={editingEmployee.emergencyphoneNumber || ''}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">بەرواری لەدایکبوون</label>
+                      <label className="block text-sm text-gray-700 mb-1">بەرواری لەدایکبوون</label>
                       <input
                         type="date"
-                        name="dateOfBirth"
-                        value={editingEmployee.dateOfBirth}
+                        name="date_of_birth"
+                        value={editingEmployee.date_of_birth ? new Date(editingEmployee.date_of_birth).toISOString().split('T')[0] : ''}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ناونیشان</label>
+                      <label className="block text-sm text-gray-700 mb-1">ناونیشان</label>
                       <input
                         type="text"
                         name="address"
-                        value={editingEmployee.address}
+                        value={editingEmployee.address || ''}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Work Information */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4 border-b pb-2">زانیاری کار</h3>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">رۆڵ</label>
+                      <label className="block text-sm text-gray-700 mb-1">رۆڵ</label>
                       <select
                         name="role"
-                        value={editingEmployee.role}
+                        value={editingEmployee.role || ''}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="ڕاهێنەر">ڕاهێنەر</option>
                         <option value="کارمەند">کارمەند</option>
@@ -672,62 +697,61 @@ export default function EmployeesPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">مووچە</label>
+                      <label className="block text-sm text-gray-700 mb-1">مووچە</label>
                       <input
-                        type="text"
+                        type="number"
                         name="salary"
-                        value={editingEmployee.salary}
+                        value={editingEmployee.salary || ''}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">بەرواری دەستپێکردن</label>
+                      <label className="block text-sm text-gray-700 mb-1">بەرواری دەستپێکردن</label>
                       <input
                         type="date"
-                        name="startWorkingDate"
-                        value={editingEmployee.startWorkingDate}
+                        name="working_date"
+                        value={editingEmployee.working_date ? new Date(editingEmployee.working_date).toISOString().split('T')[0] : ''}
                         onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">دۆخ</label>
-                      <select
-                        name="status"
-                        value={editingEmployee.status}
-                        onChange={handleEditChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="active">چالاک</option>
-                        <option value="inactive">ناچالاک</option>
-                      </select>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-end space-x-3">
+              <div className="mt-8 flex justify-start space-x-3">
+                <button
+                  onClick={saveEditedEmployee}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                >
+                  پاشەکەوتکردن
+                  <Save size={16} className="mr-1" />
+                </button>
                 <button
                   onClick={() => setShowEditModal(false)}
                   className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-colors mx-2"
                 >
-                  پاشگەزبوونەوە
-                </button>
-                <button
-                  onClick={saveEditedEmployee}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
-                >
-                  <Save size={16} className="ml-1" />
-                  پاشەکەوتکردن
+                  هەڵوەشاندنەوە
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+
+      <DeleteConfirmationModal
+        isOpen={deleteModalOpen}
+        closeModal={() => setDeleteModalOpen(false)}
+        onDelete={confirmDeleteEmployee}
+        isDeleting={isDeleting}
+        title="سڕینەوەی کارمەند"
+        message={`ئایا دڵنیایت لە سڕینەوەی کارمەندی ${employeeToDelete?.name || ''}؟ ئەم کردارە ناگەڕێتەوە.`}
+        confirmButtonText="سڕینەوە"
+        cancelButtonText="پەشیمان بوونەوە"
+      />
+
+    </div >
   );
 }
