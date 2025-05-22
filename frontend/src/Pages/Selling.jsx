@@ -1,132 +1,66 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { forwardRef } from 'react';
-import { ShoppingCart, CheckCircle, Minus, Plus, X, Percent, Search, Tag } from 'lucide-react';
-
-const productData = [
-  {
-    id: 1,
-    name: "پڕۆتینی وەی",
-    category: "پڕۆتین",
-    price: 49.750,
-    image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
-    stock: 15,
-    barcode: "8901234567890"
-  },
-  {
-    id: 2,
-    name: "باندی بەرگری",
-    category: "ئامێر",
-    price: 24.500,
-    image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
-    stock: 8,
-    barcode: "8901234567891"
-  },
-  {
-    id: 3,
-    name: "وەرگری وەرزشی",
-    category: "ئەلیکترۆنی",
-    price: 89.00,
-    image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
-    stock: 6,
-    barcode: "8901234567892"
-  },
-  {
-    id: 4,
-    name: "خاولی جیم",
-    category: "ئامێر",
-    price: 12.500,
-    image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
-    stock: 30,
-    barcode: "8901234567893"
-  },
-  {
-    id: 5,
-    name: "کرێاتین",
-    category: "پڕۆتین",
-    price: 29.25,
-    image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
-    stock: 12,
-    barcode: "8901234567894"
-  },
-  {
-    id: 6,
-    name: "باتڵی ئاو",
-    category: "ئامێر",
-    price: 18.25,
-    image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
-    stock: 20,
-    barcode: "8901234567895"
-  },
-  {
-    id: 7,
-    name: "دەستکێش",
-    category: "جلوبەرگ",
-    price: 19.750,
-    image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
-    stock: 10,
-    barcode: "8901234567896"
-  },
-  {
-    id: 8,
-    name: "پێش وەرزش",
-    category: "پڕۆتین",
-    price: 39.000,
-    image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
-    stock: 8,
-    barcode: "8901234567897"
-  },
-  {
-    id: 9,
-    name: "رۆڵەری فۆم",
-    category: "ئامێر",
-    price: 34.250,
-    image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
-    stock: 7,
-    barcode: "8901234567898"
-  },
-  {
-    id: 10,
-    name: "بارەکانی پڕۆتین (12 دانە)",
-    category: "پڕۆتین",
-    price: 24.000,
-    image: "https://i5.walmartimages.com/asr/663d9840-58da-4716-8a7d-d93f20daf6ea_1.58eb687b09f1b55c238d9e6ab3f4fc7a.jpeg",
-    stock: 15,
-    barcode: "8901234567899"
-  }
-];
-
-const allCategories = ["هەموو", ...new Set(productData.map(product => product.category))];
+import { ShoppingCart, CheckCircle, Minus, Plus, X, Percent, Search, Tag, ShoppingCartIcon } from 'lucide-react';
+import axios from 'axios';
+import Navbar from '../components/layout/Nav';
 
 const ProductCard = ({ product, addToCart }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
-      <div className="p-4">
-        <div className="aspect-square w-full bg-gradient-to-br from-blue-50 to-gray-100 rounded-lg overflow-hidden mb-4">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <h3 className="font-bold text-gray-900 mb-1 text-lg">{product.name}</h3>
-        <div className="flex justify-between items-center mb-2">
-          <p className="font-bold text-blue-600 text-xl">{product.price.toFixed(3)} د.ع</p>
-          <span className={`text-xs rounded-full px-3 py-1 ${product.stock > 5 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-            بەردەستە: {product.stock}
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden h-96 flex flex-col transform hover:-translate-y-1">
+      <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+        <img
+          src={product.img}
+          alt={product.name}
+          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+        />
+        <div className="absolute top-3 right-3">
+          <span className={`text-xs font-semibold rounded-full px-3 py-1 shadow-sm ${product.stock > 5
+            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+            : product.stock > 0
+              ? 'bg-amber-100 text-amber-700 border border-amber-200'
+              : 'bg-red-100 text-red-700 border border-red-200'
+            }`}>
+            {product.stock > 0 ? `${product.stock} بەردەستە` : 'نەماوە'}
           </span>
         </div>
-        <div className="text-xs text-gray-500 mb-3 text-center bg-gray-100 py-1 px-2 rounded">
-          بارکۆد: {product.barcode}
+      </div>
+
+      <div className="p-5 flex flex-col flex-grow">
+        <h3 className="font-bold text-gray-900 text-lg mb-3 line-clamp-2 leading-tight">
+          {product.name}
+        </h3>
+
+        <div className="mb-4">
+          <p className="text-2xl font-bold text-blue-600 mb-1">
+            {product.selling_price}
+            <span className="text-sm font-medium text-gray-500 mr-1">د.ع</span>
+          </p>
         </div>
-        <button
-          onClick={() => addToCart(product)}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white py-2 px-4 rounded-lg text-sm font-bold transition-all shadow-md hover:shadow-lg"
-        >
-          زیادکردن بۆ سەبەتە
-        </button>
+
+        <div className="text-xs text-gray-500 mb-4 bg-gray-50 py-2 px-3 rounded-lg border border-gray-100">
+          <span className="font-medium">بارکۆد:</span> {product.barcode}
+        </div>
+
+        <div className="mt-auto">
+          <button
+            onClick={() => addToCart(product)}
+            disabled={product.stock === 0}
+            className={`w-full py-3 px-4 rounded-lg text-sm font-bold transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${product.stock > 0
+              ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white active:scale-95'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+          >
+            {product.stock > 0 ? (
+              <div className='flex items-center justify-center'>
+                <span>زیادکردن بۆ سەبەتە</span>
+                <ShoppingCart size={20} className='mr-2' />
+              </div>
+            ) : 'بەردەست نییە'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -138,7 +72,7 @@ const CartItem = ({ item, updateQuantity, removeFromCart }) => {
       <div className="flex items-center p-3">
         <div className="h-16 w-16 bg-gradient-to-br from-blue-50 to-gray-100 rounded-lg overflow-hidden flex-shrink-0">
           <img
-            src={item.image}
+            src={item.img}
             alt={item.name}
             className="w-full h-full object-cover"
           />
@@ -146,10 +80,10 @@ const CartItem = ({ item, updateQuantity, removeFromCart }) => {
         <div className="mr-3 flex-grow">
           <h4 className="font-bold text-gray-800">{item.name}</h4>
           <div className="flex items-center justify-between mt-1">
-            <p className="text-blue-600 font-medium">{item.price.toFixed(3)} د.ع</p>
+            <p className="text-blue-600 font-medium">{item.selling_price} د.ع</p>
             <div className="flex items-center text-xs bg-blue-50 text-blue-800 px-2 py-0.5 rounded-full">
               <span>کۆ: </span>
-              <span className="mr-1 font-bold">{(item.price * item.quantity).toFixed(3)} د.ع</span>
+              <span className="mr-1 font-bold">{(item.selling_price * item.quantity).toFixed(3)} د.ع</span>
             </div>
           </div>
         </div>
@@ -158,7 +92,7 @@ const CartItem = ({ item, updateQuantity, removeFromCart }) => {
       <div className="flex items-center justify-between bg-gray-50 px-3 py-2 border-t border-gray-100">
         <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200">
           <button
-            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+            onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
             disabled={item.quantity <= 1}
             className="p-1 rounded-r-lg hover:bg-gray-100 disabled:opacity-50 transition-colors"
           >
@@ -166,7 +100,7 @@ const CartItem = ({ item, updateQuantity, removeFromCart }) => {
           </button>
           <span className="mx-2 w-8 text-center font-medium text-gray-800">{item.quantity}</span>
           <button
-            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+            onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
             disabled={item.quantity >= item.stock}
             className="p-1 rounded-l-lg hover:bg-gray-100 disabled:opacity-50 transition-colors"
           >
@@ -175,7 +109,7 @@ const CartItem = ({ item, updateQuantity, removeFromCart }) => {
         </div>
 
         <button
-          onClick={() => removeFromCart(item.id)}
+          onClick={() => removeFromCart(item.product_id)}
           className="p-1.5 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-full transition-colors"
           aria-label="Remove item"
         >
@@ -233,7 +167,7 @@ const DiscountForm = ({ discount, setDiscount, applyDiscount }) => {
           <div className="mt-3 flex items-center bg-green-100 p-2 rounded-lg text-green-700">
             <CheckCircle className="h-4 w-4 ml-2" />
             <span className="text-sm">
-              داشکاندن جێبەجێ کرا: {discount.type === 'percent' ? discount.value + '%' : discount.value + ' د.ع'}
+              داشکاندن جێبەجێ کرا: {discount.type === 'percent' ? discount.value + '%' : ((discount.value) * 1000) + ' د.ع'}
             </span>
           </div>
         ) : (
@@ -289,7 +223,7 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
 
       Object.assign(receiptElement.style, originalStyles);
 
-      const imgWidth = 80; 
+      const imgWidth = 80;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       const pdf = new jsPDF({
@@ -308,16 +242,16 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
   };
 
   const paymentDisplay = currencyType === 'iqd'
-    ? `${Number(payment).toFixed(3)} د.ع`
-    : `$${Number(payment).toFixed(3)}`;
+    ? `${Number(payment)} د.ع`
+    : `$${Number(payment)}`;
 
   const changeAmount = currencyType === 'iqd'
     ? change
     : change;
 
   const changeDisplay = changeType === 'iqd'
-    ? `${Number(changeAmount).toFixed(3)} د.ع`
-    : `$${(changeAmount / exchangeRate).toFixed(3)}`;
+    ? `${Number(changeAmount)} د.ع`
+    : `$${(changeAmount / exchangeRate)}`;
 
 
   return (
@@ -384,7 +318,7 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
           </div>
 
           {items.map(item => (
-            <div key={item.id} style={{
+            <div key={item.product_id} style={{
               display: 'flex',
               justifyContent: 'space-between',
               padding: '5px 0',
@@ -393,7 +327,7 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
             }}>
               <span style={{ width: '40%' }}>{item.name}</span>
               <span style={{ width: '30%', textAlign: 'center' }}>{item.quantity}</span>
-              <span style={{ width: '30%', textAlign: 'center' }}>{item.price.toFixed(3)}</span>
+              <span style={{ width: '30%', textAlign: 'center' }}>{item.selling_price}</span>
             </div>
           ))}
         </div>
@@ -539,7 +473,7 @@ const CartSummary = ({
 
       {payment > 0 && paymentInIQD >= total && (
         <ChangeDisplay
-          change={currencyType === 'iqd' ? paymentInIQD - total : ((paymentInIQD - (total * 100)))/100}
+          change={currencyType === 'iqd' ? paymentInIQD - total : ((paymentInIQD - (total * 100))) / 100}
           changeType={changeType}
           setChangeType={setChangeType}
           exchangeRate={exchangeRate}
@@ -611,9 +545,9 @@ const PaymentInput = ({ payment, setPayment, currencyType, setCurrencyType, exch
       {payment > 0 && (
         <div className="mt-2 text-sm text-gray-600">
           {currencyType === 'usd' ? (
-            <span>≈ {(payment * exchangeRate).toFixed(3)} د.ع</span>
+            <span>≈ {(payment * exchangeRate)} د.ع</span>
           ) : (
-            <span>≈ ${(payment / exchangeRate).toFixed(3)} دۆلار</span>
+            <span>≈ ${(payment / exchangeRate)} دۆلار</span>
           )}
         </div>
       )}
@@ -627,8 +561,8 @@ const ChangeDisplay = ({ change, changeType, setChangeType, exchangeRate }) => {
   };
 
   const displayChange = changeType === 'iqd'
-    ? ((change ).toFixed(3))
-    : ((change * 100) / 145).toFixed(3);
+    ? ((change))
+    : ((change * 100) / 145);
 
   return (
     <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200">
@@ -694,6 +628,30 @@ const BarcodeScanner = ({ onScan }) => {
 };
 
 export default function GymPOSSalesDashboard() {
+  const [inventoryItems, setInventoryItems] = useState([]);
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/sales/getallsales');
+        setInventoryItems(response.data.data);
+      } catch (error) {
+        console.error('Error fetching inventory items:', error);
+      }
+    };
+
+    fetchItems();
+  }, [])
+
+  const [categories, setCategories] = useState([]);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const res = await axios.get(`http://localhost:3000/category/getallcategory`)
+      const categoriesArray = Object.values(res.data.rows);
+      setCategories(categoriesArray);
+    }
+    fetchCategories()
+  }, [])
+
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('هەموو');
@@ -707,12 +665,11 @@ export default function GymPOSSalesDashboard() {
   });
   const [payment, setPayment] = useState(0);
   const receiptRef = useRef();
-
-  const [currencyType, setCurrencyType] = useState('iqd'); 
-  const [changeType, setChangeType] = useState('iqd'); 
+  const [currencyType, setCurrencyType] = useState('iqd');
+  const [changeType, setChangeType] = useState('iqd');
   const [exchangeRate, setExchangeRate] = useState(145);
 
-  const filteredProducts = productData.filter(product => {
+  const filteredProducts = inventoryItems.filter(product => {
     const matchesSearch = product.name.includes(searchTerm);
     const matchesCategory = selectedCategory === 'هەموو' || product.category === selectedCategory;
 
@@ -726,11 +683,11 @@ export default function GymPOSSalesDashboard() {
 
   const addToCart = (product) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
+      const existingItem = prevCart.find(item => item.product_id === product.product_id);
 
       if (existingItem) {
         return prevCart.map(item =>
-          item.id === product.id
+          item.product_id === product.product_id
             ? { ...item, quantity: Math.min(item.quantity + 1, item.stock) }
             : item
         );
@@ -748,7 +705,7 @@ export default function GymPOSSalesDashboard() {
 
     setCart(prevCart =>
       prevCart.map(item =>
-        item.id === productId
+        item.product_id === productId
           ? { ...item, quantity: Math.min(newQuantity, item.stock) }
           : item
       )
@@ -756,10 +713,10 @@ export default function GymPOSSalesDashboard() {
   };
 
   const removeFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
+    setCart(prevCart => prevCart.filter(item => item.product_id !== productId));
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.selling_price * item.quantity), 0);
 
   const applyDiscount = () => {
     if (!discount.value || isNaN(discount.value)) {
@@ -788,13 +745,15 @@ export default function GymPOSSalesDashboard() {
   const completeOrder = () => {
     if (paymentInIQD < total && paymentInIQD > 0) return;
 
-    const randomOrderNum = Math.floor(100000 + Math.random() * 900000).toString();
-    setOrderNumber(randomOrderNum);
+    const timestamp = Date.now().toString().slice(-7);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const orderNumber = timestamp + random;
+    setOrderNumber(orderNumber);
     setOrderComplete(true);
   };
 
   const handleBarcodeScan = (barcode) => {
-    const product = productData.find(p => p.barcode === barcode);
+    const product = inventoryItems.find(p => p.barcode === barcode);
     if (product) {
       addToCart(product);
     } else {
@@ -815,8 +774,24 @@ export default function GymPOSSalesDashboard() {
     });
   };
 
+  const submitOrder = async (orderDetails) => {
+    try {
+      const res = await axios.post(`http://localhost:3000/sales/buyingproducts`, orderDetails);
+
+      if (res.status = 201) {
+        alert("order completed successfully");
+        resetCart();
+        const updatedItems = await axios.get('http://localhost:3000/sales/getallsales');
+        setInventoryItems(updatedItems.data.data);
+      }
+    } catch (error) {
+      console.error('Error submitting order:', error);
+    }
+  }
+
   return (
     <div>
+      <Navbar />
       <div className="min-h-screen bg-gray-50" dir="rtl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center mb-8">
@@ -832,7 +807,6 @@ export default function GymPOSSalesDashboard() {
           <BarcodeScanner onScan={handleBarcodeScan} />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Product List Section */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-200">
                 <div className="mb-6">
@@ -849,16 +823,16 @@ export default function GymPOSSalesDashboard() {
                 </div>
 
                 <div className="mb-4 flex flex-wrap">
-                  {allCategories.map((category) => (
+                  {categories.map((category) => (
                     <button
-                      key={category}
-                      className={`ml-2 mb-2 px-4 py-1.5 text-sm rounded-lg ${selectedCategory === category
+                      key={category.name}
+                      className={`ml-2 mb-2 px-4 py-1.5 text-sm rounded-lg ${selectedCategory === category.name
                         ? 'bg-blue-600 text-white border border-blue-600'
                         : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'
                         }`}
-                      onClick={() => setSelectedCategory(category)}
+                      onClick={() => setSelectedCategory(category.name)}
                     >
-                      {category}
+                      {category.name}
                     </button>
                   ))}
                 </div>
@@ -873,7 +847,7 @@ export default function GymPOSSalesDashboard() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredProducts.map(product => (
                       <ProductCard
-                        key={product.id}
+                        key={product.product_id}
                         product={product}
                         addToCart={addToCart}
                       />
@@ -883,7 +857,6 @@ export default function GymPOSSalesDashboard() {
               </div>
             </div>
 
-            {/* Cart/Checkout Section */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 sticky top-8">
                 <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-500">
@@ -900,7 +873,7 @@ export default function GymPOSSalesDashboard() {
                   {cart.length === 0 && !orderComplete ? (
                     <EmptyCart />
                   ) : orderComplete ? (
-                    <div className="text-center">
+                    <div className="text-center py-4">
                       <Receipt
                         orderNumber={orderNumber}
                         items={cart}
@@ -911,23 +884,22 @@ export default function GymPOSSalesDashboard() {
                         change={change}
                         currencyType="iqd"
                         changeType="iqd"
-                        exchangeRate={1200} 
+                        exchangeRate={1200}
                         ref={receiptRef}
                       />
                       <div className="flex gap-2 mt-4 justify-center">
                         <button
                           onClick={() => {
                             resetCart();
-                            console.log(`cart`);
-                            console.log(cart);
-                            console.log(`orderNumber ${orderNumber}`);
-                            console.log(`payment ${payment}`);
-                            console.log(`change ${change}`);
-                            console.log(`subtotal ${subtotal.toFixed(3)}`);
-                            console.log(`total ${total.toFixed(3)}`);
-                            console.log(`discount`);
-                            console.log(discount)
-                            // add the buy button to connect to backend here
+                            submitOrder({
+                              e_id: 1,
+                              orderNumber: orderNumber,
+                              carts: cart,
+                              discount_type: discount.type,
+                              discount_value: discount.value,
+                              total_amount: subtotal,
+                              final_amount: total
+                            });
                           }}
                           className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white py-2 px-4 rounded-lg font-bold transition-all shadow-md hover:shadow-lg"
                         >
@@ -940,7 +912,7 @@ export default function GymPOSSalesDashboard() {
                       <div className="max-h-96 overflow-y-auto py-4 space-y-0">
                         {cart.map(item => (
                           <CartItem
-                            key={item.id}
+                            key={item.product_id}
                             item={item}
                             updateQuantity={updateQuantity}
                             removeFromCart={removeFromCart}

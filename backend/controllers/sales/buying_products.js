@@ -39,7 +39,18 @@ const buying_products = async (req, res) => {
         insert into transactions (orderNumber, e_id, e_name, discount_type, discount_value, total_amount, final_amount)
         values (?, ?, ?, ?, ?, ?, ?)`;
 
-        const [result] = await connection.query(sql2, [orderNumber, e_id, employee_name, discount_type, discount_value, total_amount, final_amount]);
+        let discount_type_val = discount_type;
+        let discount_value_val = discount_value;
+        if (discount_type && discount_value == "") {
+            discount_type_val = 'none';
+            discount_value_val = 0;
+        } else if (discount_type == "amount") {
+            discount_type_val = 'fixed_amount';
+        } else if (discount_type == "percentage") {
+            discount_type_val = 'percentage';
+        }
+
+        const [result] = await connection.query(sql2, [orderNumber, e_id, employee_name, discount_type_val, discount_value_val, total_amount, final_amount]);
 
         if (result.affectedRows === 0) {
             await connection.rollback();
