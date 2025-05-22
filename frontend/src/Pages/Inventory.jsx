@@ -10,140 +10,70 @@ import {
     FolderOpen,
     ChevronDown,
     DollarSign,
-    Dumbbell,
     ShoppingBag,
-    Bell,
     Save,
     X,
     Camera,
     Barcode,
     Download,
-    Printer,
-    RefreshCw
+    Printer
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import jsbarcode from 'jsbarcode';
 import QRCode from 'qrcode';
+import axios from 'axios';
 
 export default function Inventory() {
-    // State for inventory items
-    const [inventoryItems, setInventoryItems] = useState([
-        {
-            id: 1,
-            name: 'Dumbbells (5kg)',
-            category: 'Weights',
-            quantity: 20,
-            price: 25,
-            status: 'In Stock',
-            image: 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-            barcode: 'WT001234567890'
-        },
-        {
-            id: 2,
-            name: 'Yoga Mats',
-            category: 'Accessories',
-            quantity: 15,
-            price: 30,
-            status: 'In Stock',
-            image: 'https://images.unsplash.com/photo-1592432678016-e910b452f9a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-            barcode: 'AC002345678901'
-        },
-        {
-            id: 3,
-            name: 'Protein Powder',
-            category: 'Supplements',
-            quantity: 8,
-            price: 45,
-            status: 'Low Stock',
-            image: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-            barcode: 'SP003456789012'
-        },
-        {
-            id: 4,
-            name: 'Treadmill',
-            category: 'Equipment',
-            quantity: 2,
-            price: 1200,
-            status: 'In Stock',
-            image: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-            barcode: 'EQ004567890123'
-        },
-        {
-            id: 5,
-            name: 'Resistance Bands',
-            category: 'Accessories',
-            quantity: 25,
-            price: 15,
-            status: 'In Stock',
-            image: 'https://images.unsplash.com/photo-1598289431512-b97b0917affc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-            barcode: 'AC005678901234'
-        },
-        {
-            id: 6,
-            name: 'Pre-Workout',
-            category: 'Supplements',
-            quantity: 5,
-            price: 35,
-            status: 'Low Stock',
-            image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-            barcode: 'SP006789012345'
-        },
-        {
-            id: 7,
-            name: 'Kettlebells',
-            category: 'Weights',
-            quantity: 12,
-            price: 40,
-            status: 'In Stock',
-            image: 'https://images.unsplash.com/photo-1603455778956-d71832eafa4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-            barcode: 'WT007890123456'
-        },
-        {
-            id: 8,
-            name: 'Gym Towels',
-            category: 'Accessories',
-            quantity: 0,
-            price: 10,
-            status: 'Out of Stock',
-            image: 'https://images.unsplash.com/photo-1616401784845-180882ba9ba8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-            barcode: 'AC008901234567'
-        },
-    ]);
+    const [inventoryItems, setInventoryItems] = useState([]);
+    useEffect(() => {
+        const fetchItems = async () => {
+            try {
+                const response = await axios.get('http://localhost:3000/sales/getallsales');
+                setInventoryItems(response.data.data);
+            } catch (error) {
+                console.error('Error fetching inventory items:', error);
+            }
+        };
 
-    // State for search and filter
+
+        fetchItems();
+    }, [])
+    const [imagePreview, setImagePreview] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('All');
     const [showAddModal, setShowAddModal] = useState(false);
     const [newItem, setNewItem] = useState({
         name: '',
         category: '',
-        quantity: 0,
-        price: 0,
-        image: '',
+        stock: '',
+        selling_price: '',
+        cost_price: '',
+        img: '',
         barcode: ''
     });
-
-    // State for editing
     const [editingItem, setEditingItem] = useState(null);
     const [editedValues, setEditedValues] = useState({});
-
-    // State for barcode modal
     const [showBarcodeModal, setShowBarcodeModal] = useState(false);
     const [currentBarcode, setCurrentBarcode] = useState('');
     const [currentItem, setCurrentItem] = useState(null);
+    const [categories, setCategories] = useState([]);
 
-    // Categories for filtering
-    const categories = ['All', 'Weights', 'Equipment', 'Accessories', 'Supplements'];
+    useEffect(() => {
+        const fetchCategories = async () => {
+            const res = await axios.get(`http://localhost:3000/category/getallcategory`)
+            const categoriesArray = Object.values(res.data.rows);
+            setCategories(categoriesArray);
+        }
+        fetchCategories()
+    }, [])
 
-    // Filter items based on search term and category
-    const filteredItems = inventoryItems.filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                             item.barcode.toLowerCase().includes(searchTerm.toLowerCase());
+    const filteredItems = inventoryItems?.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.barcode.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = filterCategory === 'All' || item.category === filterCategory;
         return matchesSearch && matchesCategory;
     });
 
-    // Generate a 12-character barcode
     const generateBarcode = () => {
         const categoryPrefix = {
             'Weights': 'WT',
@@ -151,110 +81,152 @@ export default function Inventory() {
             'Accessories': 'AC',
             'Supplements': 'SP'
         }[newItem.category] || 'IT';
-        
+
         // Generate 10 random digits (12 total with prefix)
         const randomDigits = Math.floor(1000000000 + Math.random() * 9000000000).toString().substring(0, 10);
         return `${categoryPrefix}${randomDigits}`;
     };
 
-    // Handle file upload
+    const renderBarcodeOnCanvas = (barcodeText, canvasId) => {
+        const canvas = document.getElementById(canvasId);
+        if (canvas && window.JsBarcode) {
+            JsBarcode(canvas, barcodeText, {
+                format: "CODE128",
+                width: canvasId === 'barcode-canvas-print' ? 1 : 2,
+                height: canvasId === 'barcode-canvas-print' ? 30 : 50,
+                displayValue: false
+            });
+        }
+    };
+
+    const handlePrintBarcode = () => {
+        const printElement = document.querySelector('.barcode-modal-print');
+        if (printElement) {
+            printElement.style.display = 'block';
+        }
+        renderBarcodeOnCanvas(currentBarcode, 'barcode-canvas-print');
+
+        window.print();
+
+        setTimeout(() => {
+            if (printElement) {
+                printElement.style.display = 'none';
+            }
+        }, 100);
+    };
+
     const handleImageUpload = (e, isEditing = false) => {
         const file = e.target.files[0];
         if (file) {
+            if (isEditing) {
+                setEditedValues({ ...editedValues, img: file });
+            } else {
+                setNewItem({ ...newItem, img: file });
+            }
             const reader = new FileReader();
             reader.onloadend = () => {
-                if (isEditing) {
-                    setEditedValues({ ...editedValues, image: reader.result });
-                } else {
-                    setNewItem({ ...newItem, image: reader.result });
-                }
+                setImagePreview(reader.result);
             };
             reader.readAsDataURL(file);
         }
     };
 
-    // Handle adding new item
-    const handleAddItem = () => {
-        if (newItem.name && newItem.category && newItem.quantity >= 0 && newItem.price >= 0) {
-            const status = newItem.quantity === 0 ? 'Out of Stock' :
-                newItem.quantity <= 5 ? 'Low Stock' : 'In Stock';
+    const handleAddItem = async () => {
+        if (newItem.name && newItem.category && newItem.stock >= 0 && newItem.selling_price >= 0 && newItem.cost_price >= 0) {
 
-            // If no image is provided, use a placeholder
-            const image = newItem.image || 'https://via.placeholder.com/150?text=No+Image';
-            
-            // Generate barcode if not provided
-            const barcode = newItem.barcode || generateBarcode();
+            const barcode = generateBarcode();
 
-            const newItemWithBarcode = {
-                id: inventoryItems.length + 1,
-                ...newItem,
-                image,
-                status,
-                barcode
-            };
+            try {
+                const formData = new FormData();
+                formData.append('name', newItem.name);
+                formData.append('category_id', newItem.category);
+                formData.append('stock', newItem.stock);
+                formData.append('selling_price', newItem.selling_price);
+                formData.append('cost_price', newItem.cost_price);
+                formData.append('image', newItem.img);
+                formData.append('barcode', barcode);
 
-            setInventoryItems([...inventoryItems, newItemWithBarcode]);
-            
-            // Show barcode modal after adding
-            setCurrentBarcode(barcode);
-            setCurrentItem(newItemWithBarcode);
-            setShowBarcodeModal(true);
-            
-            // Reset form
-            setNewItem({
-                name: '',
-                category: '',
-                quantity: 0,
-                price: 0,
-                image: '',
-                barcode: ''
-            });
-            setShowAddModal(false);
+                const res = await axios.post(`http://localhost:3000/inventory/addproduct`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                })
+
+                if (res.status === 201) {
+                    alert('کالایەکە با موفقیت زیادکرا');
+                    location.reload()
+                }
+
+            } catch (error) {
+                console.error('Error adding item:', error);
+            }
         }
     };
 
-    // Start editing an item
     const startEditing = (item) => {
-        setEditingItem(item.id);
+        setEditingItem(item.product_id);
         setEditedValues({ ...item });
     };
 
-    // Save edited item
-    const saveEditing = () => {
-        if (editedValues.name && editedValues.category && editedValues.quantity >= 0 && editedValues.price >= 0) {
-            const status = editedValues.quantity === 0 ? 'Out of Stock' :
-                editedValues.quantity <= 5 ? 'Low Stock' : 'In Stock';
+    const saveEditing = async () => {
+        console.log(editedValues);
+        if (editedValues.name && editedValues.category && editedValues.stock >= 0 && editedValues.selling_price >= 0 && editedValues.cost_price >= 0) {
+            const status = editedValues.stock === 0 ? 'Out of Stock' :
+                editedValues.stock <= 5 ? 'Low Stock' : 'In Stock';
 
-            setInventoryItems(inventoryItems.map(item =>
-                item.id === editingItem ? { ...editedValues, status } : item
-            ));
-            setEditingItem(null);
+            const formData = new FormData();
+            formData.append('name', editedValues.name);
+            formData.append('category', editedValues.category);
+            formData.append('stock', editedValues.stock);
+            formData.append('selling_price', editedValues.selling_price);
+            formData.append('cost_price', editedValues.cost_price);
+            formData.append('image', editedValues.img);
+            formData.append('barcode', editedValues.barcode);
+
+            const res = await axios.patch(`http://localhost:3000/inventory/updateproduct/${editedValues.product_id}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+
+            if (res.status === 200) {
+                alert('کالایەکە با موفقیت ویرایشکرا');
+                setInventoryItems(inventoryItems.map(item =>
+                    item.product_id === editingItem ? { ...editedValues, status } : item
+                ));
+                setEditingItem(null);
+            }
         }
     };
 
-    // Cancel editing
     const cancelEditing = () => {
         setEditingItem(null);
     };
 
-    // Delete an item
-    const deleteItem = (id) => {
-        if (confirm('Are you sure you want to delete this item?')) {
-            setInventoryItems(inventoryItems.filter(item => item.id !== id));
+    const deleteItem = async (product_id) => {
+        if (confirm(`Are you sure you want to delete this item? ${product_id}`)) {
+            try {
+                const res = await axios.delete(`http://localhost:3000/inventory/deleteproduct/${product_id}`);
+
+                if (res.status === 200) {
+                    alert('کالایەکە با موفقیت حذفکرا');
+                    setInventoryItems(inventoryItems.filter(item => item.product_id !== product_id));
+                }
+            } catch (error) {
+                console.error('Error deleting item:', error);
+            }
         }
     };
 
-    // Get status color
     const getStatusColor = (status) => {
         switch (status) {
-            case 'In Stock': return 'text-green-600 bg-green-100';
-            case 'Low Stock': return 'text-amber-600 bg-amber-100';
-            case 'Out of Stock': return 'text-red-600 bg-red-100';
+            case 'بەردەست': return 'text-green-600 bg-green-100';
+            case 'کەم': return 'text-amber-600 bg-amber-100';
+            case 'نەماوە': return 'text-red-600 bg-red-100';
             default: return 'text-gray-600 bg-gray-100';
         }
     };
 
-    // Initialize barcode when modal opens
     useEffect(() => {
         if (showBarcodeModal && currentBarcode) {
             // Generate barcode
@@ -275,7 +247,6 @@ export default function Inventory() {
         }
     }, [showBarcodeModal, currentBarcode]);
 
-    // Download barcode as image
     const downloadBarcode = async () => {
         try {
             const barcodeElement = document.getElementById('barcode-canvas');
@@ -293,9 +264,7 @@ export default function Inventory() {
 
     return (
         <div className="min-h-screen bg-gray-50" dir="rtl">
-            {/* Main Content */}
             <main className="container mx-auto px-4 py-8">
-                {/* Search and Filter Bar */}
                 <div className="bg-white rounded-lg shadow-md p-4 mb-6 flex flex-row-reverse flex-wrap gap-4 items-center justify-between">
                     <div className="relative flex-grow max-w-md">
                         <input
@@ -315,16 +284,10 @@ export default function Inventory() {
                                 value={filterCategory}
                                 onChange={(e) => setFilterCategory(e.target.value)}
                             >
-                                {categories.map(category => {
-                                    const categoryTranslations = {
-                                        'All': 'هەموو',
-                                        'Weights': 'قورسایی',
-                                        'Equipment': 'ئامێر',
-                                        'Accessories': 'کەرەستە',
-                                        'Supplements': 'تەواوکەر'
-                                    };
+                                <option value="all">هەمووی</option>
+                                {categories?.map(category => {
                                     return (
-                                        <option key={category} value={category}>{categoryTranslations[category] || category}</option>
+                                        <option key={category.name} value={category.name}>{category.name}</option>
                                     );
                                 })}
                             </select>
@@ -335,13 +298,12 @@ export default function Inventory() {
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-1 space-x-reverse transition-colors"
                             onClick={() => setShowAddModal(true)}
                         >
-                            <Plus size={18} />
                             <span>زیادکردنی کاڵا</span>
+                            <Plus size={18} className='mr-2' />
                         </button>
                     </div>
                 </div>
 
-                {/* Inventory Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <div className="bg-white rounded-lg shadow-md p-4 flex gap-2 items-center space-x-4 space-x-reverse">
                         <div className="p-3 rounded-full bg-blue-100 text-blue-600">
@@ -360,7 +322,7 @@ export default function Inventory() {
                         <div>
                             <p className="text-sm text-gray-500">بەردەست</p>
                             <p className="text-xl font-bold">
-                                {inventoryItems.filter(item => item.status === 'In Stock').length}
+                                {inventoryItems.filter(item => item.stock > 0).length}
                             </p>
                         </div>
                     </div>
@@ -372,7 +334,7 @@ export default function Inventory() {
                         <div>
                             <p className="text-sm text-gray-500">کەم</p>
                             <p className="text-xl font-bold">
-                                {inventoryItems.filter(item => item.status === 'Low Stock').length}
+                                {inventoryItems.filter(item => item.stock >= 1 && item.stock < 10).length}
                             </p>
                         </div>
                     </div>
@@ -384,35 +346,34 @@ export default function Inventory() {
                         <div>
                             <p className="text-sm text-gray-500">نەماوە</p>
                             <p className="text-xl font-bold">
-                                {inventoryItems.filter(item => item.status === 'Out of Stock').length}
+                                {inventoryItems.filter(item => item.stock == 0).length}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Inventory Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                     {filteredItems.length > 0 ? (
                         filteredItems.map((item) => (
-                            <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                                {/* Card Image */}
+                            <div key={item.product_id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                                 <div className="h-48 overflow-hidden relative">
                                     <img
-                                        src={item.image}
+                                        src={item.img}
                                         alt={item.name}
                                         className="w-full h-full object-cover"
                                     />
                                     <div className="absolute top-2 right-2">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(item.status)}`}>
-                                            {item.status === 'In Stock' ? 'بەردەست' :
-                                                item.status === 'Low Stock' ? 'کەم' : 'نەماوە'}
+                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                                            item.stock >= 10 ? 'بەردەست' :
+                                                item.stock <= 1 && item.stock > 10 ? 'کەم' : 'نەماوە')}`}>
+
+                                            {item.stock >= 10 ? 'بەردەست' :
+                                                item.stock <= 1 && item.stock > 10 ? 'کەم' : 'نەماوە'}
                                         </span>
                                     </div>
                                 </div>
 
-                                {/* Card Content */}
-                                {editingItem === item.id ? (
-                                    // Editing Mode
+                                {editingItem === item.product_id ? (
                                     <div className="p-4">
                                         <div className="space-y-3">
                                             <div>
@@ -433,41 +394,47 @@ export default function Inventory() {
                                                         value={editedValues.category}
                                                         onChange={(e) => setEditedValues({ ...editedValues, category: e.target.value })}
                                                     >
-                                                        {categories.filter(cat => cat !== 'All').map(category => {
-                                                            const categoryTranslations = {
-                                                                'Weights': 'قورسایی',
-                                                                'Equipment': 'ئامێر',
-                                                                'Accessories': 'کەرەستە',
-                                                                'Supplements': 'تەواوکەر'
-                                                            };
+                                                        {categories.map(category => {
                                                             return (
-                                                                <option key={category} value={category}>{categoryTranslations[category] || category}</option>
+                                                                <option key={category.category_id} value={category.category_id}>{category.name}</option>
                                                             );
                                                         })}
                                                     </select>
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">ژمارە</label>
+                                                    <label className="block text-xs text-gray-500 mb-1">عەدەد</label>
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         className="w-full border rounded px-2 py-1 text-sm"
-                                                        value={editedValues.quantity}
-                                                        onChange={(e) => setEditedValues({ ...editedValues, quantity: parseInt(e.target.value) || 0 })}
+                                                        value={editedValues.stock}
+                                                        onChange={(e) => setEditedValues({ ...editedValues, stock: parseInt(e.target.value) || 0 })}
                                                     />
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-xs text-gray-500 mb-1">نرخ ($)</label>
+                                                <label className="block text-xs text-gray-500 mb-1">نرخی کڕاو</label>
                                                 <input
                                                     type="number"
                                                     min="0"
                                                     step="0.01"
                                                     className="w-full border rounded px-2 py-1 text-sm"
-                                                    value={editedValues.price}
-                                                    onChange={(e) => setEditedValues({ ...editedValues, price: parseFloat(e.target.value) || 0 })}
+                                                    value={editedValues.cost_price}
+                                                    onChange={(e) => setEditedValues({ ...editedValues, cost_price: parseFloat(e.target.value) || 0 })}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">نرخی فرۆشتن</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    className="w-full border rounded px-2 py-1 text-sm"
+                                                    value={editedValues.selling_price}
+                                                    onChange={(e) => setEditedValues({ ...editedValues, selling_price: parseFloat(e.target.value) || 0 })}
                                                 />
                                             </div>
 
@@ -485,10 +452,10 @@ export default function Inventory() {
                                                         />
                                                     </label>
                                                 </div>
-                                                {editedValues.image && (
+                                                {(imagePreview || editedValues.img) && (
                                                     <div className="mt-2 relative h-16 w-16 rounded overflow-hidden">
                                                         <img
-                                                            src={editedValues.image}
+                                                            src={imagePreview || editedValues.img}
                                                             alt="Preview"
                                                             className="h-full w-full object-cover"
                                                         />
@@ -524,7 +491,6 @@ export default function Inventory() {
                                         </div>
                                     </div>
                                 ) : (
-                                    // View Mode
                                     <div className="p-4">
                                         <div className="flex justify-between items-start mb-2">
                                             <h3 className="font-bold text-gray-900 text-lg">{item.name}</h3>
@@ -537,7 +503,7 @@ export default function Inventory() {
                                                 </button>
                                                 <button
                                                     className="p-1 rounded hover:bg-gray-100 text-red-600"
-                                                    onClick={() => deleteItem(item.id)}
+                                                    onClick={() => deleteItem(item.product_id)}
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
@@ -546,12 +512,9 @@ export default function Inventory() {
 
                                         <div className="mb-3 flex justify-between items-center">
                                             <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                                {item.category === 'Weights' ? 'قورسایی' :
-                                                    item.category === 'Equipment' ? 'ئامێر' :
-                                                        item.category === 'Accessories' ? 'کەرەستە' :
-                                                            item.category === 'Supplements' ? 'تەواوکەر' : item.category}
+                                                {item.category}
                                             </span>
-                                            <button 
+                                            <button
                                                 onClick={() => {
                                                     setCurrentBarcode(item.barcode);
                                                     setCurrentItem(item);
@@ -565,8 +528,8 @@ export default function Inventory() {
                                         </div>
 
                                         <div className="flex justify-between items-center text-sm">
-                                            <div className="font-medium">${item.price.toFixed(2)}</div>
-                                            <div className="text-gray-500">ژمارە: {item.quantity}</div>
+                                            <div className="font-medium">نرخی فرۆشتن {item.selling_price} د.ع</div>
+                                            <div className="text-gray-500">ژمارە: {item.stock}</div>
                                         </div>
                                     </div>
                                 )}
@@ -580,18 +543,16 @@ export default function Inventory() {
                 </div>
             </main>
 
-            {/* Add Item Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
                     <div
-                        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-700"
+                        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-lg border border-gray-200 dark:border-gray-700"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Header */}
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center rtl:space-x-reverse">
-                                <Plus size={24} className="text-blue-600 dark:text-blue-400 mr-2" />
                                 <span>زیادکردنی کاڵای نوێ</span>
+                                <Plus size={24} className="text-blue-600 dark:text-blue-400 mr-2" />
                             </h2>
                             <button
                                 onClick={() => setShowAddModal(false)}
@@ -602,9 +563,7 @@ export default function Inventory() {
                             </button>
                         </div>
 
-                        {/* Form */}
                         <div className="space-y-5">
-                            {/* Name */}
                             <div className="group">
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 rtl:text-right">
                                     ناوی کاڵا
@@ -626,7 +585,6 @@ export default function Inventory() {
                                 </div>
                             </div>
 
-                            {/* Category */}
                             <div className="group">
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 rtl:text-right">
                                     جۆر
@@ -637,24 +595,16 @@ export default function Inventory() {
                                     </span>
                                     <select
                                         className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-10 py-3
-                        bg-white dark:bg-gray-700 text-gray-800 dark:text-white 
-                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                        transition-all appearance-none rtl:text-right"
+                                            bg-white dark:bg-gray-700 text-gray-800 dark:text-white 
+                                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                            transition-all appearance-none rtl:text-right"
                                         value={newItem.category}
                                         onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
                                     >
                                         <option value="">جۆرێک هەڵبژێرە</option>
-                                        {categories.filter(cat => cat !== 'All').map(category => {
-                                            const categoryTranslations = {
-                                                'Weights': 'قورسایی',
-                                                'Equipment': 'ئامێر',
-                                                'Accessories': 'کەرەستە',
-                                                'Supplements': 'تەواوکەر'
-                                            };
+                                        {categories?.map(category => {
                                             return (
-                                                <option key={category} value={category}>
-                                                    {categoryTranslations[category] || category}
-                                                </option>
+                                                <option key={category.category_id} value={category.category_id}>{category.name}</option>
                                             );
                                         })}
                                     </select>
@@ -664,41 +614,75 @@ export default function Inventory() {
                                 </div>
                             </div>
 
-                            {/* Barcode */}
                             <div className="group">
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 rtl:text-right">
-                                    بارکۆد (بەخۆڕایی دروست دەکرێت)
+                                    نرخی کڕاو
                                 </label>
                                 <div className="relative">
                                     <span className="absolute inset-y-0 left-0 rtl:left-auto rtl:right-0 pl-3 rtl:pr-3 flex items-center pointer-events-none">
-                                        <Barcode size={18} className="text-gray-400" />
+                                        <DollarSign size={18} className="text-gray-400" />
                                     </span>
                                     <input
                                         type="text"
                                         className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-10 py-3 
-                        bg-white dark:bg-gray-700 text-gray-800 dark:text-white 
-                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                        transition-all placeholder:text-gray-400 rtl:text-right"
-                                        placeholder="بارکۆد"
-                                        value={newItem.barcode}
-                                        onChange={(e) => setNewItem({ ...newItem, barcode: e.target.value })}
+                                                bg-white dark:bg-gray-700 text-gray-800 dark:text-white 
+                                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                                transition-all placeholder:text-gray-400 rtl:text-right"
+                                        placeholder="نرخی کڕاو بنووسە..."
+                                        value={newItem.cost_price}
+                                        onChange={(e) => setNewItem({ ...newItem, cost_price: e.target.value })}
                                     />
-                                    <button 
-                                        onClick={() => setNewItem({ ...newItem, barcode: generateBarcode() })}
-                                        className="absolute inset-y-0 right-0 rtl:right-auto rtl:left-0 pr-3 rtl:pl-3 flex items-center text-blue-600 hover:text-blue-800"
-                                    >
-                                        <RefreshCw size={18} />
-                                    </button>
                                 </div>
                             </div>
 
-                            {/* Image Upload */}
+                            <div className="group">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 rtl:text-right">
+                                    نرخی فرۆشتن
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute inset-y-0 left-0 rtl:left-auto rtl:right-0 pl-3 rtl:pr-3 flex items-center pointer-events-none">
+                                        <DollarSign size={18} className="text-gray-400" />
+                                    </span>
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-10 py-3 
+                                        bg-white dark:bg-gray-700 text-gray-800 dark:text-white 
+                                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                        transition-all placeholder:text-gray-400 rtl:text-right"
+                                        placeholder="ناوی کاڵا بنووسە..."
+                                        value={newItem.selling_price}
+                                        onChange={(e) => setNewItem({ ...newItem, selling_price: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="group">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 rtl:text-right">
+                                    ژمارەی عەدەد
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute inset-y-0 left-0 rtl:left-auto rtl:right-0 pl-3 rtl:pr-3 flex items-center pointer-events-none">
+                                        <Package size={18} className="text-gray-400" />
+                                    </span>
+                                    <input
+                                        type='text'
+                                        className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-10 py-3
+                                            bg-white dark:bg-gray-700 text-gray-800 dark:text-white 
+                                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                            transition-all rtl:text-right"
+                                        placeholder="ژمارەی عەدەد بنووسە..."
+                                        value={newItem.stock}
+                                        onChange={(e) => setNewItem({ ...newItem, stock: parseInt(e.target.value) || 0 })}
+                                    />
+                                </div>
+                            </div>
+
                             <div className="group">
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 rtl:text-right">
                                     وێنە
                                 </label>
                                 <div className="mt-1">
-                                    {!newItem.image ? (
+                                    {!newItem.img ? (
                                         <label className="flex flex-col items-center justify-center w-full h-32 
                               border-2 border-dashed border-gray-300 dark:border-gray-600 
                               rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 
@@ -719,13 +703,13 @@ export default function Inventory() {
                                     ) : (
                                         <div className="relative h-32 w-full rounded-xl overflow-hidden group">
                                             <img
-                                                src={newItem.image}
+                                                src={imagePreview}
                                                 alt="Preview"
                                                 className="h-full w-full object-cover"
                                             />
                                             <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                                 <button
-                                                    onClick={() => setNewItem({ ...newItem, image: null })}
+                                                    onClick={() => setNewItem({ ...newItem, img: null })}
                                                     className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                                                 >
                                                     <Trash2 size={20} />
@@ -735,69 +719,22 @@ export default function Inventory() {
                                     )}
                                 </div>
                             </div>
-
-                            {/* Price and Quantity */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="group">
-                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 rtl:text-right">
-                                        ژمارە
-                                    </label>
-                                    <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 rtl:left-auto rtl:right-0 pl-3 rtl:pr-3 flex items-center pointer-events-none">
-                                            <Package size={18} className="text-gray-400" />
-                                        </span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-10 py-3
-                          bg-white dark:bg-gray-700 text-gray-800 dark:text-white 
-                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                          transition-all rtl:text-right"
-                                            value={newItem.quantity}
-                                            onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="group">
-                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 rtl:text-right">
-                                        نرخ ($)
-                                    </label>
-                                    <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 rtl:left-auto rtl:right-0 pl-3 rtl:pr-3 flex items-center pointer-events-none">
-                                            <DollarSign size={18} className="text-gray-400" />
-                                        </span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-10 py-3
-                          bg-white dark:bg-gray-700 text-gray-800 dark:text-white 
-                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                          transition-all rtl:text-right"
-                                            value={newItem.price}
-                                            onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
-                        {/* Action Buttons */}
                         <div className="mt-8 flex gap-2 justify-start space-x-3 rtl:space-x-reverse">
                             <button
                                 className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium
-                    hover:bg-blue-700 transition-colors shadow-sm 
-                    disabled:bg-blue-400 disabled:cursor-not-allowed"
+                                        hover:bg-blue-700 transition-colors shadow-sm 
+                                        disabled:bg-blue-400 disabled:cursor-not-allowed"
                                 onClick={handleAddItem}
-                                disabled={!newItem.name || !newItem.category}
+                                disabled={!newItem.name || !newItem.category || !newItem.cost_price || !newItem.selling_price || !newItem.stock}
                             >
                                 زیادکردن
                             </button>
                             <button
                                 className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl
-                    text-gray-700 dark:text-gray-300 font-medium
-                    hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                        text-gray-700 dark:text-gray-300 font-medium
+                                        hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 onClick={() => setShowAddModal(false)}
                             >
                                 پاشگەزبوونەوە
@@ -807,62 +744,92 @@ export default function Inventory() {
                 </div>
             )}
 
-            {/* Barcode Modal */}
             {showBarcodeModal && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md print:p-0 print:shadow-none print:bg-transparent print:w-auto">
-                        <div className="flex justify-between items-center mb-4 print:hidden">
-                            <h3 className="text-xl font-bold">بارکۆد</h3>
-                            <button 
-                                onClick={() => setShowBarcodeModal(false)}
-                                className="p-1 rounded-full hover:bg-gray-100"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-                        
-                        <div className="flex flex-col items-center p-4 print:p-2">
-                            {/* Item Info */}
-                            <div className="text-center mb-4 print:mb-2">
-                                <h4 className="font-bold text-lg print:text-sm">{currentItem?.name || 'Item Name'}</h4>
-                                <p className="text-gray-600 print:text-xs">
-                                    {currentItem?.category === 'Weights' ? 'قورسایی' :
-                                     currentItem?.category === 'Equipment' ? 'ئامێر' :
-                                     currentItem?.category === 'Accessories' ? 'کەرەستە' :
-                                     currentItem?.category === 'Supplements' ? 'تەواوکەر' : currentItem?.category || 'Category'}
-                                </p>
-                                <p className="font-medium print:text-xs">${currentItem?.price?.toFixed(2) || '0.00'}</p>
-                            </div>
-                            
-                            {/* Barcode Section */}
-                            <div className="w-full mb-4 print:mb-2">
-                                <canvas 
-                                    id="barcode-canvas" 
-                                    className="w-full print:w-64 print:h-16"
-                                />
-                                <p className="text-center font-mono text-lg print:text-sm">{currentBarcode}</p>
-                            </div>
-                            
-                            {/* Action Buttons */}
-                            <div className="flex flex-wrap gap-4 justify-center print:hidden">
+                <>
+                    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn print:hidden">
+                        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-bold">بارکۆد</h3>
                                 <button
-                                    onClick={downloadBarcode}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2"
+                                    onClick={() => setShowBarcodeModal(false)}
+                                    className="p-1 rounded-full hover:bg-gray-100"
                                 >
-                                    <Download size={18} />
-                                    داگرتنی بارکۆد
+                                    <X size={24} />
                                 </button>
-                                <button
-                                    onClick={() => window.print()}
-                                    className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2"
-                                >
-                                    <Printer size={18} />
-                                    چاپکردن
-                                </button>
+                            </div>
+
+                            <div className="flex flex-col items-center p-4">
+                                <div className="text-center mb-4">
+                                    <h4 className="font-bold text-lg">{currentItem?.name || 'Item Name'}</h4>
+                                    <p className="text-gray-600">
+                                        {currentItem?.category}
+                                    </p>
+                                    <p className="font-medium">{currentItem?.selling_price || '0.00'} د.ع</p>
+                                </div>
+
+                                <div className="w-full mb-4">
+                                    <canvas
+                                        id="barcode-canvas"
+                                        className="w-full"
+                                    />
+                                    <p className="text-center font-mono text-lg">{currentBarcode}</p>
+                                </div>
+
+                                <div className="flex flex-wrap gap-4 justify-center">
+                                    <button
+                                        onClick={downloadBarcode}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2"
+                                    >
+                                        <Download size={18} />
+                                        داگرتنی بارکۆد
+                                    </button>
+                                    <button
+                                        onClick={handlePrintBarcode}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2"
+                                    >
+                                        <Printer size={18} />
+                                        چاپکردن
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+
+                    <div className="barcode-modal-print" style={{ display: 'none' }}>
+                        <div className="text-center mb-4" style={{ borderBottom: '1px dashed #666', paddingBottom: '8px' }}>
+                            <h2 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px' }}>Your Store Name</h2>
+                            <p style={{ fontSize: '12px', marginBottom: '2px' }}>Address Line 1</p>
+                            <p style={{ fontSize: '12px' }}>Phone: +964 XXX XXX XXXX</p>
+                        </div>
+
+                        <div className="text-center mb-4">
+                            <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>
+                                {currentItem?.name || 'Item Name'}
+                            </h4>
+                            <p style={{ fontSize: '12px', marginBottom: '2px' }}>
+                                Category: {currentItem?.category}
+                            </p>
+                            <p style={{ fontSize: '12px', fontWeight: 'bold' }}>
+                                {currentItem?.selling_price || '0.00'} د.ع
+                            </p>
+                        </div>
+
+                        <div className="text-center mb-4">
+                            <canvas
+                                id="barcode-canvas-print"
+                                style={{ width: '60mm', height: '15mm', display: 'block', margin: '8px auto' }}
+                            />
+                            <p className="font-mono" style={{ fontSize: '10px', fontFamily: 'Courier New, monospace', letterSpacing: '1px', marginTop: '4px' }}>
+                                {currentBarcode}
+                            </p>
+                        </div>
+
+                        <div className="text-center" style={{ borderTop: '1px dashed #666', paddingTop: '8px', fontSize: '12px' }}>
+                            <p>Thank you for shopping with us!</p>
+                            <p>{new Date().toLocaleDateString('en-GB')} - {new Date().toLocaleTimeString('en-GB', { hour12: false })}</p>
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );

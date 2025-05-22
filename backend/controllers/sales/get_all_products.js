@@ -3,7 +3,7 @@ const db = require("../../config/mysql/mysqlconfig");
 const get_all_products = async (req, res) => {
     try {
         const sql = `
-        select p.product_id,p.barcode,p.name,p.stock,p.selling_price,p.img,c.name as category 
+        select p.product_id,p.barcode,p.name,p.stock,p.selling_price,p.cost_price,p.img,c.name as category 
         from products as p 
         left join 
         category as c on 

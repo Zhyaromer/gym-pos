@@ -1,1 +1,92 @@
 @import "tailwindcss";
+
+/* Print styles for barcode receipt */
+@media print {
+
+    /* Reset page margins and size */
+    @page {
+        size: 80mm auto;
+        margin: 0;
+    }
+
+    /* Hide everything */
+    * {
+        visibility: hidden !important;
+    }
+
+    /* Show only the barcode modal and its children */
+    .barcode-modal-print,
+    .barcode-modal-print * {
+        visibility: visible !important;
+    }
+
+    /* Position and style the modal for printing */
+    .barcode-modal-print {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 80mm !important;
+        height: auto !important;
+        background: white !important;
+        padding: 5mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+    }
+
+    /* Remove modal backdrop */
+    .barcode-modal-print::before {
+        display: none !important;
+    }
+
+    /* Style text elements */
+    .barcode-modal-print h2 {
+        font-size: 16px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .barcode-modal-print h4 {
+        font-size: 14px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .barcode-modal-print p {
+        font-size: 12px !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Barcode styling */
+    .barcode-modal-print #barcode-canvas {
+        width: 60mm !important;
+        height: 15mm !important;
+        display: block !important;
+        margin: 8px auto !important;
+    }
+
+    /* Barcode number */
+    .barcode-modal-print .font-mono {
+        font-family: 'Courier New', monospace !important;
+        font-size: 10px !important;
+        letter-spacing: 1px !important;
+        margin-top: 4px !important;
+    }
+
+    /* Hide elements that shouldn't print */
+    .print\\:hidden {
+        display: none !important;
+    }
+
+    /* Show elements that should only print */
+    .print\\:block {
+        display: block !important;
+    }
+
+    /* Border styles for print */
+    .border-dashed {
+        border-style: dashed !important;
+        border-width: 1px !important;
+        border-color: #666 !important;
+    }
+}

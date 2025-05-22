@@ -4,7 +4,7 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { forwardRef } from 'react';
 import { ShoppingCart, CheckCircle, Minus, Plus, X, Percent, Search, Tag } from 'lucide-react';
-// Mock product data
+
 const productData = [
   {
     id: 1,
@@ -98,10 +98,8 @@ const productData = [
   }
 ];
 
-// Get all unique categories
 const allCategories = ["هەموو", ...new Set(productData.map(product => product.category))];
 
-// ProductCard component
 const ProductCard = ({ product, addToCart }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
@@ -134,7 +132,6 @@ const ProductCard = ({ product, addToCart }) => {
   );
 };
 
-// Improved Cart item component
 const CartItem = ({ item, updateQuantity, removeFromCart }) => {
   return (
     <div className="relative bg-white rounded-lg shadow-sm border border-gray-100 mb-3 overflow-hidden group">
@@ -193,7 +190,6 @@ const CartItem = ({ item, updateQuantity, removeFromCart }) => {
   );
 };
 
-// Discount component
 const DiscountForm = ({ discount, setDiscount, applyDiscount }) => {
   return (
     <div className="mb-6 border-t border-gray-200 pt-6">
@@ -250,7 +246,6 @@ const DiscountForm = ({ discount, setDiscount, applyDiscount }) => {
   );
 };
 
-// Empty cart component
 const EmptyCart = () => {
   return (
     <div className="text-center py-16">
@@ -268,7 +263,6 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
     try {
       const receiptElement = ref.current;
 
-      // Temporary style adjustments for PDF rendering
       const originalStyles = {
         position: receiptElement.style.position,
         visibility: receiptElement.style.visibility,
@@ -281,7 +275,6 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
       receiptElement.style.left = '0';
       receiptElement.style.top = '0';
 
-      // Create canvas with specific options
       const canvas = await html2canvas(receiptElement, {
         scale: 2,
         logging: true,
@@ -294,24 +287,19 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
         windowHeight: receiptElement.scrollHeight,
       });
 
-      // Restore original styles
       Object.assign(receiptElement.style, originalStyles);
 
-      // Calculate PDF dimensions (80mm width)
-      const imgWidth = 80; // mm
+      const imgWidth = 80; 
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      // Create PDF
       const pdf = new jsPDF({
         orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
         unit: 'mm',
         format: [imgWidth, imgHeight],
       });
 
-      // Add image to PDF
       pdf.addImage(canvas, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
 
-      // Save the PDF
       pdf.save(`receipt_${orderNumber}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -381,7 +369,6 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
           </div>
         </div>
 
-        {/* Items */}
         <div style={{ marginBottom: '10px' }}>
           <div style={{
             display: 'flex',
@@ -411,7 +398,6 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
           ))}
         </div>
 
-        {/* Totals */}
         <div style={{
           borderTop: '1px dashed #ccc',
           borderBottom: '1px dashed #ccc',
@@ -441,7 +427,6 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
           </div>
         </div>
 
-        {/* Footer */}
         <div style={{
           textAlign: 'center',
           marginTop: '10px',
@@ -492,7 +477,6 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
   );
 });
 
-// Cart Summary component with payment input
 const CartSummary = ({
   subtotal,
   discount,
@@ -508,12 +492,10 @@ const CartSummary = ({
   exchangeRate,
   setExchangeRate
 }) => {
-  // Calculate payment in IQD for comparison with total
   const paymentInIQD = currencyType === 'iqd'
     ? parseFloat(payment) || 0
     : (parseFloat(payment) || 0) * exchangeRate;
 
-  // Determine if payment is sufficient
   const isPaymentSufficient = paymentInIQD >= total;
 
   return (
@@ -547,7 +529,6 @@ const CartSummary = ({
         <span className="text-lg font-bold text-blue-700">کۆی گشتی کۆتایی</span>
       </div>
 
-      {/* Enhanced Payment Input with currency selection */}
       <PaymentInput
         payment={payment}
         setPayment={setPayment}
@@ -556,7 +537,6 @@ const CartSummary = ({
         exchangeRate={exchangeRate}
       />
 
-      {/* Enhanced Change Display with currency selection */}
       {payment > 0 && paymentInIQD >= total && (
         <ChangeDisplay
           change={currencyType === 'iqd' ? paymentInIQD - total : ((paymentInIQD - (total * 100)))/100}
@@ -598,7 +578,6 @@ const CurrencyConverter = ({ exchangeRate, setExchangeRate }) => {
   );
 };
 
-// Enhanced payment input with currency selection
 const PaymentInput = ({ payment, setPayment, currencyType, setCurrencyType, exchangeRate }) => {
   const handleCurrencyChange = (e) => {
     setCurrencyType(e.target.value);
@@ -642,7 +621,6 @@ const PaymentInput = ({ payment, setPayment, currencyType, setCurrencyType, exch
   );
 };
 
-// Enhanced change display with currency selection
 const ChangeDisplay = ({ change, changeType, setChangeType, exchangeRate }) => {
   const handleChangeTypeChange = (e) => {
     setChangeType(e.target.value);
@@ -675,7 +653,6 @@ const ChangeDisplay = ({ change, changeType, setChangeType, exchangeRate }) => {
   );
 };
 
-// BarcodeScanner component
 const BarcodeScanner = ({ onScan }) => {
   const [barcode, setBarcode] = useState('');
 
