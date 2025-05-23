@@ -1,120 +1,97 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DollarSign,
   Search,
   Plus,
   Edit,
   Trash2,
-  Filter,
   ArrowUpDown,
-  Dumbbell,
-  Bell,
   Save,
   X,
   Calendar,
   Tag,
   FileText,
-  UserCircle,
   ChevronDown
 } from 'lucide-react';
 import Navbar from '../components/layout/Nav';
+import axios from 'axios';
 
 export default function Expenses() {
-  // State for expenses
-  const [expenses, setExpenses] = useState([
-    {
-      id: 1,
-      date: '2023-06-15',
-      category: 'ئامێر',
-      amount: 1200,
-      description: 'کڕینی ئامێری ڕاکردن'
-    },
-    {
-      id: 2,
-      date: '2023-06-18',
-      category: 'خزمەتگوزاری',
-      amount: 350,
-      description: 'پسوولەی کارەبا بۆ مانگی حوزەیران'
-    },
-    {
-      id: 3,
-      date: '2023-06-20',
-      category: 'پڕۆتین',
-      amount: 750,
-      description: 'کۆگای پڕۆتینی وەی'
-    },
-    {
-      id: 4,
-      date: '2023-06-25',
-      category: 'چاککردنەوە',
-      amount: 200,
-      description: 'چاککردنەوەی ئامێرەکانی قورسایی'
-    },
-    {
-      id: 5,
-      date: '2023-06-28',
-      category: 'مووچە',
-      amount: 3500,
-      description: 'مووچەی کارمەندان بۆ مانگی حوزەیران'
-    },
-    {
-      id: 6,
-      date: '2023-07-01',
-      category: 'ڕیکلام',
-      amount: 300,
-      description: 'ڕیکلامی تۆڕە کۆمەڵایەتییەکان'
-    },
-    {
-      id: 7,
-      date: '2023-07-05',
-      category: 'کەلوپەل',
-      amount: 450,
-      description: 'دۆشەکی یۆگا و باندی بەرگری نوێ'
-    },
-  ]);
-
-  // State for search and filter
+  const [expenses, setExpenses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('هەموو');
-  const [dateFilterType, setDateFilterType] = useState('all');
+  const [dateFilterType, setDateFilterType] = useState('today');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showDateFilterDropdown, setShowDateFilterDropdown] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newExpense, setNewExpense] = useState({
-    date: new Date().toISOString().split('T')[0],
-    category: '',
-    amount: 0,
-    description: ''
+    expenses_date: new Date().toISOString().split('T')[0],
+    expenses_category_id: '',
+    price: 0,
+    name: ''
   });
-
-  // State for editing
   const [editingExpense, setEditingExpense] = useState(null);
   const [editedValues, setEditedValues] = useState({});
+  const [expensesTotal, setExpensesTotal] = useState(0);
+  const [categories, setCategories] = useState([]);
 
-  // Categories for filtering
-  const categories = ['هەموو', 'ئامێر', 'خزمەتگوزاری', 'پڕۆتین', 'چاککردنەوە', 'مووچە', 'ڕیکلام', 'کەلوپەل', 'هیتر'];
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        let url = `http://localhost:3000/expenses/get_expenses`;
 
-  // Date filter options
+        if (dateFilterType == 'custom' && (customStartDate && customEndDate)) {
+          url += `?start_date=${customStartDate}&end_date=${customEndDate}`;
+        } else {
+          url += '';
+        }
+
+        if (dateFilterType == 'today') {
+          url += '';
+        } else if (dateFilterType != 'today' && dateFilterType != 'custom') {
+          url += `?filter=${dateFilterType}`;
+        }
+
+        const res = await axios.get(url)
+        setExpenses(res.data.data);
+        setExpensesTotal(res.data.total);
+      } catch (error) {
+        console.error('Error fetching expenses:', error);
+      }
+    };
+
+    fetchExpenses();
+  }, [dateFilterType, customStartDate, customEndDate]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const res = await axios.get(`http://localhost:3000/expenses_category/get_all_expensess_category`)
+      const categoriesArray = Object.values(res.data.rows);
+      setCategories(categoriesArray);
+    }
+    fetchCategories()
+  }, [expenses])
+
   const dateFilterOptions = [
-    { id: 'all', label: 'هەموو کات' },
     { id: 'today', label: 'ئەمڕۆ' },
     { id: 'yesterday', label: 'دوێنێ' },
-    { id: 'last_week', label: 'هەفتەی ڕابردوو' },
-    { id: 'this_month', label: 'ئەم مانگە' },
+    { id: 'week', label: 'هەفتەی ڕابردوو' },
+    { id: 'month', label: 'ئەم مانگە' },
     { id: 'last_month', label: 'مانگی ڕابردوو' },
-    { id: 'this_year', label: 'ئەمساڵ' },
+    { id: 'year', label: 'ئەمساڵ' },
+    { id: 'all', label: 'هەموو کات' },
     { id: 'custom', label: 'ماوەی دیاریکراو' }
   ];
 
-  // Get current date filter label
   const getCurrentDateFilterLabel = () => {
     const option = dateFilterOptions.find(option => option.id === dateFilterType);
-    return option ? option.label : 'هەموو کات';
+    return option ? option.label : 'ئەمڕۆ';
   };
 
-  // Filter expenses based on date range
   const getDateFilteredExpenses = (expenses) => {
+    if (!Array.isArray(expenses)) return [];
+
     if (dateFilterType === 'all') return expenses;
 
     const today = new Date();
@@ -134,7 +111,7 @@ export default function Expenses() {
     const thisYearStart = new Date(today.getFullYear(), 0, 1);
 
     return expenses.filter(expense => {
-      const expenseDate = new Date(expense.date);
+      const expenseDate = new Date(expense.expenses_date);
       expenseDate.setHours(0, 0, 0, 0);
 
       switch (dateFilterType) {
@@ -163,92 +140,113 @@ export default function Expenses() {
     });
   };
 
-  // Filter expenses based on search term, category, and date
-  const filteredExpenses = getDateFilteredExpenses(expenses.filter(expense => {
+  const filteredExpenses = getDateFilteredExpenses(Array.isArray(expenses) ? expenses.filter(expense => {
     const matchesSearch =
-      expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      expense.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'هەموو' || expense.category === filterCategory;
+      expense.name?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+      expense.category_name?.toLowerCase().includes(searchTerm?.toLowerCase());
+    const matchesCategory = filterCategory === 'هەموو' || expense.category_name === filterCategory;
     return matchesSearch && matchesCategory;
-  }));
+  }) : []);
 
-  // Calculate total expenses
-  const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-
-  // Calculate expenses by category
   const expensesByCategory = {};
   filteredExpenses.forEach(expense => {
-    if (!expensesByCategory[expense.category]) {
-      expensesByCategory[expense.category] = 0;
+    if (!expensesByCategory[expense.category_name]) {
+      expensesByCategory[expense.category_name] = 0;
     }
-    expensesByCategory[expense.category] += expense.amount;
+    expensesByCategory[expense.category_name] += expense.price;
   });
 
-  // Handle adding new expense
-  const handleAddExpense = () => {
-    if (newExpense.category && newExpense.amount > 0) {
-      setExpenses([
-        ...expenses,
-        {
-          id: expenses.length + 1,
-          ...newExpense
+  const handleAddExpense = async () => {
+    if (newExpense.expenses_category_id && newExpense.price >= 0 && newExpense.name && newExpense.expenses_date) {
+      try {
+        const res = await axios.post(`http://localhost:3000/expenses/add_expense`, {
+          expenses_category_id: newExpense.expenses_category_id,
+          price: newExpense.price,
+          name: newExpense.name,
+          expenses_date: newExpense.expenses_date
+        });
+
+        if (res.status === 200) {
+          alert('خەرجییەکە بەسەرکەوە');
+          setExpenses([
+            ...expenses
+          ]);
+          setNewExpense({
+            expenses_date: new Date().toISOString().split('T')[0],
+            expenses_category_id: '',
+            price: 0,
+            name: ''
+          });
+          setShowAddModal(false);
         }
-      ]);
-      setNewExpense({
-        date: new Date().toISOString().split('T')[0],
-        category: '',
-        amount: 0,
-        description: ''
-      });
-      setShowAddModal(false);
+      } catch (error) {
+        console.error('Error adding expense:', error);
+      }
     }
   };
 
-  // Start editing an expense
   const startEditing = (expense) => {
-    setEditingExpense(expense.id);
+    setEditingExpense(expense.expenses_id);
     setEditedValues({ ...expense });
   };
 
-  // Save edited expense
-  const saveEditing = () => {
-    if (editedValues.category && editedValues.amount > 0) {
-      setExpenses(expenses.map(expense =>
-        expense.id === editingExpense ? { ...editedValues } : expense
-      ));
-      setEditingExpense(null);
+  const saveEditing = async () => {
+    if (editedValues.price >= 0 && editedValues.price && editedValues.name && editedValues.expenses_date) {
+      try {
+        const data = {
+          expenses_id: editedValues.expenses_id,
+          expenses_category_id: editedValues.expenses_category_id,
+          price: editedValues.price,
+          name: editedValues.name,
+          expenses_date: editedValues.expenses_date
+        }
+
+        const res = await axios.patch(`http://localhost:3000/expenses/update_expenses`, data);
+
+        if (res.status === 200) {
+          alert('خەرجییەکە بەسەرکەوە');
+          setExpenses(expenses.map(expense =>
+            expense.expenses_id === editingExpense ? { ...data, category_name: categories.find(category => category.expenses_category_id == editedValues.expenses_category_id).name } : expense
+          ));
+          setEditingExpense(null);
+          setExpensesTotal(expensesTotal + (editedValues.price - expenses.find(expense => expense.expenses_id === editedValues.expenses_id).price));
+        }
+      } catch (error) {
+        console.error('Error updating expense:', error);
+      }
     }
   };
 
-  // Cancel editing
   const cancelEditing = () => {
     setEditingExpense(null);
   };
 
-  // Delete an expense
-  const deleteExpense = (id) => {
+  const deleteExpense = async (id) => {
     if (confirm('دڵنیایت کە دەتەوێت ئەم خەرجییە بسڕیتەوە؟')) {
-      setExpenses(expenses.filter(expense => expense.id !== id));
+      try {
+        const res = await axios.delete(`http://localhost:3000/expenses/delete_expenses/${id}`)
+        if (res.status === 200) {
+          alert('خەرجییەکە بەسەرکەوە');
+          setExpenses(expenses.filter(expense => expense.expenses_id !== id));
+          setExpensesTotal(expensesTotal - expenses.find(expense => expense.expenses_id === id).price);
+        }
+      } catch (error) {
+        console.error('Error deleting expense:', error);
+      }
     }
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('ku', options);
-  };
-
-  // Format currency
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('ku-IQ', { style: 'currency', currency: 'IQD' }).format(amount);
+    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-GB', options);
   };
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
-            <Navbar/>
+      <Navbar />
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6 border-r-4 border-purple-500">
             <div className="flex items-center justify-between">
               <div>
@@ -266,12 +264,7 @@ export default function Expenses() {
               <div>
                 <p className="text-sm text-gray-500 mb-1">خەرجییەکانی ئەم مانگە</p>
                 <h3 className="text-2xl font-bold text-gray-800">
-                  {formatCurrency(expenses.filter(expense => {
-                    const today = new Date();
-                    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                    const expenseDate = new Date(expense.date);
-                    return expenseDate >= firstDay && expenseDate <= today;
-                  }).reduce((sum, expense) => sum + expense.amount, 0))}
+                  {((expensesTotal / 1) * 1000).toLocaleString()} د.ع
                 </h3>
               </div>
               <div className="p-3 rounded-full bg-green-100">
@@ -279,21 +272,8 @@ export default function Expenses() {
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6 border-r-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">کۆی خەرجییەکان</p>
-                <h3 className="text-2xl font-bold text-gray-800">{formatCurrency(totalExpenses)}</h3>
-              </div>
-              <div className="p-3 rounded-full bg-blue-100">
-                <DollarSign className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Search and Filter Bar */}
         <div className="bg-white rounded-lg shadow-md p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-[0.7] relative">
@@ -313,8 +293,9 @@ export default function Expenses() {
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
               >
+                <option value="هەموو">هەموو</option>
                 {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
+                  <option key={category.name} value={category.name}>{category.name}</option>
                 ))}
               </select>
             </div>
@@ -380,7 +361,6 @@ export default function Expenses() {
           </div>
         </div>
 
-        {/* Expenses Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -415,26 +395,26 @@ export default function Expenses() {
               <tbody className="divide-y divide-gray-200">
                 {filteredExpenses.length > 0 ? (
                   filteredExpenses.map(expense => (
-                    <tr key={expense.id} className="hover:bg-gray-50">
-                      {editingExpense === expense.id ? (
-                        // Edit mode
+                    <tr key={expense.expenses_id} className="hover:bg-gray-50">
+                      {editingExpense === expense.expenses_id ? (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <input
                               type="date"
                               className="w-full px-2 py-1 border rounded"
-                              value={editedValues.date}
-                              onChange={(e) => setEditedValues({ ...editedValues, date: e.target.value })}
+                              value={editedValues.expenses_date}
+                              onChange={(e) => setEditedValues({ ...editedValues, expenses_date: e.target.value })}
                             />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <select
                               className="w-full px-2 py-1 border rounded"
-                              value={editedValues.category}
-                              onChange={(e) => setEditedValues({ ...editedValues, category: e.target.value })}
+                              value={editedValues.expenses_category_id}
+                              onChange={(e) => setEditedValues({ ...editedValues, expenses_category_id: e.target.value })}
                             >
-                              {categories.filter(cat => cat !== 'هەموو').map(category => (
-                                <option key={category} value={category}>{category}</option>
+                              <option value="">جۆرێک هەڵبژێرە</option>
+                              {categories.map(category => (
+                                <option key={category.expenses_category_id} value={category.expenses_category_id}>{category.name}</option>
                               ))}
                             </select>
                           </td>
@@ -442,16 +422,16 @@ export default function Expenses() {
                             <input
                               type="number"
                               className="w-full px-2 py-1 border rounded"
-                              value={editedValues.amount}
-                              onChange={(e) => setEditedValues({ ...editedValues, amount: parseFloat(e.target.value) || 0 })}
+                              value={editedValues.price}
+                              onChange={(e) => setEditedValues({ ...editedValues, price: parseFloat(e.target.value) || 0 })}
                             />
                           </td>
                           <td className="px-6 py-4">
                             <input
                               type="text"
                               className="w-full px-2 py-1 border rounded"
-                              value={editedValues.description}
-                              onChange={(e) => setEditedValues({ ...editedValues, description: e.target.value })}
+                              value={editedValues.name}
+                              onChange={(e) => setEditedValues({ ...editedValues, name: e.target.value })}
                             />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
@@ -470,21 +450,20 @@ export default function Expenses() {
                           </td>
                         </>
                       ) : (
-                        // View mode
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
-                            {formatDate(expense.date)}
+                            {formatDate(expense.expenses_date)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
                             <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                              {expense.category}
+                              {expense.category_name}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap font-medium text-right">
-                            {formatCurrency(expense.amount)}
+                            {((expense.price / 1) * 1000).toLocaleString()} د.ع
                           </td>
                           <td className="px-6 py-4 text-right">
-                            {expense.description}
+                            {expense.name}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
                             <button
@@ -494,7 +473,7 @@ export default function Expenses() {
                               <Edit size={18} />
                             </button>
                             <button
-                              onClick={() => deleteExpense(expense.id)}
+                              onClick={() => deleteExpense(expense.expenses_id)}
                               className="text-red-600 hover:text-red-900"
                             >
                               <Trash2 size={18} />
@@ -517,9 +496,8 @@ export default function Expenses() {
         </div>
       </main>
 
-      {/* Add Expense Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 backdrop-blur-xs bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="bg-gradient-to-l from-blue-600 to-indigo-700 text-white px-6 py-4 rounded-t-lg">
               <h3 className="text-lg font-bold">زیادکردنی خەرجی نوێ</h3>
@@ -529,14 +507,12 @@ export default function Expenses() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">بەروار</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <Calendar size={18} className="text-gray-400" />
-                    </div>
+                    <div className="absolute inset-y-0 right-0  flex items-center pointer-events-none"></div>
                     <input
                       type="date"
-                      className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newExpense.date}
-                      onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
+                      className="w-full pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={newExpense.expenses_date}
+                      onChange={(e) => setNewExpense({ ...newExpense, expenses_date: e.target.value })}
                     />
                   </div>
                 </div>
@@ -549,12 +525,14 @@ export default function Expenses() {
                     </div>
                     <select
                       className="w-full pr-10 pl-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={newExpense.category}
-                      onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
+                      value={newExpense.expenses_category_id}
+                      onChange={(e) => setNewExpense({
+                        ...newExpense, expenses_category_id: e.target.value
+                      })}
                     >
-                      <option value="" disabled>جۆرێک هەڵبژێرە</option>
-                      {categories.filter(cat => cat !== 'هەموو').map(category => (
-                        <option key={category} value={category}>{category}</option>
+                      <option value="">جۆرێک هەڵبژێرە</option>
+                      {categories.map(category => (
+                        <option key={category.expenses_category_id} value={category.expenses_category_id}>{category.name}</option>
                       ))}
                     </select>
                   </div>
@@ -572,8 +550,8 @@ export default function Expenses() {
                       min="0"
                       className="w-full pr-10 pl-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="0.00"
-                      value={newExpense.amount || ''}
-                      onChange={(e) => setNewExpense({ ...newExpense, amount: parseFloat(e.target.value) || 0 })}
+                      value={newExpense.price || ''}
+                      onChange={(e) => setNewExpense({ ...newExpense, price: parseFloat(e.target.value) || 0 })}
                     />
                   </div>
                 </div>
@@ -588,8 +566,8 @@ export default function Expenses() {
                       type="text"
                       className="w-full pr-10 pl-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="وەسفێک بنووسە"
-                      value={newExpense.description}
-                      onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+                      value={newExpense.name}
+                      onChange={(e) => setNewExpense({ ...newExpense, name: e.target.value })}
                     />
                   </div>
                 </div>

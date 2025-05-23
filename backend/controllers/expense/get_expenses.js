@@ -20,16 +20,28 @@ const get_expenses = async (req, res) => {
                 case 'week':
                     whereClause += 'expenses_date >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)';
                     break;
+                case 'last_week':
+                    whereClause += `YEARWEEK(expenses_date, 1) = YEARWEEK(CURDATE(), 1) - 1`;
+                    break;
                 case 'month':
                     whereClause += 'expenses_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)';
+                    break;
+                case 'last_month':
+                    whereClause += `
+                        MONTH(expenses_date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+                        AND YEAR(expenses_date) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))`;
                     break;
                 case 'year':
                     whereClause += 'expenses_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)';
                     break;
+                case 'all':
+                    whereClause = '';
+                    break;
                 default:
                     whereClause = '';
             }
-        } else if (!finalFilter && start_date && end_date) {
+        }
+        else if (!finalFilter && start_date && end_date) {
             whereClause = 'WHERE expenses_date BETWEEN ? AND ?';
             params.push(start_date, end_date);
         }
