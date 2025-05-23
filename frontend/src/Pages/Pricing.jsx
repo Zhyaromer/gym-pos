@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Waves, Dumbbell, Settings, Save, X } from 'lucide-react';
 import Navbar from '../components/layout/Nav';
+import axios from 'axios';
 
 export default function PricingPage() {
-  // Service icons mapping - separate from the data structure
   const serviceIcons = {
-    gym: <Dumbbell className="w-8 h-8" />,
-    pool: <Waves className="w-8 h-8" />,
-    combined: (
+    'هۆلی وەرزشی': <Dumbbell className="w-8 h-8" />,
+    'مەلەوانگە': <Waves className="w-8 h-8" />,
+    'مەلەوانگە و هۆلی وەرزشی': (
       <div className="flex">
         <Dumbbell className="w-8 h-8" />
         <Waves className="w-8 h-8 ml-1" />
@@ -15,65 +15,25 @@ export default function PricingPage() {
     )
   };
 
-  // Default pricing data - no React elements here
-  const defaultPricing = {
-    gym: {
-      title: 'هۆڵی وەرزشی',
-      type: 'gym',
-      plans: [
-        { duration: '1 مانگ', price: '50,000', id: 'gym-month' },
-        { duration: '3 مانگ', price: '140,000', id: 'gym-3month', saving: '%7 کەمکردنەوە' },
-        { duration: '6 مانگ', price: '270,000', id: 'gym-6month', saving: '%10 کەمکردنەوە' },
-        { duration: '1 ساڵ', price: '500,000', id: 'gym-year', saving: '%17 کەمکردنەوە' },
-      ]
-    },
-    pool: {
-      title: 'مەلەوانگە',
-      type: 'pool',
-      plans: [
-        { duration: '1 مانگ', price: '60,000', id: 'pool-month' },
-        { duration: '3 مانگ', price: '170,000', id: 'pool-3month', saving: '%6 کەمکردنەوە' },
-        { duration: '6 مانگ', price: '330,000', id: 'pool-6month', saving: '%8 کەمکردنەوە' },
-        { duration: '1 ساڵ', price: '600,000', id: 'pool-year', saving: '%17 کەمکردنەوە' },
-      ]
-    },
-    combined: {
-      title: 'هۆڵی وەرزشی و مەلەوانگە',
-      type: 'combined',
-      plans: [
-        { duration: '1 مانگ', price: '100,000', id: 'combined-month', saving: '%10 کەمکردنەوە' },
-        { duration: '3 مانگ', price: '280,000', id: 'combined-3month', saving: '%15 کەمکردنەوە' },
-        { duration: '6 مانگ', price: '540,000', id: 'combined-6month', saving: '%17 کەمکردنەوە' },
-        { duration: '1 ساڵ', price: '960,000', id: 'combined-year', saving: '%20 کەمکردنەوە' },
-      ]
-    }
-  };
-
-  // State for services
-  const [services, setServices] = useState(() => {
-    // Try to load from localStorage first
-    try {
-      const savedPricing = localStorage.getItem('gymPricing');
-      return savedPricing ? JSON.parse(savedPricing) : defaultPricing;
-    } catch (error) {
-      console.error("Error loading pricing data:", error);
-      return defaultPricing;
-    }
-  });
-
-  const [selectedTab, setSelectedTab] = useState('gym');
+  const [services, setServices] = useState({});
+  const [selectedTab, setSelectedTab] = useState('هۆلی وەرزشی');
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedServices, setEditedServices] = useState({});
+  const [modifiedPlans, setModifiedPlans] = useState(new Set());
 
-  // Save to localStorage whenever services changes
   useEffect(() => {
-    try {
-      localStorage.setItem('gymPricing', JSON.stringify(services));
-    } catch (error) {
-      console.error("Error saving pricing data:", error);
+    const fetchPricingData = async () => {
+      try {
+        const res = await axios.get(`http://localhost:3000/membership_plans/get_plans`);
+        setServices(res.data);
+      } catch (error) {
+        console.error("Error fetching pricing data:", error);
+      }
     }
-  }, [services]);
+
+    fetchPricingData();
+  }, [])
 
   const handleSelectPlan = (planId) => {
     setSelectedPlan(planId);
@@ -81,49 +41,72 @@ export default function PricingPage() {
 
   const toggleEditMode = () => {
     if (isEditMode) {
-      // When exiting edit mode without saving
       setIsEditMode(false);
       setEditedServices({});
+      setModifiedPlans(new Set());
     } else {
-      // When entering edit mode, copy current services to edited services
       setIsEditMode(true);
       setEditedServices(JSON.parse(JSON.stringify(services)));
+      setModifiedPlans(new Set()); 
     }
   };
 
-  const handleSaveChanges = () => {
-    setServices(editedServices);
-    setIsEditMode(false);
-    // Show a temporary success message (you could add this as a state)
+  const handleSaveChanges = async () => {
+    try {
+      const updatePromises = [];
+      
+      for (const serviceKey in editedServices) {
+        for (const plan of editedServices[serviceKey].plans) {
+          if (modifiedPlans.has(plan.mp_id)) {
+            updatePromises.push(
+              axios.patch(`http://localhost:3000/membership_plans/update_plan/${plan.mp_id}`, {
+                title: plan.duration,
+                duration: plan.duration.includes('ساڵانە') ? 12 : parseInt(plan.duration),
+                free_pool_entries: plan.free_pool_entries || 0,
+                price: plan.price
+              })
+            );
+          }
+        }
+      }
+      
+      await Promise.all(updatePromises);
+      
+      setServices(editedServices);
+      setIsEditMode(false);
+      setModifiedPlans(new Set());
+      
+      console.log(`Updated ${updatePromises.length} plans successfully`);
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      alert("هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی گۆڕانکاریەکان");
+    }
   };
 
   const handlePriceChange = (serviceKey, planIndex, value) => {
+    const planId = editedServices[serviceKey].plans[planIndex].mp_id;
+    
     setEditedServices(prev => {
       const updated = { ...prev };
       updated[serviceKey].plans[planIndex].price = value;
       return updated;
     });
+    
+    setModifiedPlans(prev => new Set([...prev, planId]));
   };
 
-  const handleSavingChange = (serviceKey, planIndex, value) => {
+  const handlePoolEntriesChange = (serviceKey, planIndex, value) => {
+    const planId = editedServices[serviceKey].plans[planIndex].mp_id;
+    
     setEditedServices(prev => {
       const updated = { ...prev };
-      updated[serviceKey].plans[planIndex].saving = value;
+      updated[serviceKey].plans[planIndex].free_pool_entries = value;
       return updated;
     });
+    
+    setModifiedPlans(prev => new Set([...prev, planId]));
   };
 
-  const resetToDefaults = () => {
-    if (window.confirm('هەموو نرخەکان دەگەڕێنەوە بۆ بنەڕەت. دڵنیایت؟')) {
-      setServices(defaultPricing);
-      localStorage.setItem('gymPricing', JSON.stringify(defaultPricing));
-      if (isEditMode) {
-        setEditedServices(JSON.parse(JSON.stringify(defaultPricing)));
-      }
-    }
-  };
-
-  // Function to format prices (adding د.ع)
   const formatPrice = (price) => {
     return `${price} د.ع`;
   };
@@ -140,16 +123,20 @@ export default function PricingPage() {
             <h1 className="text-4xl font-bold mb-3 text-gray-800 bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">سیستەمی نرخی باشگا</h1>
             <p className="text-gray-600 text-lg">تکایە جۆری خزمەتگوزاری و ماوەکەی هەڵبژێرە</p>
 
-            {/* Admin Controls */}
             <div className="absolute top-0 left-0 flex gap-2">
               {isEditMode ? (
                 <>
                   <button
-                    onClick={handleSaveChanges}
-                    className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg shadow-md transition-colors"
+                    onClick={() => handleSaveChanges()}
+                    disabled={modifiedPlans.size === 0}
+                    className={`flex items-center gap-1 py-2 px-4 rounded-lg shadow-md transition-colors ${
+                      modifiedPlans.size > 0 
+                        ? 'bg-green-500 hover:bg-green-600 text-white' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                   >
                     <Save size={18} />
-                    <span>هەڵگرتن</span>
+                    <span>هەڵگرتن ({modifiedPlans.size})</span>
                   </button>
                   <button
                     onClick={toggleEditMode}
@@ -168,18 +155,9 @@ export default function PricingPage() {
                   <span>گۆڕینی نرخەکان</span>
                 </button>
               )}
-              {isEditMode && (
-                <button
-                  onClick={resetToDefaults}
-                  className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg shadow-md transition-colors"
-                >
-                  گەڕانەوە بۆ نرخی بنەڕەت
-                </button>
-              )}
             </div>
           </header>
 
-          {/* Service Type Tabs */}
           <div className="flex mb-8 bg-white rounded-xl shadow-lg p-2 border border-gray-100">
             {Object.keys(displayedServices).map((key) => (
               <button
@@ -193,44 +171,29 @@ export default function PricingPage() {
                 <div className={`${selectedTab === key ? 'text-white' : 'text-blue-500'}`}>
                   {serviceIcons[key]}
                 </div>
-                <span className="text-lg">{displayedServices[key].title}</span>
+                <span className="text-lg">{displayedServices[key]?.type}</span>
               </button>
             ))}
           </div>
 
-          {/* Selected Service Info */}
           <div className="mb-8 bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-            <h2 className="text-2xl font-bold mb-8 text-center text-gray-800">{displayedServices[selectedTab].title}</h2>
+            <h2 className="text-2xl font-bold mb-8 text-center text-gray-800">{displayedServices[selectedTab]?.type}</h2>
 
-            {/* Plan Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {displayedServices[selectedTab].plans.map((plan, index) => (
+              {displayedServices[selectedTab]?.plans.map((plan, index) => (
                 <div
                   key={plan.id}
-                  onClick={() => !isEditMode && handleSelectPlan(plan.id)}
+                  onClick={() => !isEditMode && handleSelectPlan(plan.mp_id)}
                   className={`rounded-xl p-6 ${!isEditMode ? 'cursor-pointer' : ''} transition-all transform ${!isEditMode && 'hover:-translate-y-1'
-                    } ${selectedPlan === plan.id && !isEditMode
+                    } ${selectedPlan === plan.mp_id && !isEditMode
                       ? 'bg-gradient-to-b from-blue-50 to-blue-100 border-2 border-blue-400 shadow-md'
                       : 'bg-gray-50 border border-gray-200 hover:border-blue-300 hover:shadow-md'
-                    }`}
+                    } ${isEditMode && modifiedPlans.has(plan.mp_id) ? 'ring-2 ring-yellow-400' : ''}`}
                 >
                   <div className="text-center mb-4">
                     <h3 className="text-xl font-bold text-gray-800">{plan.duration}</h3>
-
-                    {isEditMode ? (
-                      <div className="mt-2">
-                        <input
-                          type="text"
-                          value={plan.saving || ''}
-                          onChange={(e) => handleSavingChange(selectedTab, index, e.target.value)}
-                          className="w-full text-sm px-3 py-1 rounded border border-gray-300 text-center"
-                          placeholder="کەمکردنەوە (بۆ نموونە: %10 کەمکردنەوە)"
-                        />
-                      </div>
-                    ) : plan.saving && (
-                      <span className="inline-block bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full mt-2 font-medium">
-                        {plan.saving}
-                      </span>
+                    {isEditMode && modifiedPlans.has(plan.mp_id) && (
+                      <div className="text-xs text-yellow-600 mt-1">گۆڕراوە</div>
                     )}
                   </div>
 
@@ -249,34 +212,30 @@ export default function PricingPage() {
                       <span className="text-3xl font-bold text-blue-600">{formatPrice(plan.price)}</span>
                     )}
                   </div>
-                  <div className={`h-1 w-16 mx-auto mb-2 rounded ${selectedPlan === plan.id && !isEditMode ? 'bg-blue-500' : 'bg-gray-200'}`}></div>
+                  
+                  <div className="text-center mb-3">
+                    <p className="text-gray-600 mb-1">چوونە ژوورەوەی مەلەوانگەی بەخۆڕایی</p>
+                    {isEditMode ? (
+                      <div className="flex items-center justify-center">
+                        <input
+                          type="number"
+                          min="0"
+                          value={plan.free_pool_entries || 0}
+                          onChange={(e) => handlePoolEntriesChange(selectedTab, index, e.target.value)}
+                          className="text-center text-lg font-medium text-blue-600 border-b-2 border-blue-300 p-1 w-20"
+                        />
+                        <span className="text-lg font-medium text-blue-600 ml-1">جار</span>
+                      </div>
+                    ) : (
+                      <span className="text-xl font-medium text-blue-600">{plan.free_pool_entries || 0} جار</span>
+                    )}
+                  </div>
+                  
+                  <div className={`h-1 w-16 mx-auto mb-2 rounded ${selectedPlan === plan.mp_id && !isEditMode ? 'bg-blue-500' : 'bg-gray-200'}`}></div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Cashier Controls */}
-          {selectedPlan && !isEditMode && (
-            <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-500 mt-4">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h3 className="text-xl font-bold mb-3 text-gray-800">پوختەی پارەدان</h3>
-                  <p className="text-gray-600 text-lg">
-                    خزمەتگوزاری: <span className="font-medium">{services[selectedTab].title}</span> |
-                    ماوە: <span className="font-medium">{services[selectedTab].plans.find(p => p.id === selectedPlan).duration}</span>
-                  </p>
-                  <p className="text-2xl font-bold text-blue-600 mt-3 bg-blue-50 inline-block px-4 py-2 rounded-lg">
-                    کۆی گشتی: {formatPrice(services[selectedTab].plans.find(p => p.id === selectedPlan).price)}
-                  </p>
-                </div>
-                <div className="mt-6 md:mt-0">
-                  <button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 px-8 rounded-lg font-bold transition-colors shadow-md">
-                    تەواوکردنی پارەدان
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
