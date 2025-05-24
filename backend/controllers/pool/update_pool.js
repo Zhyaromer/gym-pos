@@ -1,20 +1,22 @@
 const db = require("../../config/mysql/mysqlconfig");
 
 const update_pool = async (req, res) => {
-    const { swimmingpool_id, name, age, gender, entry_date, entry_time } = req.body;
+    let { swimmingpool_id, name, age, price, gender, entry_date, entry_time } = req.body;
 
-    if (!swimmingpool_id || !name || !age || !gender) {
+    if (!swimmingpool_id || !name || !price || !age || !gender) {
         return res.status(400).json({ message: "Swimmingpool ID, name, age, and gender are required" });
     }
+
+    entry_date = new Date(entry_date).toLocaleDateString('en-CA');
 
     try {
         const sql = `
             UPDATE swimmingpool
-            SET name = ?, age = ?, gender = ?, entry_date = ?, entry_time = ?
+            SET name = ?, age = ?, gender = ?, price = ?, entry_date = ?, entry_time = ?
             WHERE swimmingpool_id = ?
         `;
-        
-        const values = [name, age, gender, entry_date ? entry_date : null, entry_time? entry_time : null, swimmingpool_id];
+
+        const values = [name, age, gender, price, entry_date ? entry_date : null, entry_time ? entry_time : null, swimmingpool_id];
 
         const [result] = await db.query(sql, values);
 

@@ -18,7 +18,7 @@ import Expenses from './Pages/Expenses'
 import AddingExpenses from './Pages/AddingExpenses'
 import ProfitAnalysisPage from './Pages/Profit'
 import CostsAnalysisPage from './Pages/Report'
- 
+
 function App() {
   return (
     <Router>
@@ -46,4 +46,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

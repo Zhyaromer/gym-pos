@@ -15,7 +15,7 @@ const get_all_pool = async (req, res) => {
           COUNT(CASE WHEN gender = 'ئافرەت' THEN 1 END) AS female,
           COUNT(CASE WHEN gender = 'پیاو' THEN 1 END) AS male,
           COUNT(swimmingpool_id) AS sold_tickets,
-          SUM(price) AS total_sold_tickets
+          COALESCE(SUM(price), 0) AS total_sold_tickets
         FROM swimmingpool
         WHERE entry_date = ?`;
 

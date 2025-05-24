@@ -87,12 +87,6 @@ export default function GymDashboard() {
             color: "bg-gradient-to-r from-red-500 to-rose-600",
             link: "/attendence"
         },
-        // {
-        //     title: "خشتەی ڕۆژانە",
-        //     icon: <CalendarDays size={24} />,
-        //     color: "bg-gradient-to-r from-indigo-500 to-violet-600",
-        //     link : "/users"
-        // },
         {
             title: "نرخەکان",
             icon: <BadgeDollarSign size={24} />,
@@ -104,12 +98,6 @@ export default function GymDashboard() {
             icon: <Coins size={24} />,
             color: "bg-gradient-to-r from-green-500 to-emerald-600",
             link: "/expenses"
-        },
-        {
-            title: "زیادکردنی خەرجی",
-            icon: <Receipt size={24} />,
-            color: "bg-gradient-to-r from-green-500 to-emerald-600",
-            link: "/addingexpenses"
         },
         {
             title: "مەلەوانگە",

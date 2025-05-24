@@ -5,98 +5,18 @@ import {
   Plus,
   Edit,
   Trash2,
-  Filter,
-  ArrowUpDown,
-  Dumbbell,
-  Bell,
   Save,
   X,
-  Calendar,
   DollarSign,
   Users,
   BarChart2,
-  Droplets
 } from 'lucide-react';
 import Navbar from '../components/layout/Nav';
+import axios from 'axios';
 
 export default function PoolTickets() {
-  const [ticketSales, setTicketSales] = useState([
-    {
-      id: 1,
-      name: 'ئارام عەلی',
-      gender: 'نێر',
-      ageCategory: 'گەورە',
-      price: 15,
-      date: '2023-06-15',
-      time: '14:30'
-    },
-    {
-      id: 2,
-      name: 'شەیدا کەریم',
-      gender: 'مێ',
-      ageCategory: 'گەورە',
-      price: 15,
-      date: '2023-06-15',
-      time: '15:45'
-    },
-    {
-      id: 3,
-      name: 'هێمن عومەر',
-      gender: 'نێر',
-      ageCategory: 'گەورە',
-      price: 15,
-      date: '2023-06-16',
-      time: '10:15'
-    },
-    {
-      id: 4,
-      name: 'لانە ئەحمەد',
-      gender: 'مێ',
-      ageCategory: 'منداڵ',
-      price: 8,
-      date: '2023-06-16',
-      time: '11:00'
-    },
-    {
-      id: 5,
-      name: 'ئاکۆ محەمەد',
-      gender: 'نێر',
-      ageCategory: 'منداڵ',
-      price: 8,
-      date: '2023-06-16',
-      time: '11:30'
-    },
-    {
-      id: 6,
-      name: 'شادان ڕەزا',
-      gender: 'مێ',
-      ageCategory: 'منداڵ',
-      price: 8,
-      date: '2023-06-17',
-      time: '09:45'
-    },
-    {
-      id: 7,
-      name: 'سامان سەعید',
-      gender: 'نێر',
-      ageCategory: 'گەورە',
-      price: 15,
-      date: '2023-06-17',
-      time: '16:20'
-    },
-    {
-      id: 8,
-      name: 'تارا جەمال',
-      gender: 'مێ',
-      ageCategory: 'گەورە',
-      price: 15,
-      date: '2023-06-17',
-      time: '17:00'
-    },
-  ]);
-
+  const [ticketSales, setTicketSales] = useState([]);
   const today = new Date().toLocaleDateString('en-CA');
-  
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterGender, setFilterGender] = useState('All');
@@ -105,133 +25,156 @@ export default function PoolTickets() {
   const [newTicket, setNewTicket] = useState({
     name: '',
     gender: '',
-    ageCategory: '',
+    age: '',
     price: 0,
-    date: new Date().toISOString().split('T')[0],
-    time: new Date().toTimeString().slice(0, 5)
+    entry_date: new Date().toLocaleDateString('en-CA'),
+    entry_time: new Date().toTimeString().slice(0, 5)
   });
-  // State for editing
   const [editingTicket, setEditingTicket] = useState(null);
   const [editedValues, setEditedValues] = useState({});
+  const [stats, setStats] = useState({});
 
-  // Categories for filtering
-  const ageCategories = ['All', 'گەورە', 'منداڵ'];
-  const genderCategories = ['All', 'نێر', 'مێ'];
-
-  // Stats
-  const [stats, setStats] = useState({
-    totalSales: 0,
-    adultCount: 0,
-    childCount: 0,
-    maleCount: 0,
-    femaleCount: 0,
-    dailyRevenue: 0
-  });
-
-  // Calculate stats
   useEffect(() => {
-    // Filter today's sales
-    const todaySales = ticketSales.filter(ticket => ticket.date === today);
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`http://localhost:3000/pool/get_all_pool?date=${filterDate}`)
+        if (res.status === 200) {
+          setTicketSales(res.data.records)
+          setStats(res.data.stats);
+          console.log(res.data)
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
 
-    const adultCount = todaySales.filter(ticket => ticket.ageCategory === 'گەورە').length;
-    const childCount = todaySales.filter(ticket => ticket.ageCategory === 'منداڵ').length;
-    const maleCount = todaySales.filter(ticket => ticket.gender === 'نێر').length;
-    const femaleCount = todaySales.filter(ticket => ticket.gender === 'مێ').length;
-    const totalSales = todaySales.length;
-    const dailyRevenue = todaySales.reduce((sum, ticket) => sum + ticket.price, 0);
-
-    setStats({
-      totalSales,
-      adultCount,
-      childCount,
-      maleCount,
-      femaleCount,
-      dailyRevenue
-    });
-  }, [ticketSales, today]);
+    fetchData();
+  }, [filterDate])
 
   // Filter tickets based on search term and filters
   const filteredTickets = ticketSales.filter(ticket => {
-    const matchesSearch = ticket.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesAgeCategory = filterCategory === 'All' || ticket.ageCategory === filterCategory;
+    const matchesSearch = !searchTerm || ticket.name?.toLowerCase()?.includes(searchTerm?.toLowerCase());
+    const matchesAgeCategory = filterCategory === 'All' || ticket?.age === filterCategory;
     const matchesGender = filterGender === 'All' || ticket.gender === filterGender;
-    const matchesDate = filterDate === '' || ticket.date === filterDate;
+    
+    // Convert both dates to YYYY-MM-DD format for comparison
+    const ticketDate = ticket.entry_date ? new Date(ticket.entry_date).toLocaleDateString('en-CA') : null;
+    const matchesDate = !filterDate || ticketDate === filterDate;
+    
     return matchesSearch && matchesAgeCategory && matchesGender && matchesDate;
   });
 
-  // Handle adding new ticket
-  const handleAddTicket = () => {
-    if (newTicket.name && newTicket.gender && newTicket.ageCategory) {
-      // Set price based on age category
-      const price = newTicket.ageCategory === 'گەورە' ? 15 : 8;
+  useEffect(() => {
+    console.log(filteredTickets)
+  },[filteredTickets])
 
-      setTicketSales([
-        ...ticketSales,
-        {
-          id: ticketSales.length + 1,
-          ...newTicket,
-          price
+  const handleAddTicket = async () => {
+    if (newTicket.name && newTicket.gender && newTicket.age && newTicket.entry_date && newTicket.entry_time) {
+      try {
+        const price = newTicket.age === 'گەورە' ? 15 : 8;
+
+        const data = {
+          name: newTicket.name,
+          gender: newTicket.gender,
+          age: newTicket.age,
+          price: price,
+          entry_date: newTicket.entry_date,
+          entry_time: newTicket.entry_time
         }
-      ]);
-      setNewTicket({
-        name: '',
-        gender: '',
-        ageCategory: '',
-        price: 0,
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toTimeString().slice(0, 5)
-      });
-      setShowAddModal(false);
+
+        const res = await axios.post(`http://localhost:3000/pool/add_pool`, data);
+
+        if (res.status === 200) {
+          alert('pool ticket added successfully')
+          setTicketSales([
+            ...ticketSales,
+            {
+              ...newTicket,
+              price : price * 1000
+            }
+          ]);
+          setNewTicket({
+            name: '',
+            gender: '',
+            age: '',
+            price: 0,
+            entry_date: new Date().toLocaleDateString('en-CA'),
+            entry_time: new Date().toTimeString().slice(0, 5)
+          });
+          setShowAddModal(false);
+        }
+      } catch (error) {
+        console.error(error)
+      }
     }
   };
 
-  // Start editing a ticket
   const startEditing = (ticket) => {
-    setEditingTicket(ticket.id);
+    setEditingTicket(ticket.swimmingpool_id);
     setEditedValues({ ...ticket });
   };
 
-  // Save edited ticket
-  const saveEditing = () => {
-    if (editedValues.name && editedValues.gender && editedValues.ageCategory) {
-      // Update price if age category changed
-      const price = editedValues.ageCategory === 'گەورە' ? 15 : 8;
+  const saveEditing = async () => {
+    if (editedValues.name && editedValues.gender && editedValues.age && editedValues.entry_date && editedValues.entry_time) {
+      try {
+        const price = editedValues.age === 'گەورە' ? 15 : 8;
 
-      setTicketSales(ticketSales.map(ticket =>
-        ticket.id === editingTicket ? { ...editedValues, price } : ticket
-      ));
-      setEditingTicket(null);
+        const data = {
+          swimmingpool_id: editedValues.swimmingpool_id,
+          name: editedValues.name,
+          gender: editedValues.gender,
+          age: editedValues.age,
+          price: price,
+          entry_date: editedValues.entry_date,
+          entry_time: editedValues.entry_time
+        }
+
+        const res = await axios.patch(`http://localhost:3000/pool/update_pool`, data);
+
+        if (res.status === 200) {
+          setTicketSales(ticketSales.map(ticket =>
+            ticket.swimmingpool_id === editingTicket ? { ...editedValues, price : price * 1000 } : ticket
+          ));
+          setEditingTicket(null);
+        }
+      } catch (error) {
+        console.error(error)
+      }
     }
   };
 
-  // Cancel editing
   const cancelEditing = () => {
     setEditingTicket(null);
   };
 
-  // Delete a ticket
-  const deleteTicket = (id) => {
+  const deleteTicket = async (id) => {
     if (confirm('دڵنیایت کە دەتەوێت ئەم بلیتە بسڕیتەوە؟')) {
-      setTicketSales(ticketSales.filter(ticket => ticket.id !== id));
+      try {
+        const res = await axios.delete(`http://localhost:3000/pool/delete_pool/${id}`)
+
+        if (res.status === 200) {
+          alert('pool ticket deleted successfully')
+          setTicketSales(ticketSales.filter(ticket => ticket.swimmingpool_id !== id));
+        }
+      } catch (error) {
+        console.error(error)
+      }
     }
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('ku', options);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return new Date(dateString).toLocaleDateString('en-gb', options);
   };
 
-  // Format currency
   const formatCurrency = (amount) => {
-    return `${amount.toLocaleString()} د.ع`;
+    return `${amount?.toLocaleString()} د.ع`;
   };
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
-            <Navbar/>
+      <Navbar />
 
-      {/* Stats Section */}
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4 flex items-center">
@@ -240,7 +183,7 @@ export default function PoolTickets() {
             </div>
             <div>
               <p className="text-sm text-gray-500">کۆی بلیت فرۆشراو ئەمڕۆ</p>
-              <p className="text-xl font-bold">{stats.totalSales}</p>
+              <p className="text-xl font-bold">{stats.sold_tickets}</p>
             </div>
           </div>
 
@@ -250,7 +193,7 @@ export default function PoolTickets() {
             </div>
             <div>
               <p className="text-sm text-gray-500">داهاتی ئەمڕۆ</p>
-              <p className="text-xl font-bold">{formatCurrency(stats.dailyRevenue)}</p>
+              <p className="text-xl font-bold">{(formatCurrency(stats.total_sold_tickets)) || 0}</p>
             </div>
           </div>
 
@@ -260,7 +203,7 @@ export default function PoolTickets() {
             </div>
             <div>
               <p className="text-sm text-gray-500">گەورە / منداڵ</p>
-              <p className="text-xl font-bold">{stats.adultCount} / {stats.childCount}</p>
+              <p className="text-xl font-bold">{stats.adult} / {stats.kids}</p>
             </div>
           </div>
 
@@ -269,8 +212,8 @@ export default function PoolTickets() {
               <User className="h-6 w-6 text-orange-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">نێر / مێ</p>
-              <p className="text-xl font-bold">{stats.maleCount} / {stats.femaleCount}</p>
+              <p className="text-sm text-gray-500">پیاو / ئافرەت</p>
+              <p className="text-xl font-bold">{stats.male} / {stats.female}</p>
             </div>
           </div>
         </div>
@@ -311,8 +254,8 @@ export default function PoolTickets() {
                   onChange={(e) => setFilterGender(e.target.value)}
                 >
                   <option value="All">هەموو ڕەگەزەکان</option>
-                  <option value="نێر">نێر</option>
-                  <option value="مێ">مێ</option>
+                  <option value="پیاو">پیاو</option>
+                  <option value="ئافرەت">ئافرەت</option>
                 </select>
               </div>
 
@@ -368,9 +311,9 @@ export default function PoolTickets() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredTickets.length > 0 ? (
                   filteredTickets.map(ticket => (
-                    <tr key={ticket.id}>
+                    <tr key={ticket.swimmingpool_id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {editingTicket === ticket.id ? (
+                        {editingTicket === ticket.swimmingpool_id ? (
                           <input
                             type="text"
                             className="border rounded px-2 py-1 w-full"
@@ -382,62 +325,62 @@ export default function PoolTickets() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {editingTicket === ticket.id ? (
+                        {editingTicket === ticket.swimmingpool_id ? (
                           <select
                             className="border rounded px-2 py-1 w-full"
                             value={editedValues.gender}
                             onChange={(e) => setEditedValues({ ...editedValues, gender: e.target.value })}
                           >
-                            <option value="نێر">نێر</option>
-                            <option value="مێ">مێ</option>
+                            <option value="پیاو">پیاو</option>
+                            <option value="ئافرەت">ئافرەت</option>
                           </select>
                         ) : (
                           <div className="text-sm text-gray-900">{ticket.gender}</div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {editingTicket === ticket.id ? (
+                        {editingTicket === ticket.swimmingpool_id ? (
                           <select
                             className="border rounded px-2 py-1 w-full"
-                            value={editedValues.ageCategory}
-                            onChange={(e) => setEditedValues({ ...editedValues, ageCategory: e.target.value })}
+                            value={editedValues.age}
+                            onChange={(e) => setEditedValues({ ...editedValues, age: e.target.value })}
                           >
                             <option value="گەورە">گەورە</option>
                             <option value="منداڵ">منداڵ</option>
                           </select>
                         ) : (
-                          <div className="text-sm text-gray-900">{ticket.ageCategory}</div>
+                          <div className="text-sm text-gray-900">{ticket?.age}</div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{formatCurrency(ticket.price)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {editingTicket === ticket.id ? (
+                        {editingTicket === ticket.swimmingpool_id ? (
                           <input
                             type="date"
                             className="border rounded px-2 py-1 w-full"
-                            value={editedValues.date}
-                            onChange={(e) => setEditedValues({ ...editedValues, date: e.target.value })}
+                            value={new Date(new Date(editedValues.entry_date).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]}
+                            onChange={(e) => setEditedValues({ ...editedValues, entry_date: e.target.value })}
                           />
                         ) : (
-                          <div className="text-sm text-gray-900">{formatDate(ticket.date)}</div>
+                          <div className="text-sm text-gray-900">{formatDate(ticket.entry_date)}</div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {editingTicket === ticket.id ? (
+                        {editingTicket === ticket.swimmingpool_id ? (
                           <input
                             type="time"
                             className="border rounded px-2 py-1 w-full"
-                            value={editedValues.time}
-                            onChange={(e) => setEditedValues({ ...editedValues, time: e.target.value })}
+                            value={editedValues.entry_time}
+                            onChange={(e) => setEditedValues({ ...editedValues, entry_time: e.target.value })}
                           />
                         ) : (
-                          <div className="text-sm text-gray-900">{ticket.time}</div>
+                          <div className="text-sm text-gray-900">{ticket.entry_time}</div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {editingTicket === ticket.id ? (
+                        {editingTicket === ticket.swimmingpool_id ? (
                           <div className="flex space-x-2 space-x-reverse">
                             <button
                               onClick={saveEditing}
@@ -461,7 +404,7 @@ export default function PoolTickets() {
                               <Edit size={18} />
                             </button>
                             <button
-                              onClick={() => deleteTicket(ticket.id)}
+                              onClick={() => deleteTicket(ticket.swimmingpool_id)}
                               className="text-red-600 hover:text-red-900"
                             >
                               <Trash2 size={18} />
@@ -485,8 +428,8 @@ export default function PoolTickets() {
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden relative">
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden relative">
             <button
               onClick={() => setShowAddModal(false)}
               className="absolute left-4 top-4 text-gray-100 hover:text-gray-400 transition-colors"
@@ -497,12 +440,10 @@ export default function PoolTickets() {
               </svg>
             </button>
 
-            {/* Modal Header */}
             <div className="bg-blue-600 px-6 py-4">
               <h3 className="text-xl font-bold text-white text-right">زیادکردنی بلیتی نوێ</h3>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 space-y-5">
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-gray-700">ناو</label>
@@ -522,8 +463,8 @@ export default function PoolTickets() {
                   onChange={(e) => setNewTicket({ ...newTicket, gender: e.target.value })}
                 >
                   <option value="">هەڵبژاردنی ڕەگەز</option>
-                  <option value="نێر">نێر</option>
-                  <option value="مێ">مێ</option>
+                  <option value="پیاو">پیاو</option>
+                  <option value="ئافرەت">ئافرەت</option>
                 </select>
               </div>
 
@@ -531,8 +472,8 @@ export default function PoolTickets() {
                 <label className="block text-sm font-semibold text-gray-700">تەمەن</label>
                 <select
                   className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={newTicket.ageCategory}
-                  onChange={(e) => setNewTicket({ ...newTicket, ageCategory: e.target.value })}
+                  value={newTicket.age}
+                  onChange={(e) => setNewTicket({ ...newTicket, age: e.target.value })}
                 >
                   <option value="">هەڵبژاردنی تەمەن</option>
                   <option value="گەورە">گەورە</option>
@@ -546,8 +487,8 @@ export default function PoolTickets() {
                   <input
                     type="date"
                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={newTicket.date}
-                    onChange={(e) => setNewTicket({ ...newTicket, date: e.target.value })}
+                    value={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]}
+                    onChange={(e) => setNewTicket({ ...newTicket, entry_date: e.target.value })}
                   />
                 </div>
 
@@ -556,14 +497,13 @@ export default function PoolTickets() {
                   <input
                     type="time"
                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={newTicket.time}
-                    onChange={(e) => setNewTicket({ ...newTicket, time: e.target.value })}
+                    value={newTicket.entry_time}
+                    onChange={(e) => setNewTicket({ ...newTicket, entry_time: e.target.value })}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="bg-gray-50 px-6 py-4 flex justify-start gap-2">
               <button
                 className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
