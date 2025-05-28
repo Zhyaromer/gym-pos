@@ -23,7 +23,7 @@ const add_attendence_record = async (req, res) => {
         const [result] = await db.query(sql, values);
 
         if (result.affectedRows > 0) {
-            return res.status(200).json({ message: "Attendance Record Added Successfully" });
+            return res.status(200).json({ message: "Attendance Record Added Successfully", attendence_id: result.insertId });
         } else {
             return res.status(400).json({ message: "Attendance Record Not Added" });
         }

@@ -16,8 +16,8 @@ const get_attended_employees = async (req, res) => {
         const [attendedEmployees] = await db.query(`
             SELECT 
                 e.e_id, e.name, e.img, e.role, 
-                a.attendence_id, a.attendence_date, a.entry_time, a.leaving_time, 
-                a.working_hours, a.state, a.note
+                a.attendence_id, a.attendence_date, a.entry_time as checkInTime, a.leaving_time as checkOutTime, 
+                a.working_hours, a.state, a.note as notes
             FROM 
                 employees e
             JOIN 
