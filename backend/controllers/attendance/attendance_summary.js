@@ -17,7 +17,7 @@ const attendance_summary = async (req, res) => {
         const totalEmployees = totalEmployeesResult[0].total_employees;
 
         const [attendedEmployeesResult] = await db.query(
-            "SELECT COUNT(*) AS attended_employees FROM attendence WHERE attendence_date = ?",
+            "SELECT COUNT(*) AS attended_employees FROM attendence WHERE attendence_date = ? and state = 'هاتوو'",
             [date]
         );
         const attendedEmployees = attendedEmployeesResult[0].attended_employees;
@@ -26,7 +26,7 @@ const attendance_summary = async (req, res) => {
             SELECT COUNT(*) AS unattended_employees
             FROM employees e
             LEFT JOIN attendence a ON e.e_id = a.e_id AND a.attendence_date = ?
-            WHERE a.attendence_id IS NULL
+            WHERE a.attendence_id IS NULL or a.state = 'نەهاتوو'
         `, [date]);
         const unattendedEmployees = unattendedEmployeesResult[0].unattended_employees;
 

@@ -3,7 +3,7 @@ const db = require("../../config/mysql/mysqlconfig");
 const add_attendence_record = async (req, res) => {
     const { e_id, attendence_date, entry_time, leaving_time, state, note } = req.body;
 
-    if (!e_id || !attendence_date || !entry_time || !state) {
+    if (!e_id || !attendence_date || !state) {
         return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -18,7 +18,7 @@ const add_attendence_record = async (req, res) => {
         }
 
         const sql = "INSERT INTO attendence (e_id, attendence_date, entry_time, leaving_time, state, note) VALUES (?, ?, ?, ?, ?, ?)";
-        const values = [e_id, attendence_date, entry_time, leaving_time ? leaving_time : null, state, note ? note : null];
+        const values = [e_id, attendence_date, entry_time ? entry_time : null, leaving_time ? leaving_time : null, state, note ? note : null];
 
         const [result] = await db.query(sql, values);
 

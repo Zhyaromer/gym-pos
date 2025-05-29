@@ -19,7 +19,8 @@ import axios from 'axios';
 export default function AttendenceEmployeeAttendancePage() {
   const [user, setUser] = useState({ name: "جۆن دۆ", role: "بەڕێوەبەر" });
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentDate, setCurrentDate] = useState(new Date().toISOString().slice(0, 10));
+  const today = new Date().toLocaleDateString('en-CA');
+  const [currentDate, setCurrentDate] = useState(today);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentAttendance, setCurrentAttendance] = useState(null);
@@ -91,7 +92,7 @@ export default function AttendenceEmployeeAttendancePage() {
     if (name === 'e_id') {
       const selectedEmployee = employees.find(emp => emp.e_id == value);
 
-      if (name === 'state' && value === 'نەهاتوو') {
+      if (name == 'state' && value == 'نەهاتوو') {
         setFormData({
           ...formData,
           state: value,
@@ -158,9 +159,16 @@ export default function AttendenceEmployeeAttendancePage() {
   const handleSubmit = async (isEdit = false) => {
     if (isEdit) {
       try {
-        const updatedAttendance = attendance.map(record =>
-          record.e_id === currentAttendance.e_id ? { ...record, ...formData } : record
-        );
+        let hasBeenUpdated = false;
+
+        if (formData.state == 'نەهاتوو' && (formData.checkInTime || formData.checkOutTime)) {
+          hasBeenUpdated = true;
+        }
+
+        if (formData.state == 'نەهاتوو') {
+          formData.checkInTime = null;
+          formData.checkOutTime = null;
+        }
 
         const data = {
           attendence_id: formData.attendence_id,
@@ -174,36 +182,72 @@ export default function AttendenceEmployeeAttendancePage() {
 
         if (res.status === 200) {
           alert('تۆمار بە سەرکەوتوویی ویرایشکرا');
-        }
 
-        setAttendance(updatedAttendance);
-        setShowEditModal(false);
+          const updatedAttendance = attendance.map(record =>
+            record.e_id === currentAttendance.e_id ? { ...record, ...data } : record
+          );
+
+          setAttendance(updatedAttendance);
+          setShowEditModal(false);
+
+          if (hasBeenUpdated) {
+            setStats(prevStats => ({
+              ...prevStats,
+              attended_employees: prevStats.attended_employees - 1,
+              unattended_employees: prevStats.unattended_employees + 1
+            }));
+          } else {
+            setStats(prevStats => ({
+              ...prevStats,
+              unattended_employees: prevStats.unattended_employees - 1,
+              attended_employees: prevStats.attended_employees + 1
+            }));
+          }
+        }
       } catch (error) {
         console.log(error);
       }
     } else {
       try {
 
+        if (formData.state == 'نەهاتوو') {
+          formData.checkInTime = null;
+          formData.checkOutTime = null;
+        }
+
         const data = {
           e_id: formData.e_id,
           attendence_date: formData.attendence_date,
           entry_time: formData.checkInTime,
-          leaving_time: formData.checkOutTime || null,
+          leaving_time: (formData.checkOutTime)?.trim() == "" ? null : formData.checkOutTime,
           state: formData.state,
-          note: formData.notes || null
+          note: (formData.notes).trim() == "" ? null : formData.notes,
         }
 
         const res = await axios.post(`http://localhost:3000/attendence/addattendence`, data);
 
+        const id = res.data.attendence_id;
+
         if (res.status === 200) {
           alert('تۆمار بە سەرکەوتوویی زیادکرا');
           const newRecord = {
-            attendence_id: res.data.attendence_id,
             ...formData,
+            attendence_id: id,
             date: currentDate
           };
           setAttendance([...attendance, newRecord]);
           setShowAddModal(false);
+
+          const updateEmployees = employees.filter(emp => emp.e_id != data.e_id);
+          setEmployees(updateEmployees);
+
+          if (data.state === 'هاتوو') {
+            setStats(prevStats => ({
+              ...prevStats,
+              attended_employees: prevStats.attended_employees + 1,
+              unattended_employees: prevStats.unattended_employees - 1
+            }));
+          }
         }
       } catch (error) {
         console.log(error);
@@ -217,7 +261,17 @@ export default function AttendenceEmployeeAttendancePage() {
         const res = await axios.delete(`http://localhost:3000/attendence/deleteattendence/${id}`);
 
         if (res.status === 200) {
-          const updatedAttendance = attendance.filter(record => record.e_id !== id);
+          const updatedAttendance = attendance.filter(record => record.attendence_id !== id);
+          const stateAttendence = attendance.find(record => record.attendence_id == id);
+
+          if (stateAttendence.state === 'هاتوو') {
+            setStats(prevStats => ({
+              ...prevStats,
+              attended_employees: prevStats.attended_employees - 1,
+              unattended_employees: prevStats.unattended_employees + 1
+            }));
+          }
+
           setAttendance(updatedAttendance);
           alert('تۆمار بە سەرکەوتوویی حذفکرا');
         }
@@ -472,9 +526,9 @@ export default function AttendenceEmployeeAttendancePage() {
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                      {
-                        record?.checkInTime == null ? '-' : (record?.checkInTime?.split(":")[0] + ":" + record?.checkInTime?.split(":")[1])
-                      }
+                      {!record?.checkInTime ? '-' : (
+                        record.checkInTime.split(":").slice(0, 2).join(":")
+                      )}
                       {record.checkInTime && calculateLateDuration(record.checkInTime) && (
                         <div className="text-xs text-yellow-600 mt-1 flex items-center justify-center">
                           درەنگ: {calculateLateDuration(record.checkInTime)}
@@ -484,11 +538,11 @@ export default function AttendenceEmployeeAttendancePage() {
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                      {
-                        record?.checkOutTime == null ? '-' : (record?.checkOutTime?.split(":")[0] + ":" + record?.checkOutTime?.split(":")[1])
-                      }
+                      {!record?.checkOutTime ? '-' : (
+                        record.checkOutTime.split(":").slice(0, 2).join(":")
+                      )}
 
-                      {record.checkOutTime && calculateEarlyDeparture(record.checkOutTime) && (
+                      {record?.checkOutTime && calculateEarlyDeparture(record.checkOutTime) && (
                         <div className="text-xs text-red-600 mt-1 flex items-center justify-center">
                           زوو: {calculateEarlyDeparture(record.checkOutTime)}
                           <AlertCircle size={12} className="mr-1" />
@@ -534,7 +588,6 @@ export default function AttendenceEmployeeAttendancePage() {
             </table>
           </div>
 
-          {/* Empty state */}
           {filteredAttendance.length === 0 && (
             <div className="p-8 text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-4">
@@ -559,7 +612,6 @@ export default function AttendenceEmployeeAttendancePage() {
         </div>
       </div>
 
-      {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-75 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full overflow-hidden" dir="rtl">
@@ -698,7 +750,6 @@ export default function AttendenceEmployeeAttendancePage() {
         </div>
       )}
 
-      {/* Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-75 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full overflow-hidden" dir="rtl">

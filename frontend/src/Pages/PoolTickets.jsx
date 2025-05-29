@@ -41,7 +41,6 @@ export default function PoolTickets() {
         if (res.status === 200) {
           setTicketSales(res.data.records)
           setStats(res.data.stats);
-          console.log(res.data)
         }
       } catch (error) {
         console.error(error)
@@ -51,22 +50,16 @@ export default function PoolTickets() {
     fetchData();
   }, [filterDate])
 
-  // Filter tickets based on search term and filters
   const filteredTickets = ticketSales.filter(ticket => {
     const matchesSearch = !searchTerm || ticket.name?.toLowerCase()?.includes(searchTerm?.toLowerCase());
     const matchesAgeCategory = filterCategory === 'All' || ticket?.age === filterCategory;
     const matchesGender = filterGender === 'All' || ticket.gender === filterGender;
     
-    // Convert both dates to YYYY-MM-DD format for comparison
     const ticketDate = ticket.entry_date ? new Date(ticket.entry_date).toLocaleDateString('en-CA') : null;
     const matchesDate = !filterDate || ticketDate === filterDate;
     
     return matchesSearch && matchesAgeCategory && matchesGender && matchesDate;
   });
-
-  useEffect(() => {
-    console.log(filteredTickets)
-  },[filteredTickets])
 
   const handleAddTicket = async () => {
     if (newTicket.name && newTicket.gender && newTicket.age && newTicket.entry_date && newTicket.entry_time) {

@@ -3,8 +3,13 @@ const db = require("../../config/mysql/mysqlconfig");
 const update_attendence_record = async (req, res) => {
     let { attendence_id, entry_time, leaving_time, state, note } = req.body;
 
-    if (!attendence_id || !entry_time || !state) {
+    if (!attendence_id || !state) {
         return res.status(400).json({ message: "Attendence ID is required" });
+    }
+
+    if (state == 'نەهاتوو') {
+        entry_time = null;
+        leaving_time = null;
     }
 
     try {
