@@ -81,7 +81,7 @@ const Receipt = forwardRef(({
 
         <div className="border-t border-b border-dashed border-gray-300 py-3 my-4">
           <div className="flex justify-between mb-2">
-            <span>کۆی گشتی:</span>
+            <span>کۆی گشتی :</span>
             <span>{Number(subtotal).toFixed(3)} د.ع</span>
           </div>
 
@@ -93,7 +93,7 @@ const Receipt = forwardRef(({
           )}
 
           <div className="flex justify-between font-bold mt-2 pt-2 border-t border-dashed border-gray-300">
-            <span>کۆی کۆتایی:</span>
+            <span>کۆی کۆتایی</span>
             <span>{Number(total).toFixed(3)} د.ع</span>
           </div>
         </div>
@@ -287,11 +287,15 @@ const ItemModal = ({ isOpen, onClose, item, onSave, mode }) => {
   );
 };
 
-const DiscountModal = ({ isOpen, onClose, discount, onSave }) => {
+const DiscountModal = ({ isOpen, onClose, discount, onSave , orderNumber }) => {
   const [discountType, setDiscountType] = useState(discount?.type || 'none');
   const [discountValue, setDiscountValue] = useState(discount?.value || 0);
 
   const handleSubmit = (e) => {
+    if (discountType === 'none') {
+      setDiscountValue(0);
+    }
+    console.log(discountType, discountValue,orderNumber);
     e.preventDefault();
     onSave({
       type: discountType,
@@ -908,6 +912,7 @@ const TransactionView = () => {
             value: transaction?.discount_value || 0
           }}
           onSave={handleSaveDiscount}
+          orderNumber={transaction?.orderNumber}
         />
 
         <DateModal

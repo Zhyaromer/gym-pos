@@ -1,7 +1,7 @@
 const db = require("../../config/mysql/mysqlconfig");
 
-const get_reception = async (_req, res) => {
-    const { orderNumber } = _req.query;
+const get_reception = async (req, res) => {
+    const { orderNumber } = req.query;
 
     if (!orderNumber) {
         return res.status(400).json({ error: 'Order number is required' });
