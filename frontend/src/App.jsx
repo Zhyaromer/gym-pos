@@ -18,6 +18,7 @@ import Expenses from './Pages/Expenses'
 import AddingExpenses from './Pages/AddingExpenses'
 import ProfitAnalysisPage from './Pages/Profit'
 import CostsAnalysisPage from './Pages/Report'
+import Recptioin from './Pages/Recptioin';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
         <Route path="/addingexpenses" element={<AddingExpenses />} />
         <Route path="/profit" element={<ProfitAnalysisPage />} />
         <Route path="/report" element={<CostsAnalysisPage />} />
+        <Route path="/recptioin" element={<Recptioin />} />
       </Routes>
     </Router>
   )

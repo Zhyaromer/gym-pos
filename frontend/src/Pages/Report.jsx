@@ -3,94 +3,145 @@ import {
   DollarSign, Filter, ChevronDown, Download,
   RefreshCw, PieChart, BarChart, Calendar,
   AlertCircle, Tag, Users, CreditCard,
-  Settings, ClipboardList, Warehouse
+  Settings, ClipboardList, Warehouse, ShoppingBag,
+  Shirt, Droplet, Ticket, Dumbbell, TrendingUp, 
+  TrendingDown, ArrowUp, ArrowDown, Percent
 } from 'lucide-react';
-import { Pie, Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
+import { Pie, Bar, Line } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, 
+  LinearScale, BarElement, Title, LineElement, PointElement, Filler } from 'chart.js';
 import Navbar from '../components/layout/Nav';
 
-// Register ChartJS components
 ChartJS.register(
   ArcElement, Tooltip, Legend, CategoryScale,
-  LinearScale, BarElement, Title
+  LinearScale, BarElement, Title, LineElement, 
+  PointElement, Filler
 );
 
 const CostsAnalysisPage = () => {
   // State for filters
   const [dateRange, setDateRange] = useState('this_month');
-  const [costCategory, setCostCategory] = useState('all');
+  const [category, setCategory] = useState('all');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [viewMode, setViewMode] = useState('chart');
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // Mock cost data with more detailed entries
-  const allCostData = [
-    // Current month data
-    { id: 1, date: '2023-11-01', category: 'salaries', subCategory: 'trainers', amount: 4200, paymentMethod: 'bank', recurring: true },
-    { id: 2, date: '2023-11-03', category: 'supplements', subCategory: 'whey_protein', amount: 850, paymentMethod: 'cash', recurring: false },
-    { id: 3, date: '2023-11-05', category: 'utilities', subCategory: 'electricity', amount: 320, paymentMethod: 'bank', recurring: true },
-    { id: 4, date: '2023-11-10', category: 'equipment', subCategory: 'resistance_bands', amount: 1200, paymentMethod: 'bank', recurring: false },
-    { id: 5, date: '2023-11-15', category: 'maintenance', subCategory: 'cleaning', amount: 180, paymentMethod: 'cash', recurring: true },
-    { id: 6, date: '2023-11-20', category: 'supplements', subCategory: 'creatine', amount: 450, paymentMethod: 'bank', recurring: false },
-    { id: 7, date: '2023-11-25', category: 'rent', subCategory: 'gym_space', amount: 1500, paymentMethod: 'bank', recurring: true },
-    { id: 8, date: '2023-11-28', category: 'marketing', subCategory: 'social_media', amount: 300, paymentMethod: 'bank', recurring: false },
+  // Color palette
+  const colors = {
+    gym: { bg: 'bg-blue-100', text: 'text-blue-800', chart: '#3b82f6' },
+    pool: { bg: 'bg-cyan-100', text: 'text-cyan-800', chart: '#06b6d4' },
+    supplements: { bg: 'bg-purple-100', text: 'text-purple-800', chart: '#8b5cf6' },
+    equipment: { bg: 'bg-amber-100', text: 'text-amber-800', chart: '#f59e0b' },
+    clothing: { bg: 'bg-pink-100', text: 'text-pink-800', chart: '#ec4899' },
+    salaries: { bg: 'bg-red-100', text: 'text-red-800', chart: '#ef4444' },
+    rent: { bg: 'bg-indigo-100', text: 'text-indigo-800', chart: '#6366f1' },
+    utilities: { bg: 'bg-green-100', text: 'text-green-800', chart: '#10b981' },
+    marketing: { bg: 'bg-yellow-100', text: 'text-yellow-800', chart: '#facc15' },
+    profit: { bg: 'bg-emerald-100', text: 'text-emerald-800', chart: '#059669' },
+  };
 
-    // Previous month data
-    { id: 9, date: '2023-10-02', category: 'salaries', subCategory: 'trainers', amount: 4200, paymentMethod: 'bank', recurring: true },
-    { id: 10, date: '2023-10-05', category: 'supplements', subCategory: 'pre_workout', amount: 600, paymentMethod: 'cash', recurring: false },
-
-    // Last year data
-    { id: 11, date: '2022-11-10', category: 'equipment', subCategory: 'treadmill', amount: 3500, paymentMethod: 'bank', recurring: false },
+  // Mock data with more detailed product information
+  const allData = [
+    // Expenses
+    { id: 1, type: 'expense', date: '2025-04-04', category: 'salaries', subCategory: 'trainers', amount: 4200, paymentMethod: 'bank', recurring: true },
+    { id: 2, type: 'expense', date: '2025-04-03', category: 'supplements', subCategory: 'whey_protein', amount: 850, paymentMethod: 'cash', recurring: false, productId: 'supp-1' },
+    { id: 3, type: 'expense', date: '2025-04-05', category: 'utilities', subCategory: 'electricity', amount: 320, paymentMethod: 'bank', recurring: true },
+    { id: 4, type: 'expense', date: '2025-04-10', category: 'equipment', subCategory: 'resistance_bands', amount: 1200, paymentMethod: 'bank', recurring: false, productId: 'eq-1' },
+    { id: 5, type: 'expense', date: '2025-04-15', category: 'maintenance', subCategory: 'cleaning', amount: 180, paymentMethod: 'cash', recurring: true },
+    { id: 6, type: 'expense', date: '2025-04-20', category: 'supplements', subCategory: 'creatine', amount: 450, paymentMethod: 'bank', recurring: false, productId: 'supp-2' },
+    { id: 7, type: 'expense', date: '2025-04-25', category: 'rent', subCategory: 'gym_space', amount: 1500, paymentMethod: 'bank', recurring: true },
+    { id: 8, type: 'expense', date: '2025-04-28', category: 'marketing', subCategory: 'social_media', amount: 300, paymentMethod: 'bank', recurring: false },
+    
+    // Revenue - Gym Memberships
+    { id: 9, type: 'revenue', date: '2025-03-02', category: 'gym', subCategory: 'monthly_membership', amount: 2500, paymentMethod: 'bank', productId: 'gym-1' },
+    { id: 10, type: 'revenue', date: '2025-03-05', category: 'gym', subCategory: 'personal_training', amount: 1200, paymentMethod: 'cash', productId: 'gym-2' },
+    { id: 11, type: 'revenue', date: '2025-03-12', category: 'gym', subCategory: 'daily_pass', amount: 450, paymentMethod: 'cash', productId: 'gym-3' },
+    
+    // Revenue - Pool
+    { id: 12, type: 'revenue', date: '2025-11-03', category: 'pool', subCategory: 'daily_ticket', amount: 600, paymentMethod: 'cash', productId: 'pool-1' },
+    { id: 13, type: 'revenue', date: '2025-11-10', category: 'pool', subCategory: 'monthly_pass', amount: 800, paymentMethod: 'bank', productId: 'pool-2' },
+    
+    // Revenue - Supplements
+    { id: 14, type: 'revenue', date: '2025-11-04', category: 'supplements', subCategory: 'whey_protein', amount: 1500, paymentMethod: 'bank', productId: 'supp-1' },
+    { id: 15, type: 'revenue', date: '2025-11-18', category: 'supplements', subCategory: 'creatine', amount: 750, paymentMethod: 'cash', productId: 'supp-2' },
+    { id: 16, type: 'revenue', date: '2025-11-22', category: 'supplements', subCategory: 'pre_workout', amount: 600, paymentMethod: 'bank', productId: 'supp-3' },
+    
+    // Revenue - Equipment/Clothing
+    { id: 17, type: 'revenue', date: '2025-11-07', category: 'equipment', subCategory: 'resistance_bands', amount: 900, paymentMethod: 'bank', productId: 'eq-1' },
+    { id: 18, type: 'revenue', date: '2025-11-22', category: 'clothing', subCategory: 't-shirts', amount: 600, paymentMethod: 'cash', productId: 'cloth-1' },
+    { id: 19, type: 'revenue', date: '2025-11-25', category: 'clothing', subCategory: 'shorts', amount: 450, paymentMethod: 'bank', productId: 'cloth-2' },
+    
+    // Previous month data for comparison
+    { id: 20, type: 'expense', date: '2025-10-02', category: 'salaries', subCategory: 'trainers', amount: 4200, paymentMethod: 'bank', recurring: true },
+    { id: 21, type: 'revenue', date: '2025-10-05', category: 'gym', subCategory: 'monthly_membership', amount: 2300, paymentMethod: 'bank', productId: 'gym-1' },
+    { id: 22, type: 'revenue', date: '2025-10-12', category: 'supplements', subCategory: 'whey_protein', amount: 1200, paymentMethod: 'bank', productId: 'supp-1' },
+    { id: 23, type: 'revenue', date: '2025-10-18', category: 'pool', subCategory: 'monthly_pass', amount: 700, paymentMethod: 'bank', productId: 'pool-2' },
+    
+    // Two months ago data
+    { id: 24, type: 'revenue', date: '2025-09-05', category: 'gym', subCategory: 'monthly_membership', amount: 2100, paymentMethod: 'bank', productId: 'gym-1' },
+    { id: 25, type: 'revenue', date: '2025-09-15', category: 'supplements', subCategory: 'creatine', amount: 600, paymentMethod: 'cash', productId: 'supp-2' },
   ];
+
+  // Product information
+  const products = {
+    // Gym products
+    'gym-1': { name: 'ئەندامێتی مانگانە', category: 'gym', cost: 0, price: 2500 },
+    'gym-2': { name: 'ڕاهێنانی تایبەت', category: 'gym', cost: 0, price: 1200 },
+    'gym-3': { name: 'بەردەوامی ڕۆژانە', category: 'gym', cost: 0, price: 450 },
+    
+    // Pool products
+    'pool-1': { name: 'تکەتەی ڕۆژانە', category: 'pool', cost: 0, price: 600 },
+    'pool-2': { name: 'بەردەوامی مانگانە', category: 'pool', cost: 0, price: 800 },
+    
+    // Supplement products
+    'supp-1': { name: 'پڕۆتینی وەی (5kg)', category: 'supplements', cost: 850, price: 1500 },
+    'supp-2': { name: 'کرێاتین (500g)', category: 'supplements', cost: 450, price: 750 },
+    'supp-3': { name: 'پێش وەرزش', category: 'supplements', cost: 300, price: 600 },
+    
+    // Equipment products
+    'eq-1': { name: 'باندی بەرگری', category: 'equipment', cost: 1200, price: 900, set: true },
+    
+    // Clothing products
+    'cloth-1': { name: 'کراسی جیم', category: 'clothing', cost: 200, price: 600 },
+    'cloth-2': { name: 'شۆرت', category: 'clothing', cost: 150, price: 450 },
+  };
 
   // Categories configuration
   const categories = [
-    { id: 'all', name: 'هەموو', subCategories: [] },
-    {
-      id: 'salaries',
-      name: 'مووچەی کارمەند',
+    { id: 'all', name: 'هەموو', icon: Filter, color: 'gray' },
+    { 
+      id: 'revenue', 
+      name: 'داھات', 
+      icon: TrendingUp, 
+      color: 'green',
       subCategories: [
-        { id: 'trainers', name: 'ڕاهێنەران' },
-        { id: 'staff', name: 'کارمەندانی پشتیبانی' }
+        { id: 'gym', name: 'جیم', icon: Dumbbell },
+        { id: 'pool', name: 'مەلەوانی', icon: Droplet },
+        { id: 'supplements', name: 'پڕۆتین', icon: ShoppingBag },
+        { id: 'equipment', name: 'کەل و پەل', icon: Warehouse },
+        { id: 'clothing', name: 'جلوبەرگ', icon: Shirt }
       ]
     },
-    {
-      id: 'supplements',
-      name: 'پڕۆتین',
+    { 
+      id: 'expense', 
+      name: 'خەرجی', 
+      icon: TrendingDown, 
+      color: 'red',
       subCategories: [
-        { id: 'whey_protein', name: 'پڕۆتینی وەی' },
-        { id: 'creatine', name: 'کرێاتین' },
-        { id: 'pre_workout', name: 'پێش وەرزش' }
+        { id: 'salaries', name: 'مووچە' },
+        { id: 'supplements', name: 'پڕۆتین' },
+        { id: 'equipment', name: 'کەل و پەل' },
+        { id: 'utilities', name: 'کارگێڕی' },
+        { id: 'rent', name: 'کرێ' },
+        { id: 'marketing', name: 'بازاڕکردن' }
       ]
-    },
-    {
-      id: 'equipment',
-      name: 'کەل و پەل',
-      subCategories: [
-        { id: 'resistance_bands', name: 'باندی بەرگری' },
-        { id: 'treadmill', name: 'ڕێگای ڕاکردن' }
-      ]
-    },
-    {
-      id: 'utilities',
-      name: 'کارگێڕی',
-      subCategories: [
-        { id: 'electricity', name: 'کارەبا' },
-        { id: 'water', name: 'ئاو' }
-      ]
-    },
-    {
-      id: 'rent',
-      name: 'کرێ',
-      subCategories: [
-        { id: 'gym_space', name: 'بینای جیم' }
-      ]
-    },
+    }
   ];
 
   // Filter data based on selected filters
   const filterData = () => {
-    let filtered = [...allCostData];
+    let filtered = [...allData];
 
     // Filter by date range
     const now = new Date();
@@ -146,99 +197,247 @@ const CostsAnalysisPage = () => {
     }
 
     // Filter by category
-    if (costCategory !== 'all') {
-      filtered = filtered.filter(item => item.category === costCategory);
+    if (category !== 'all') {
+      filtered = filtered.filter(item => item.type === category);
     }
 
     return filtered;
   };
 
-  const filteredCosts = filterData();
+  const filteredData = filterData();
 
   // Calculate totals
-  const totalCosts = filteredCosts.reduce((sum, item) => sum + item.amount, 0);
-  const recurringCosts = filteredCosts.filter(item => item.recurring).reduce((sum, item) => sum + item.amount, 0);
-  const oneTimeCosts = totalCosts - recurringCosts;
+  const totalRevenue = filteredData.filter(item => item.type === 'revenue').reduce((sum, item) => sum + item.amount, 0);
+  const totalExpenses = filteredData.filter(item => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0);
+  const profit = totalRevenue - totalExpenses;
+  const profitMargin = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
+
+  // Revenue by category
+  const revenueByCategory = filteredData
+    .filter(item => item.type === 'revenue')
+    .reduce((acc, item) => {
+      if (!acc[item.category]) acc[item.category] = 0;
+      acc[item.category] += item.amount;
+      return acc;
+    }, {});
+
+  // Expenses by category
+  const expensesByCategory = filteredData
+    .filter(item => item.type === 'expense')
+    .reduce((acc, item) => {
+      if (!acc[item.category]) acc[item.category] = 0;
+      acc[item.category] += item.amount;
+      return acc;
+    }, {});
+
+  // Product performance
+  const productPerformance = filteredData
+    .filter(item => item.type === 'revenue' && item.productId)
+    .reduce((acc, item) => {
+      if (!acc[item.productId]) {
+        acc[item.productId] = {
+          revenue: 0,
+          count: 0,
+          product: products[item.productId]
+        };
+      }
+      acc[item.productId].revenue += item.amount;
+      acc[item.productId].count += 1;
+      return acc;
+    }, {});
+
+  // Calculate product net revenue (revenue - cost)
+  Object.keys(productPerformance).forEach(productId => {
+    const product = productPerformance[productId];
+    product.netRevenue = product.revenue - (product.count * (product.product.cost || 0));
+    product.margin = product.revenue > 0 ? 
+      (product.netRevenue / product.revenue) * 100 : 0;
+  });
+
+  // Get last 3 months revenue data for comparison
+  const getMonthlyComparisonData = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    const months = [
+      { name: 'ئەم مانگە', year: currentYear, month: currentMonth },
+      { name: 'مانگی ڕابردوو', year: currentMonth === 0 ? currentYear - 1 : currentYear, month: currentMonth === 0 ? 11 : currentMonth - 1 },
+      { name: '2 مانگ لەمەوپێش', year: currentMonth <= 1 ? currentYear - 1 : currentYear, month: currentMonth <= 1 ? 11 + currentMonth - 1 : currentMonth - 2 }
+    ];
+    
+    return months.map(month => {
+      const firstDay = new Date(month.year, month.month, 1);
+      const lastDay = new Date(month.year, month.month + 1, 0);
+      
+      const monthData = allData.filter(item => {
+        const itemDate = new Date(item.date);
+        return itemDate >= firstDay && itemDate <= lastDay;
+      });
+      
+      const revenue = monthData
+        .filter(item => item.type === 'revenue')
+        .reduce((sum, item) => sum + item.amount, 0);
+      
+      const expenses = monthData
+        .filter(item => item.type === 'expense')
+        .reduce((sum, item) => sum + item.amount, 0);
+      
+      return {
+        name: month.name,
+        revenue,
+        expenses,
+        profit: revenue - expenses,
+        profitMargin: revenue > 0 ? ((revenue - expenses) / revenue) * 100 : 0
+      };
+    });
+  };
+
+  const monthlyComparison = getMonthlyComparisonData();
 
   // Prepare chart data
-  const getCategoryData = () => {
-    const categoryMap = {};
-
-    categories.forEach(cat => {
-      if (cat.id !== 'all') {
-        categoryMap[cat.name] = 0;
-      }
-    });
-
-    filteredCosts.forEach(item => {
-      const category = categories.find(c => c.id === item.category);
-      if (category) {
-        categoryMap[category.name] += item.amount;
-      }
-    });
+  const getRevenuePieData = () => {
+    const labels = Object.keys(revenueByCategory);
+    const data = Object.values(revenueByCategory);
+    
+    const backgroundColors = labels.map(label => colors[label]?.chart || '#cccccc');
+    const borderColors = backgroundColors.map(color => `${color}80`);
 
     return {
-      labels: Object.keys(categoryMap),
+      labels,
       datasets: [
         {
-          data: Object.values(categoryMap),
-          backgroundColor: [
-            '#3b82f6', '#10b981', '#f59e0b',
-            '#ef4444', '#8b5cf6', '#ec4899'
-          ],
+          data,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
           borderWidth: 1,
         }
       ]
     };
   };
 
-  const getMonthlyTrendData = () => {
-    // Group by month
-    const monthlyData = {};
+  const getExpensesPieData = () => {
+    const labels = Object.keys(expensesByCategory);
+    const data = Object.values(expensesByCategory);
+    
+    const backgroundColors = labels.map(label => colors[label]?.chart || '#cccccc');
+    const borderColors = backgroundColors.map(color => `${color}80`);
 
-    filteredCosts.forEach(item => {
-      const month = item.date.substring(0, 7); // YYYY-MM
-      if (!monthlyData[month]) {
-        monthlyData[month] = 0;
+    return {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 1,
+        }
+      ]
+    };
+  };
+
+  const getFinancialTrendData = () => {
+    // Group by day for the current month
+    const dailyRevenue = {};
+    const dailyExpenses = {};
+    const dailyProfit = {};
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    
+    // Initialize all days in month
+    for (let d = new Date(firstDay); d <= now; d.setDate(d.getDate() + 1)) {
+      const dayStr = d.toISOString().split('T')[0];
+      dailyRevenue[dayStr] = 0;
+      dailyExpenses[dayStr] = 0;
+      dailyProfit[dayStr] = 0;
+    }
+
+    // Populate with actual data
+    filteredData.forEach(item => {
+      const dayStr = item.date;
+      if (item.type === 'revenue') {
+        dailyRevenue[dayStr] += item.amount;
+        dailyProfit[dayStr] += item.amount;
+      } else {
+        dailyExpenses[dayStr] += item.amount;
+        dailyProfit[dayStr] -= item.amount;
       }
-      monthlyData[month] += item.amount;
     });
 
-    // Convert to array and sort by month
-    const sortedMonths = Object.keys(monthlyData).sort();
-    const amounts = sortedMonths.map(month => monthlyData[month]);
+    // Convert to arrays
+    const days = Object.keys(dailyRevenue).sort();
+    const revenueData = days.map(day => dailyRevenue[day]);
+    const expensesData = days.map(day => dailyExpenses[day]);
+    const profitData = days.map(day => dailyProfit[day]);
 
-    // Format month names for display
-    const monthNames = {
-      '01': 'کانوونی 1',
-      '02': 'کانوونی 2',
-      '03': 'ئازار',
-      '04': 'نیسان',
-      '05': 'ئایار',
-      '06': 'حوزەیران',
-      '07': 'تەمموز',
-      '08': 'ئاب',
-      '09': 'ئەیلوول',
-      '10': 'تشرینی 1',
-      '11': 'تشرینی 2',
-      '12': 'کانوونی 2'
-    };
-
-    const labels = sortedMonths.map(month => {
-      const [year, monthNum] = month.split('-');
-      return `${monthNames[monthNum]} ${year}`;
+    // Format labels as day numbers
+    const labels = days.map(day => {
+      const dayNum = new Date(day).getDate();
+      return `${dayNum} ${new Date(day).toLocaleString('default', { month: 'short' })}`;
     });
 
     return {
       labels,
       datasets: [
         {
-          label: 'خەرجی مانگانە',
-          data: amounts,
-          backgroundColor: '#3b82f6',
+          label: 'داھات',
+          data: revenueData,
+          borderColor: colors.gym.chart,
+          backgroundColor: `${colors.gym.chart}20`,
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'خەرجی',
+          data: expensesData,
+          borderColor: colors.salaries.chart,
+          backgroundColor: `${colors.salaries.chart}20`,
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'قازانج',
+          data: profitData,
+          borderColor: colors.profit.chart,
+          backgroundColor: `${colors.profit.chart}20`,
+          fill: true,
+          tension: 0.4
         }
       ]
     };
+  };
+
+  const getMonthlyComparisonChartData = () => {
+    return {
+      labels: monthlyComparison.map(month => month.name),
+      datasets: [
+        {
+          label: 'کۆی داھات',
+          data: monthlyComparison.map(month => month.revenue),
+          backgroundColor: colors.gym.chart,
+          borderRadius: 6
+        }
+      ]
+    };
+  };
+
+  // Get icon for category
+  const getCategoryIcon = (categoryId) => {
+    switch (categoryId) {
+      case 'gym': return <Dumbbell className="h-5 w-5" />;
+      case 'pool': return <Droplet className="h-5 w-5" />;
+      case 'supplements': return <ShoppingBag className="h-5 w-5" />;
+      case 'equipment': return <Warehouse className="h-5 w-5" />;
+      case 'clothing': return <Shirt className="h-5 w-5" />;
+      case 'salaries': return <Users className="h-5 w-5" />;
+      case 'rent': return <CreditCard className="h-5 w-5" />;
+      case 'utilities': return <Settings className="h-5 w-5" />;
+      case 'marketing': return <AlertCircle className="h-5 w-5" />;
+      default: return <Tag className="h-5 w-5" />;
+    }
   };
 
   return (
@@ -248,13 +447,13 @@ const CostsAnalysisPage = () => {
       <div className="bg-gray-50 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div className="flex flex-col md:flex-row-reverse justify-between items-start md:items-center mb-8">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">شیکردنەوەی خەرجی</h1>
-              <p className="text-gray-600">وردبینی تەواوی خەرجییەکان</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">شیکردنەوەی دارایی</h1>
+              <p className="text-gray-600 text-right">وردبینی تەواوی داھات و خەرجییەکان</p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 mt-4 md:mt-0">
+            <div className="flex flex-col sm:flex-row-reverse gap-3 mt-4 md:mt-0">
               <div className="relative">
                 <select
                   className="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -293,8 +492,8 @@ const CostsAnalysisPage = () => {
               <div className="relative">
                 <select
                   className="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={costCategory}
-                  onChange={(e) => setCostCategory(e.target.value)}
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
                 >
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -311,31 +510,33 @@ const CostsAnalysisPage = () => {
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div dir='rtl' className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <div className="flex justify-between">
+                <div>
+                  <p className="text-gray-500 text-sm">کۆی داھات</p>
+                  <h3 className="text-2xl font-bold mt-1">${totalRevenue.toLocaleString()}</h3>
+                  <p className="text-gray-500 text-sm mt-2">
+                    {filteredData.filter(item => item.type === 'revenue').length} تۆمار
+                  </p>
+                </div>
+                <div className="bg-green-100 p-3 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </div>
+
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="flex justify-between">
                 <div>
                   <p className="text-gray-500 text-sm">کۆی خەرجی</p>
-                  <h3 className="text-2xl font-bold mt-1">${totalCosts.toLocaleString()}</h3>
-                  <p className="text-gray-500 text-sm mt-2">{filteredCosts.length} تۆمار</p>
-                </div>
-                <div className="bg-red-100 p-3 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-red-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <div className="flex justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">خەرجییە بەردەوامەکان</p>
-                  <h3 className="text-2xl font-bold mt-1">${recurringCosts.toLocaleString()}</h3>
+                  <h3 className="text-2xl font-bold mt-1">${totalExpenses.toLocaleString()}</h3>
                   <p className="text-gray-500 text-sm mt-2">
-                    {totalCosts > 0 ? ((recurringCosts / totalCosts * 100).toFixed(1) + '%') : '0%'}
+                    {filteredData.filter(item => item.type === 'expense').length} تۆمار
                   </p>
                 </div>
-                <div className="bg-purple-100 p-3 rounded-lg">
-                  <CreditCard className="h-6 w-6 text-purple-600" />
+                <div className="bg-red-100 p-3 rounded-lg">
+                  <TrendingDown className="h-6 w-6 text-red-600" />
                 </div>
               </div>
             </div>
@@ -343,16 +544,160 @@ const CostsAnalysisPage = () => {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <div className="flex justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm">خەرجییە یەکجارەکان</p>
-                  <h3 className="text-2xl font-bold mt-1">${oneTimeCosts.toLocaleString()}</h3>
-                  <p className="text-gray-500 text-sm mt-2">
-                    {totalCosts > 0 ? ((oneTimeCosts / totalCosts * 100).toFixed(1) + '%') : '0%'}
+                  <p className="text-gray-500 text-sm">قازانجی خاو</p>
+                  <h3 className="text-2xl font-bold mt-1">${profit.toLocaleString()}</h3>
+                  <p className={`text-sm mt-2 flex items-center ${profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {profitMargin >= 0 ? <ArrowUp className="h-4 w-4 mr-1" /> : <ArrowDown className="h-4 w-4 mr-1" />}
+                    {Math.abs(profitMargin).toFixed(1)}% ڕێژەی قازانج
                   </p>
                 </div>
                 <div className="bg-blue-100 p-3 rounded-lg">
-                  <AlertCircle className="h-6 w-6 text-blue-600" />
+                  <DollarSign className="h-6 w-6 text-blue-600" />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Revenue Breakdown Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {Object.entries(revenueByCategory).map(([categoryId, amount]) => (
+              <div key={categoryId} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-500 text-sm">{categories.find(c => c.id === categoryId)?.name || categoryId}</p>
+                    <h3 className="text-xl font-bold mt-1">${amount.toLocaleString()}</h3>
+                    <p className="text-gray-500 text-xs mt-1">
+                      {totalRevenue > 0 ? ((amount / totalRevenue * 100).toFixed(1) + '%') : '0%'} لە کۆی داھات
+                    </p>
+                  </div>
+                  <div className={`${colors[categoryId]?.bg || 'bg-gray-100'} p-2 rounded-lg`}>
+                    {getCategoryIcon(categoryId)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Monthly Revenue Comparison */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
+            <h2 className="text-lg font-bold mb-6">بەراوردی داھات لە ماوەی سێ مانگی ڕابردوو</h2>
+            <div className="h-80">
+              <Bar
+                data={getMonthlyComparisonChartData()}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'top',
+                      rtl: true,
+                    },
+                    tooltip: {
+                      callbacks: {
+                        afterLabel: function(context) {
+                          const month = monthlyComparison[context.dataIndex];
+                          return `قازانج: $${month.profit.toLocaleString()} (${month.profitMargin.toFixed(1)}%)`;
+                        }
+                      }
+                    }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: {
+                        callback: function(value) {
+                          return '$' + value.toLocaleString();
+                        }
+                      }
+                    }
+                  },
+                }}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              {monthlyComparison.map((month, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-medium text-gray-900 mb-2">{month.name}</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">داھات:</span>
+                      <span className="font-medium">${month.revenue.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">خەرجی:</span>
+                      <span className="font-medium">${month.expenses.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">قازانج:</span>
+                      <span className={`font-medium ${month.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        ${month.profit.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">ڕێژەی قازانج:</span>
+                      <span className={`font-medium ${month.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {month.profitMargin.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Product Performance */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
+            <h2 className="text-lg font-bold mb-6">کارایی بەرهەمەکان</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Object.entries(productPerformance)
+                .sort((a, b) => b[1].netRevenue - a[1].netRevenue)
+                .map(([productId, performance]) => (
+                  <div 
+                    key={productId} 
+                    className={`bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer ${
+                      selectedProduct === productId ? 'ring-2 ring-blue-500' : ''
+                    }`}
+                    onClick={() => setSelectedProduct(selectedProduct === productId ? null : productId)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-medium text-gray-900">{performance.product.name}</h3>
+                      <div className={`${colors[performance.product.category]?.bg || 'bg-gray-100'} p-1 rounded-lg`}>
+                        {getCategoryIcon(performance.product.category)}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">کۆی داھات:</span>
+                        <span className="font-medium">${performance.revenue.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">کۆی تێچوو:</span>
+                        <span className="font-medium">${(performance.count * performance.product.cost).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">داھاتی خاو:</span>
+                        <span className={`font-medium ${
+                          performance.netRevenue >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          ${performance.netRevenue.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm items-center">
+                        <span className="text-gray-600">ڕێژەی قازانج:</span>
+                        <span className={`flex items-center ${
+                          performance.margin >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          <Percent className="h-3 w-3 mr-1" />
+                          {performance.margin.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">ژمارەی فرۆش:</span>
+                        <span className="font-medium">{performance.count}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
 
@@ -378,13 +723,13 @@ const CostsAnalysisPage = () => {
 
           {/* Main Content */}
           {viewMode === 'chart' ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              {/* Cost Breakdown Chart */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
-                <h2 className="text-lg font-bold mb-6">پارەدان بە پێی پۆل</h2>
+            <div dir='rtl' className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {/* Revenue Breakdown Chart */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 className="text-lg font-bold mb-6">پارەدان بە پێی پۆل (داھات)</h2>
                 <div className="h-80">
                   <Pie
-                    data={getCategoryData()}
+                    data={getRevenuePieData()}
                     options={{
                       responsive: true,
                       maintainAspectRatio: false,
@@ -393,24 +738,16 @@ const CostsAnalysisPage = () => {
                           position: 'left',
                           rtl: true,
                         },
-                      },
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Cost Trends */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h2 className="text-lg font-bold mb-6">ڕێڕەوی خەرجی</h2>
-                <div className="h-80">
-                  <Bar
-                    data={getMonthlyTrendData()}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      scales: {
-                        y: {
-                          beginAtZero: true
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              const label = context.label || '';
+                              const value = context.raw || 0;
+                              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                              const percentage = Math.round((value / total) * 100);
+                              return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                            }
+                          }
                         }
                       },
                     }}
@@ -418,83 +755,80 @@ const CostsAnalysisPage = () => {
                 </div>
               </div>
 
-              {/* Payment Methods */}
+              {/* Expenses Breakdown Chart */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h2 className="text-lg font-bold mb-6">شێوازی پارەدان</h2>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-700">بانک</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {filteredCosts.length > 0 ?
-                          Math.round(filteredCosts.filter(i => i.paymentMethod === 'bank').length / filteredCosts.length * 100) + '%'
-                          : '0%'}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div
-                        className="bg-blue-600 h-2.5 rounded-full"
-                        style={{
-                          width: filteredCosts.length > 0 ?
-                            (filteredCosts.filter(i => i.paymentMethod === 'bank').length / filteredCosts.length * 100) + '%'
-                            : '0%'
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-700">پارە</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {filteredCosts.length > 0 ?
-                          Math.round(filteredCosts.filter(i => i.paymentMethod === 'cash').length / filteredCosts.length * 100) + '%'
-                          : '0%'}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div
-                        className="bg-green-500 h-2.5 rounded-full"
-                        style={{
-                          width: filteredCosts.length > 0 ?
-                            (filteredCosts.filter(i => i.paymentMethod === 'cash').length / filteredCosts.length * 100) + '%'
-                            : '0%'
-                        }}
-                      ></div>
-                    </div>
-                  </div>
+                <h2 className="text-lg font-bold mb-6">پارەدان بە پێی پۆل (خەرجی)</h2>
+                <div className="h-80">
+                  <Pie
+                    data={getExpensesPieData()}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'left',
+                          rtl: true,
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              const label = context.label || '';
+                              const value = context.raw || 0;
+                              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                              const percentage = Math.round((value / total) * 100);
+                              return `${label}: $${value.toLocaleString()} (${percentage}%)`;
+                            }
+                          }
+                        }
+                      },
+                    }}
+                  />
                 </div>
               </div>
 
-              {/* Subcategories Breakdown */}
+              {/* Financial Trends */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
-                <h2 className="text-lg font-bold mb-6">پارەدان بە پێی پۆلی ورد</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {categories
-                    .filter(c => c.id !== 'all' && c.subCategories.length > 0)
-                    .map(category => {
-                      const subCatCosts = {};
-                      category.subCategories.forEach(subCat => {
-                        subCatCosts[subCat.name] = filteredCosts
-                          .filter(item => item.subCategory === subCat.id)
-                          .reduce((sum, item) => sum + item.amount, 0);
-                      });
-
-                      return (
-                        <div key={category.id} className="bg-gray-50 p-4 rounded-lg">
-                          <h3 className="font-medium text-gray-900 mb-2">{category.name}</h3>
-                          <ul className="space-y-1">
-                            {Object.entries(subCatCosts)
-                              .filter(([_, amount]) => amount > 0)
-                              .map(([subCatName, amount]) => (
-                                <li key={subCatName} className="flex justify-between text-sm">
-                                  <span className="text-gray-600">{subCatName}</span>
-                                  <span className="font-medium">${amount.toLocaleString()}</span>
-                                </li>
-                              ))}
-                          </ul>
-                        </div>
-                      );
-                    })}
+                <h2 className="text-lg font-bold mb-6">ڕێڕەوی دارایی</h2>
+                <div className="h-96">
+                  <Line
+                    data={getFinancialTrendData()}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      interaction: {
+                        mode: 'index',
+                        intersect: false,
+                      },
+                      plugins: {
+                        legend: {
+                          position: 'top',
+                          rtl: true,
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              let label = context.dataset.label || '';
+                              if (label) {
+                                label += ': ';
+                              }
+                              label += '$' + context.raw.toLocaleString();
+                              return label;
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          ticks: {
+                            callback: function(value) {
+                              return '$' + value.toLocaleString();
+                            }
+                          }
+                        }
+                      },
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -506,41 +840,52 @@ const CostsAnalysisPage = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">بەروار</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">جۆر</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">پۆل</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">پۆلی ورد</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">بەرهەم</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">بڕ</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">شێوازی پارەدان</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">جۆر</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {filteredCosts.length > 0 ? (
-                      filteredCosts.map((cost) => {
-                        const category = categories.find(c => c.id === cost.category);
-                        const subCategory = category?.subCategories.find(sc => sc.id === cost.subCategory);
+                    {filteredData.length > 0 ? (
+                      filteredData.map((item) => {
+                        const categoryInfo = categories.find(c => c.id === item.type);
+                        const subCategoryInfo = categoryInfo?.subCategories?.find(sc => sc.id === item.category);
+                        const productInfo = item.productId ? products[item.productId] : null;
 
                         return (
-                          <tr key={cost.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{cost.date}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{category?.name || cost.category}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{subCategory?.name || cost.subCategory}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-red-600">${cost.amount}</td>
+                          <tr key={item.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.date}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              {item.type === 'revenue' ? (
+                                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">داھات</span>
+                              ) : (
+                                <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">خەرجی</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                              {subCategoryInfo?.name || item.category}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.subCategory}</td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                              {cost.paymentMethod === 'bank' ? 'بانک' : 'پارە'}
+                              {productInfo?.name || '-'}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium" style={{
+                              color: item.type === 'revenue' ? '#10b981' : '#ef4444'
+                            }}>
+                              ${item.amount.toLocaleString()}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                              {cost.recurring ? (
-                                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">بەردەوام</span>
-                              ) : (
-                                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">یەکجار</span>
-                              )}
+                              {item.paymentMethod === 'bank' ? 'بانک' : 'پارە'}
                             </td>
                           </tr>
                         );
                       })
                     ) : (
                       <tr>
-                        <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                        <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
                           هیچ تۆمارێک نەدۆزرایەوە
                         </td>
                       </tr>
@@ -550,81 +895,6 @@ const CostsAnalysisPage = () => {
               </div>
             </div>
           )}
-
-          {/* Cost Analysis */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
-            <h2 className="text-lg font-bold mb-6">شیکردنەوەی خەرجی</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-medium mb-3 text-blue-600">خەرجی بە پێی مانگ</h3>
-                <div className="h-64">
-                  <Bar
-                    data={getMonthlyTrendData()}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      scales: {
-                        y: {
-                          beginAtZero: true
-                        }
-                      },
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <h3 className="font-medium mb-3 text-purple-600">پێشبینی خەرجی</h3>
-                <div className="bg-purple-50 p-4 rounded-lg mb-4">
-                  <p className="text-purple-800 text-sm mb-2">
-                    بەپێی ڕێڕەوی خەرجییەکان، پێشبینیدەکرێت خەرجییەکان بەڕێژەی {
-                      filteredCosts.length > 3 ? '8' : '0'
-                    }% زیاد بکات لە مانگی داهاتوودا
-                  </p>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">کۆی خەرجی ئێستا</span>
-                    <span className="font-medium">${totalCosts.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">پێشبینی مانگی داهاتوو</span>
-                    <span className="font-medium text-purple-600">
-                      ${filteredCosts.length > 3 ? (totalCosts * 1.08).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '0'}
-                    </span>
-                  </div>
-                </div>
-
-                <h4 className="font-medium mb-2 text-gray-700">خەرجییە بەرزەکان</h4>
-                <ul className="space-y-2">
-                  {categories
-                    .filter(c => c.id !== 'all')
-                    .map(category => {
-                      const categoryTotal = filteredCosts
-                        .filter(item => item.category === category.id)
-                        .reduce((sum, item) => sum + item.amount, 0);
-
-                      const percentage = totalCosts > 0 ?
-                        Math.round((categoryTotal / totalCosts) * 100) : 0;
-
-                      return percentage > 0 ? (
-                        <li key={category.id} className="flex items-center">
-                          <div
-                            className="w-2 h-2 rounded-full mr-2"
-                            style={{
-                              backgroundColor:
-                                category.id === 'salaries' ? '#3b82f6' :
-                                  category.id === 'supplements' ? '#10b981' :
-                                    category.id === 'equipment' ? '#f59e0b' :
-                                      category.id === 'rent' ? '#ef4444' : '#8b5cf6'
-                            }}
-                          ></div>
-                          <span className="text-gray-600 text-sm flex-grow">{category.name}</span>
-                          <span className="font-medium text-sm">{percentage}%</span>
-                        </li>
-                      ) : null;
-                    })}
-                </ul>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
