@@ -501,7 +501,6 @@ const TransactionView = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [modalMode, setModalMode] = useState('add');
   const receiptRef = useRef();
-
   const [mockTransactions, setMockTransactions] = useState({});
 
   const fetchTransactions = async () => {
@@ -546,6 +545,10 @@ const TransactionView = () => {
   };
 
   const handleDeleteItem = async (item) => {
+    console.log(`discount_type: ${transaction.discount_type}`);
+    console.log(`discount_value: ${transaction.discount_value}`);
+    console.log(`final_amount: ${transaction.final_amount}`);
+    console.log(`total_amount: ${transaction.total_amount}`);
     console.log(item.barcode);
     console.log(item.line_total);
     console.log(item.quantity);
