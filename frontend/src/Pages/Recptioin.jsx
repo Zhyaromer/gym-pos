@@ -88,7 +88,7 @@ const Receipt = forwardRef(({
           {discount?.discount_value !== 0.000 && (
             <div className="flex justify-between mb-2">
               <span>داشکاندن :</span>
-              <p>{discount.discount_type == 'percentage' ? `${Number(discount.discount_value)}%` : `${(discount.discount_value).toFixed(3)} د.ع`} </p>
+              <p>{discount.discount_type == 'percentage' ? `${Number(discount.discount_value)}%` : `${(discount.discount_value)} د.ع`} </p>
             </div>
           )}
 
@@ -180,10 +180,10 @@ const ItemModal = ({ isOpen, onClose, item, onSave, mode }) => {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-50" />
+          <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-y-auto">
+        <div dir='rtl' className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
             <Transition.Child
               as={React.Fragment}
@@ -212,7 +212,7 @@ const ItemModal = ({ isOpen, onClose, item, onSave, mode }) => {
 
                 <form onSubmit={handleSubmit} className="mt-4 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm text-right font-medium text-gray-700 mb-1">
                       بارکۆد
                     </label>
                     <input
@@ -225,43 +225,21 @@ const ItemModal = ({ isOpen, onClose, item, onSave, mode }) => {
                     />
                   </div>
 
-                  {productInfo && (
-                    <>
-                      <div className="bg-blue-50 p-3 rounded-md">
-                        <div className="flex justify-between">
-                          <span className="font-medium">ناو:</span>
-                          <span>{productInfo.name}</span>
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <span className="font-medium">نرخ:</span>
-                          <span>{productInfo.selling_price} د.ع</span>
-                        </div>
-                      </div>
+                  <div>
+                    <label className="block text-sm text-right font-medium text-gray-700 mb-1">
+                      ژمارە
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          ژمارە
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={formData.quantity}
-                          onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          required
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  <div className="flex justify-end space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors rounded-lg"
-                    >
-                      پەشیمانبوونەوە
-                    </button>
+                  <div className="flex justify-start space-x-3 pt-4">
                     <button
                       type="submit"
                       className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center justify-center min-w-24"
@@ -271,10 +249,17 @@ const ItemModal = ({ isOpen, onClose, item, onSave, mode }) => {
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       ) : (
                         <>
+                          پاشەکەوت
                           <Save className="w-4 h-4 mr-2" />
-                          {productInfo ? 'پاشەکەوت' : 'گەڕان'}
                         </>
                       )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="px-4 py-2 bg-gray-100 text-black transition-colors rounded-lg"
+                    >
+                      پەشیمانبوونەوە
                     </button>
                   </div>
                 </form>
@@ -287,7 +272,7 @@ const ItemModal = ({ isOpen, onClose, item, onSave, mode }) => {
   );
 };
 
-const DiscountModal = ({ isOpen, onClose, discount, onSave , orderNumber }) => {
+const DiscountModal = ({ isOpen, onClose, discount, onSave, orderNumber }) => {
   const [discountType, setDiscountType] = useState(discount?.type || 'none');
   const [discountValue, setDiscountValue] = useState(discount?.value || 0);
 
@@ -295,7 +280,7 @@ const DiscountModal = ({ isOpen, onClose, discount, onSave , orderNumber }) => {
     if (discountType === 'none') {
       setDiscountValue(0);
     }
-    console.log(discountType, discountValue,orderNumber);
+    console.log(discountType, discountValue, orderNumber);
     e.preventDefault();
     onSave({
       type: discountType,
@@ -560,33 +545,37 @@ const TransactionView = () => {
     setIsItemModalOpen(true);
   };
 
-  const handleDeleteItem = async (itemId) => {
-    if (window.confirm('ئایا دڵنیای لە سڕینەوەی ئەم بەرهەمە؟')) {
-      const updatedTransaction = {
-        ...transaction,
-        items: transaction.items.filter(item => item.item_id !== itemId)
-      };
+  const handleDeleteItem = async (item) => {
+    console.log(item.barcode);
+    console.log(item.line_total);
+    console.log(item.quantity);
+    console.log(transaction.transaction_id);
+    // if (window.confirm('ئایا دڵنیای لە سڕینەوەی ئەم بەرهەمە؟')) {
+    //   const updatedTransaction = {
+    //     ...transaction,
+    //     items: transaction.items.filter(item => item.item_id !== itemId)
+    //   };
 
-      // Recalculate totals
-      const newTotal = updatedTransaction.items.reduce((sum, item) => sum + (item.quantity * item.selling_price), 0);
-      updatedTransaction.total_amount = newTotal;
+    //   // Recalculate totals
+    //   const newTotal = updatedTransaction.items.reduce((sum, item) => sum + (item.quantity * item.selling_price), 0);
+    //   updatedTransaction.total_amount = newTotal;
 
-      // Apply discount
-      if (updatedTransaction.discount_type === 'percentage') {
-        updatedTransaction.final_amount = newTotal * (1 - updatedTransaction.discount_value / 100);
-      } else if (updatedTransaction.discount_type === 'fixed_amount') {
-        updatedTransaction.final_amount = Math.max(0, newTotal - updatedTransaction.discount_value);
-      } else {
-        updatedTransaction.final_amount = newTotal;
-      }
+    //   // Apply discount
+    //   if (updatedTransaction.discount_type === 'percentage') {
+    //     updatedTransaction.final_amount = newTotal * (1 - updatedTransaction.discount_value / 100);
+    //   } else if (updatedTransaction.discount_type === 'fixed_amount') {
+    //     updatedTransaction.final_amount = Math.max(0, newTotal - updatedTransaction.discount_value);
+    //   } else {
+    //     updatedTransaction.final_amount = newTotal;
+    //   }
 
-      setTransaction(updatedTransaction);
-      setMockTransactions({
-        ...mockTransactions,
-        [transaction.orderNumber]: updatedTransaction
-      });
-      setSuccess('بەرهەم بە سەرکەوتوویی سڕایەوە');
-    }
+    //   setTransaction(updatedTransaction);
+    //   setMockTransactions({
+    //     ...mockTransactions,
+    //     [transaction.orderNumber]: updatedTransaction
+    //   });
+    //   setSuccess('بەرهەم بە سەرکەوتوویی سڕایەوە');
+    // }
   };
 
   const handleSaveItem = (itemData) => {
@@ -669,12 +658,6 @@ const TransactionView = () => {
     setSuccess('بەروار بە سەرکەوتوویی نوێکرایەوە');
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('en-US');
   };
@@ -713,7 +696,6 @@ const TransactionView = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={handleKeyPress}
                   placeholder="ژمارەی داواکاری داخڵ بکە (وەک ORD001)"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -846,7 +828,7 @@ const TransactionView = () => {
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleDeleteItem(item.item_id)}
+                              onClick={() => handleDeleteItem(item)}
                               className="p-1 text-red-500 hover:text-red-700"
                             >
                               <Trash2 className="w-4 h-4" />
