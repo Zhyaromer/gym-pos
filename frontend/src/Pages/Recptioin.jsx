@@ -127,12 +127,32 @@ const ItemModal = ({ isOpen, onClose, item, onSave, mode }) => {
     selling_price: item.selling_price
   } : null);
 
+  useEffect(() => {
+    if (item) {
+      setFormData({
+        barcode: item.barcode || '',
+        quantity: item.quantity || 1
+      });
+      setProductInfo({
+        name: item.name,
+        selling_price: item.selling_price
+      });
+    } else {
+      setFormData({
+        barcode: '',
+        quantity: 1
+      });
+      setProductInfo(null);
+    }
+  }, [item]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log(formData);
+
     if (!productInfo) {
       setIsLoading(true);
-      // Simulate API call to fetch product info by barcode
       try {
         await new Promise(resolve => setTimeout(resolve, 800));
         // Mock response - in real app this would come from your backend
@@ -663,23 +683,6 @@ const TransactionView = () => {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('en-US');
-  };
-
-  const calculateDiscount = (transaction) => {
-    if (transaction.discount_type === 'none') {
-      return { applied: false, amount: 0, percentage: 0 };
-    }
-
-    const amount = transaction.total_amount - transaction.final_amount;
-    const percentage = transaction.discount_type === 'percentage'
-      ? transaction.discount_value
-      : (amount / transaction.total_amount) * 100;
-
-    return {
-      applied: true,
-      amount: amount,
-      percentage: percentage
-    };
   };
 
   return (

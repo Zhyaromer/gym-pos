@@ -40,18 +40,19 @@ export default function AddMemberPage() {
           return null;
         };
 
-        res.data.forEach(plan => {
-          const typeKey = mapType(plan.type);
+        Object.values(res.data).forEach(planGroup => {
+          const typeKey = mapType(planGroup.type);
           if (!typeKey) return;
 
-          const durationKey = `${plan.duration} مانگ`;
-          const priceValue = parseInt(plan.price.replace('.', '').replace(',', ''));
+          planGroup.plans.forEach(plan => {
+            const priceValue = parseInt(plan.price.replace('.', '').replace(',', ''));
 
-          if (plan.duration === 12) {
-            prices[typeKey]['ساڵانە'] = priceValue;
-          } else {
-            prices[typeKey][durationKey] = priceValue;
-          }
+            if (plan.duration.includes("ساڵ")) {
+              prices[typeKey]['ساڵانە'] = priceValue;
+            } else {
+              prices[typeKey][plan.duration] = priceValue;
+            }
+          });
         });
 
         setPlans(prices);
@@ -67,7 +68,7 @@ export default function AddMemberPage() {
     name: '',
     phone: '',
     emergencyPhone: '',
-    membership: '1 مانگ',
+    membership: 'پلانی مانگی',
     startDate: new Date().toISOString().split('T')[0],
     endDate: '',
     gender: 'پیاو',
@@ -79,16 +80,19 @@ export default function AddMemberPage() {
 
   const calculateEndDate = (startDate, membershipType) => {
     const date = new Date(startDate);
+    let daysToAdd = 0;
 
-    if (membershipType === "1 مانگ") {
-      date.setMonth(date.getMonth() + 1);
-    } else if (membershipType === "3 مانگ") {
-      date.setMonth(date.getMonth() + 3);
-    } else if (membershipType === "6 مانگ") {
-      date.setMonth(date.getMonth() + 6);
+    if (membershipType === "پلانی مانگی") {
+      daysToAdd = 30;
+    } else if (membershipType === "پلانی سێ مانگ") {
+      daysToAdd = 90;
+    } else if (membershipType === "پلانی شەش مانگ") {
+      daysToAdd = 180;
     } else if (membershipType === "ساڵانە") {
-      date.setFullYear(date.getFullYear() + 1);
+      daysToAdd = 365;
     }
+
+    date.setTime(date.getTime() + (daysToAdd * 24 * 60 * 60 * 1000));
 
     return date.toISOString().split('T')[0];
   };
@@ -103,6 +107,7 @@ export default function AddMemberPage() {
   useEffect(() => {
     if (formData.membership && formData.accessLevel) {
       const price = plans[formData.accessLevel][formData.membership] || 0;
+      console.log(price);
       setCalculatedPrice(price);
     } else {
       setCalculatedPrice(0);
@@ -116,7 +121,6 @@ export default function AddMemberPage() {
       [name]: value
     });
 
-    // Clear error for this field when user types
     if (formErrors[name]) {
       setFormErrors({
         ...formErrors,
@@ -170,37 +174,47 @@ export default function AddMemberPage() {
     e.preventDefault();
 
     if (validateForm()) {
-      const formdata = new FormData();
-      formdata.append('name', formData.name);
-      formdata.append('phoneNumber', formData.phone);
-      formdata.append('emergencyphoneNumber', formData.emergencyPhone);
-      formdata.append('startDate', formData.startDate);
-      formdata.append('endDate', formData.endDate);
-      formdata.append('gender', formData.gender);
-      formdata.append('height', formData.height);
-      formdata.append('weight', formData.weight);
-
-      if (formData.membership === '1 مانگ') {
-        formdata.append('membership', "پلانی مانگی");
-      } else if (formData.membership === '3 مانگ') {
-        formdata.append('membership', "پلانی سێ مانگ");
-      } else if (formData.membership === '6 مانگ') {
-        formdata.append('membership', "پلانی شەش مانگ");
-      } else if (formData.membership === 'ساڵانە') {
-        formdata.append('membership', "پلانی ساڵانە");
-      }
+      let access = "هۆلی وەرزشی";
 
       if (formData.accessLevel === "gym") {
-        formdata.append('accessLevel', "هۆلی وەرزشی");
+        access = "هۆلی وەرزشی";
       } else if (formData.accessLevel === "pool") {
-        formdata.append('accessLevel', "مەلەوانگە");
+        access = "مەلەوانگە";
       } else if (formData.accessLevel === "both") {
-        formdata.append('accessLevel', "مەلەوانگە و هۆلی وەرزشی");
+        access = "مەلەوانگە و هۆلی وەرزشی";
       }
 
-      const res = await axios.post("http://localhost:3000/members/addmember", formdata);
-      console.log(res.data);
+      const data = {
+        name: formData.name,
+        phoneNumber: formData.phone,
+        emergencyphoneNumber: formData.emergencyPhone,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        gender: formData.gender,
+        height: formData.height,
+        weight: formData.weight,
+        membership: formData.membership,
+        accessLevel: access
+      }
+      const res = await axios.post("http://localhost:3000/members/addmember", data);
 
+      if (res.status === 200) {
+        setFormData({
+          name: '',
+          phone: '',
+          emergencyPhone: '',
+          membership: 'پلانی مانگی',
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: calculateEndDate(new Date().toISOString().split('T')[0], 'پلانی مانگی'),
+          gender: 'پیاو',
+          accessLevel: '',
+          height: '',
+          weight: '',
+          status: 'active'
+        });
+      }
+
+      setCalculatedPrice(0);
       setShowSuccessModal(true);
     }
   };
@@ -211,9 +225,9 @@ export default function AddMemberPage() {
       name: '',
       phone: '',
       emergencyPhone: '',
-      membership: '1 مانگ',
+      membership: 'پلانی مانگی',
       startDate: new Date().toISOString().split('T')[0],
-      endDate: calculateEndDate(new Date().toISOString().split('T')[0], '1 مانگ'),
+      endDate: calculateEndDate(new Date().toISOString().split('T')[0], 'پلانی مانگی'),
       gender: 'پیاو',
       accessLevel: '',
       height: '',
@@ -352,15 +366,14 @@ export default function AddMemberPage() {
                     onChange={handleInputChange}
                     className={`pr-4 pl-4 py-2 w-full border ${formErrors.membership ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm`}
                   >
-                    <option value="1 مانگ">1 مانگ</option>
-                    <option value="3 مانگ">3 مانگ</option>
-                    <option value="6 مانگ">6 مانگ</option>
+                    <option value="پلانی مانگی">پلانی مانگی</option>
+                    <option value="پلانی سێ مانگ">پلانی سێ مانگ</option>
+                    <option value="پلانی شەش مانگ">پلانی شەش مانگ</option>
                     <option value="ساڵانە">ساڵانە</option>
                   </select>
                   {formErrors.membership && <p className="mt-1 text-sm text-red-500">{formErrors.membership}</p>}
                 </div>
 
-                {/* Access Level */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ئاستی دەستگەیشتن <span className="text-red-500">*</span></label>
                   <div className="grid grid-cols-3 gap-2 mb-2">
@@ -395,7 +408,6 @@ export default function AddMemberPage() {
                   {formErrors.accessLevel && <p className="mt-1 text-sm text-red-500">{formErrors.accessLevel}</p>}
                 </div>
 
-                {/* Start Date */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">بەرواری دەستپێک <span className="text-red-500">*</span></label>
                   <div className="relative">
@@ -413,7 +425,6 @@ export default function AddMemberPage() {
                   {formErrors.startDate && <p className="mt-1 text-sm text-red-500">{formErrors.startDate}</p>}
                 </div>
 
-                {/* End Date (Calculated automatically) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">بەرواری کۆتایی</label>
                   <div className="relative">
@@ -431,7 +442,6 @@ export default function AddMemberPage() {
                   <p className="mt-1 text-sm text-gray-500">بەرواری کۆتایی بەپێی جۆری ئەندامێتی دیاری دەکرێت</p>
                 </div>
 
-                {/* Price Display */}
                 <div className="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
                   <h4 className="text-md font-medium text-indigo-700 mb-2">نرخی ئەندامێتی</h4>
                   <div className="flex items-center justify-between">
@@ -440,7 +450,6 @@ export default function AddMemberPage() {
                   </div>
                 </div>
 
-                {/* Submit Button */}
                 <div className="pt-6">
                   <button
                     type="submit"
@@ -457,7 +466,7 @@ export default function AddMemberPage() {
       </main>
 
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
             <div className="bg-gradient-to-l from-green-500 to-emerald-600 p-6 text-white">
               <h2 className="text-xl font-bold">سەرکەوتوو بوو!</h2>
@@ -471,8 +480,8 @@ export default function AddMemberPage() {
                   onClick={handleAddAnother}
                   className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
                 >
-                  <Plus size={18} className="ml-2" />
                   زیادکردنی ئەندامێکی تر
+                  <Plus size={18} className="mr-2" />
                 </button>
 
                 <button
