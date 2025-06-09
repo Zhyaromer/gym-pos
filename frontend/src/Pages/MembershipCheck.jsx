@@ -41,7 +41,7 @@ export default function MembershipCheck() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [renewalData, setRenewalData] = useState({
-    membership: "1 مانگ",
+    membership: "پلانی مانگی",
     accessLevel: 'gym',
     startDate: new Date().toISOString().split('T')[0],
     endDate: ''
@@ -82,23 +82,24 @@ export default function MembershipCheck() {
           return null;
         };
 
-        res.data.forEach(plan => {
-          const typeKey = mapType(plan.type);
+        Object.values(res.data).forEach(planGroup => {
+          const typeKey = mapType(planGroup.type);
           if (!typeKey) return;
 
-          const durationKey = `${plan.duration} مانگ`;
-          const priceValue = parseInt(plan.price.replace('.', '').replace(',', ''));
+          planGroup.plans.forEach(plan => {
+            const priceValue = parseInt(plan.price.replace('.', '').replace(',', ''));
 
-          if (plan.duration === 12) {
-            prices[typeKey]['ساڵانە'] = priceValue;
-          } else {
-            prices[typeKey][durationKey] = priceValue;
-          }
+            if (plan.duration.includes("ساڵ")) {
+              prices[typeKey]['ساڵانە'] = priceValue;
+            } else {
+              prices[typeKey][plan.duration] = priceValue;
+            }
+          });
         });
 
         setPlans(prices);
       } catch (error) {
-        alert('هەڵەیەک ڕوویدا');
+        console.error("Error fetching plans:", error);
       }
     };
 
@@ -190,29 +191,32 @@ export default function MembershipCheck() {
 
   const calculateEndDate = (startDate, membershipType) => {
     const date = new Date(startDate);
+    let daysToAdd = 0;
 
-    if (membershipType === '1 مانگ') {
-      date.setDate(date.getDate() + 30);
-    } else if (membershipType === '3 مانگ') {
-      date.setDate(date.getDate() + 90);
-    } else if (membershipType === '6 مانگ') {
-      date.setDate(date.getDate() + 180);
-    } else if (membershipType === 'ساڵانە') {
-      date.setFullYear(date.getFullYear() + 1);
+    if (membershipType === "پلانی مانگی") {
+      daysToAdd = 30;
+    } else if (membershipType === "پلانی سێ مانگ") {
+      daysToAdd = 90;
+    } else if (membershipType === "پلانی شەش مانگ") {
+      daysToAdd = 180;
+    } else if (membershipType === "ساڵانە") {
+      daysToAdd = 365;
     }
+
+    date.setTime(date.getTime() + (daysToAdd * 24 * 60 * 60 * 1000));
 
     return date.toISOString().split('T')[0];
   };
-
+  
   const handleOpenRenewalModal = () => {
-    let membershipType = '1 مانگ';
+    let membershipType = 'پلانی مانگی';
 
     if (searchResult.membership_title === 'پلانی مانگی') {
-      membershipType = '1 مانگ';
+      membershipType = 'پلانی مانگی';
     } else if (searchResult.membership_title === 'پلانی سێ مانگ') {
-      membershipType = '3 مانگ';
+      membershipType = 'پلانی سێ مانگ';
     } else if (searchResult.membership_title === 'پلانی شەش مانگ') {
-      membershipType = '6 مانگ';
+      membershipType = 'پلانی شەش مانگ';
     } else if (searchResult.membership_title === 'پلانی ساڵانە') {
       membershipType = 'ساڵانە';
     }
@@ -271,7 +275,6 @@ export default function MembershipCheck() {
   };
 
   const handleRenewMembership = async () => {
-
     if (!validateForm()) {
       return;
     }
@@ -286,25 +289,9 @@ export default function MembershipCheck() {
         type = 'مەلەوانگە و هۆلی وەرزشی';
       }
 
-      let membership_title = '';
-      if (renewalData.membership === "1 مانگ") {
-        membership_title = 'پلانی مانگی';
-      } else if (renewalData.membership === "3 مانگ") {
-        membership_title = 'پلانی سێ مانگ';
-      } else if (renewalData.membership === "6 مانگ") {
-        membership_title = 'پلانی شەش مانگ';
-      } else if (renewalData.membership === "ساڵانە") {
-        membership_title = 'پلانی ساڵانە';
-      }
-
-      if (!membership_title) {
-        alert('خشتەی ئەندامێتی دیاری نەکراوە');
-        return;
-      }
-
       const res = await axios.post(`http://localhost:3000/members/updatemembership/${searchResult.m_id}`,
         {
-          membership_title: membership_title,
+          membership_title: renewalData.membership,
           start_date: renewalData.startDate,
           end_date: renewalData.endDate,
           type: type,
@@ -782,13 +769,13 @@ export default function MembershipCheck() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">جۆری ئەندامێتی <span className="text-red-500">*</span></label>
                 <select
                   name="membership"
-                  value={renewalData.membership || "1 مانگ"}
+                  value={renewalData.membership || "پلانی مانگی"}
                   onChange={handleRenewalInputChange}
                   className={`pr-4 pl-4 py-2 w-full border ${formErrors.membership ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm`}
                 >
-                  <option value="1 مانگ">1 مانگ</option>
-                  <option value="3 مانگ">3 مانگ</option>
-                  <option value="6 مانگ">6 مانگ</option>
+                  <option value="پلانی مانگی">پلانی مانگی</option>
+                  <option value="پلانی سێ مانگ">پلانی سێ مانگ</option>
+                  <option value="پلانی شەش مانگ">پلانی شەش مانگ</option>
                   <option value="ساڵانە">ساڵانە</option>
                 </select>
                 {formErrors.membership && <p className="mt-1 text-sm text-red-500">{formErrors.membership}</p>}

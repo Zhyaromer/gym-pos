@@ -1,7 +1,6 @@
 const db = require("../../config/mysql/mysqlconfig");
 
 const addNewMember = async (req, res) => {
-    console.log(req.body);
     const { name, gender, phoneNumber, emergencyphoneNumber, height, weight, accessLevel, endDate, startDate, membership } = req.body;
 
     if (!name || !gender || !phoneNumber || !emergencyphoneNumber || !accessLevel || !endDate || !startDate || !membership) {
@@ -30,7 +29,6 @@ const addNewMember = async (req, res) => {
     }
 
     if (startDate > endDate) {
-        console.log("start date must be less than end date");
         return res.status(400).json({ message: "start date must be less than end date" });
     }
 
@@ -70,7 +68,6 @@ const addNewMember = async (req, res) => {
             return res.status(400).json({ message: "data entery failed" });
         }
     } catch (error) {
-        console.error(error);
         connection.rollback();
         return res.status(500).json({ message: "internal error please try again" });
     } finally {
