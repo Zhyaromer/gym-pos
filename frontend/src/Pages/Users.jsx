@@ -169,6 +169,45 @@ export default function GymUsersPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow p-4 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm opacity-80">کۆی ئەندامان</p>
+                  <h3 className="text-2xl font-bold">{gymUsers.length}</h3>
+                </div>
+                <div className="bg-blue-400 bg-opacity-30 p-3 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow p-4 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm opacity-80">ئەندامانی چالاک</p>
+                  <h3 className="text-2xl font-bold">{gymUsers.filter(user => user.remaining_days >= 1).length}</h3>
+                </div>
+                <div className="bg-green-400 bg-opacity-30 p-3 rounded-full">
+                  <CheckCircle size={24} />
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow p-4 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm opacity-80">ئەندامانی بەسەرچوو</p>
+                  <h3 className="text-2xl font-bold">{gymUsers.filter(user => user.remaining_days == 0).length}</h3>
+                </div>
+                <div className="bg-red-400 bg-opacity-30 p-3 rounded-full">
+                  <XCircle size={24} />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -268,7 +307,6 @@ export default function GymUsersPage() {
             </table>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-6">
               <div className="text-sm text-gray-500">
@@ -305,7 +343,7 @@ export default function GymUsersPage() {
       </main>
 
       {showProfileModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden">
             <div className="bg-gradient-to-l from-blue-600 to-indigo-700 p-6 text-white relative">
               <button
@@ -431,7 +469,7 @@ export default function GymUsersPage() {
       )}
 
       {showEditModal && editingUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden">
             <div className="bg-gradient-to-l from-blue-600 to-indigo-700 p-6 text-white relative">
               <button
@@ -450,7 +488,6 @@ export default function GymUsersPage() {
 
             <div className="p-6 overflow-y-auto max-h-[70vh]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Personal Information */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4 border-b pb-2">زانیاری کەسی</h3>
 

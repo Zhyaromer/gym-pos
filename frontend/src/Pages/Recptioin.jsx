@@ -477,7 +477,6 @@ const DateModal = ({ isOpen, onClose, date, onSave }) => {
                   </button>
                 </Dialog.Title>
 
-                {/* add the code to change date here  */}
                 <form onSubmit={handleSubmit} className="mt-4 space-y-4">
                   <div className="flex justify-center">
 
@@ -565,40 +564,34 @@ const TransactionView = () => {
   };
 
   const handleDeleteItem = async (item) => {
-    console.log(`discount_type: ${transaction.discount_type}`);
-    console.log(`discount_value: ${transaction.discount_value}`);
-    console.log(`final_amount: ${transaction.final_amount}`);
-    console.log(`total_amount: ${transaction.total_amount}`);
-    console.log(item.barcode);
-    console.log(item.line_total);
-    console.log(item.quantity);
-    console.log(transaction.transaction_id);
-    // if (window.confirm('ئایا دڵنیای لە سڕینەوەی ئەم بەرهەمە؟')) {
-    //   const updatedTransaction = {
-    //     ...transaction,
-    //     items: transaction.items.filter(item => item.item_id !== itemId)
-    //   };
+    if (window.confirm('ئایا دڵنیای لە سڕینەوەی ئەم بەرهەمە؟')) {
 
-    //   // Recalculate totals
-    //   const newTotal = updatedTransaction.items.reduce((sum, item) => sum + (item.quantity * item.selling_price), 0);
-    //   updatedTransaction.total_amount = newTotal;
+      try {
+        const data = {
+          item_id: item.item_id,
+          transaction_id: transaction.transaction_id,
+          barcode: item.barcode,
+          name: item.name,
+          quantity: item.quantity,
+          selling_price: item.selling_price,
+          line_total: item.line_total,
+          discount_type: transaction.discount_type,
+          discount_value: transaction.discount_value,
+          final_amount: transaction.final_amount,
+          total_amount: transaction.total_amount
+        }
 
-    //   // Apply discount
-    //   if (updatedTransaction.discount_type === 'percentage') {
-    //     updatedTransaction.final_amount = newTotal * (1 - updatedTransaction.discount_value / 100);
-    //   } else if (updatedTransaction.discount_type === 'fixed_amount') {
-    //     updatedTransaction.final_amount = Math.max(0, newTotal - updatedTransaction.discount_value);
-    //   } else {
-    //     updatedTransaction.final_amount = newTotal;
-    //   }
+        const res = await axios.delete(`http://localhost:3000/reception/delete_item`, {
+          data: data
+        });
 
-    //   setTransaction(updatedTransaction);
-    //   setMockTransactions({
-    //     ...mockTransactions,
-    //     [transaction.orderNumber]: updatedTransaction
-    //   });
-    //   setSuccess('بەرهەم بە سەرکەوتوویی سڕایەوە');
-    // }
+        if (res.status === 200) {
+          setSuccess('بەرهەم بە سەرکەوتوویی سڕایەوە');
+        }
+      } catch (error) {
+        setError('هەڵەیەک ڕوویدا لە سڕینەوە');
+      }
+    }
   };
 
   const handleSaveItem = (itemData) => {

@@ -1,6 +1,7 @@
 const db = require("../../config/mysql/mysqlconfig");
 
 const delete_item = async (req, res) => {
+    console.log(req.body);
     let { barcode, line_total, quantity, transaction_id, discount_type, discount_value, final_amount, total_amount } = req.body;
 
     if ([barcode, line_total, quantity, transaction_id, discount_type, discount_value, final_amount, total_amount].some(v => v === undefined || v === null)) {
