@@ -20,7 +20,7 @@ import {
     ReceiptTextIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/layout/Nav';
+import Navbar from '../../components/layout/Nav';
 
 export default function GymDashboard() {
     const navigate = useNavigate();
@@ -28,106 +28,70 @@ export default function GymDashboard() {
 
     const dashboardItems = [
         {
-            title: "زیادکردنی ئەندام",
-            icon: <UserPlus size={24} />,
-            color: "bg-gradient-to-r from-blue-500 to-indigo-600",
-            link: "/AddMember"
-        },
-        {
-            title: "ئەندامەکان",
-            icon: <Users size={24} />,
-            color: "bg-gradient-to-r from-blue-500 to-indigo-600",
-            link: "/users"
-        },
-        {
-            title: "گەڕان بە دوای ئەندام",
-            icon: <UserSearch size={24} />,
-            color: "bg-gradient-to-r from-blue-500 to-indigo-600",
-            link: "/membership-check"
+            title: "مێزەکان",
+            icon: <Bell size={24} />,
+            color: "bg-gradient-to-r from-pink-500 to-rose-600",
+            link: "/R_main"
         },
         {
             title: "زیادکردنی کارمەند",
             icon: <UserPlus2 size={24} />,
             color: "bg-gradient-to-r from-purple-500 to-pink-600",
-            link: "/AddEmployee"
+            link: "/R_AddEmployee"
         },
         {
             title: "کارمەندەکان",
             icon: <UserCircle size={24} />,
             color: "bg-gradient-to-r from-purple-500 to-pink-600",
-            link: "/employees"
+            link: "/R_employees"
         },
         {
             title: "موچەی کارمەندەکان",
             icon: <DollarSign size={24} />,
             color: "bg-gradient-to-r from-purple-500 to-pink-600",
-            link: "/salarypayments"
+            link: "/R_salarypayments"
         },
         {
             title: "فرۆشتن",
             icon: <ShoppingCart size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link: "/selling"
+            link: "/R_selling"
         },
         {
             title: "کۆگا",
             icon: <Package size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link: "/inventory"
+            link: "/R_inventory"
         },
         {
             title: "زیادکردنی بەرهەم",
             icon: <PlusCircle size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link: "/addinventory"
+            link: "/R_addinventory"
         },
         {
             title: "گەڕان بۆ وەسڵ",
             icon: <ReceiptTextIcon size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link: "/recptioin"
+            link: "/R_recptioin"
         },
         {
             title: "خیابات",
             icon: <ClipboardList size={24} />,
             color: "bg-gradient-to-r from-red-500 to-rose-600",
-            link: "/attendence"
-        },
-        {
-            title: "نرخەکان",
-            icon: <BadgeDollarSign size={24} />,
-            color: "bg-gradient-to-r from-teal-500 to-cyan-600",
-            link: "/pricing"
+            link: "/R_attendence"
         },
         {
             title: "خەرجیەکان",
             icon: <Coins size={24} />,
             color: "bg-gradient-to-r from-green-500 to-emerald-600",
-            link: "/expenses"
-        },
-        {
-            title: "مەلەوانگە",
-            icon: <Ticket size={24} />,
-            color: "bg-gradient-to-r from-slate-500 to-gray-600",
-            link: "/pooltickets"
-        },
-        {
-            title: "قازانج",
-            icon: <TrendingUp size={24} />,
-            color: "bg-gradient-to-r from-emerald-500 to-green-600",
-            link: "/profit"
+            link: "/R_expenses"
         },
         {
             title: "ڕاپۆرت",
             icon: <FileBarChart size={24} />,
             color: "bg-gradient-to-r from-cyan-500 to-teal-600",
-            link: "/report"
-        },
-        {
-            title: "ئاگادارییەکان",
-            icon: <Bell size={24} />,
-            color: "bg-gradient-to-r from-pink-500 to-rose-600",
-            link: "/users"
+            link: "/R_report"
         }
     ];
 
@@ -141,7 +105,7 @@ export default function GymDashboard() {
 
             <div className="container mx-auto p-6">
                 <div className="mb-8 bg-white rounded-xl p-6 shadow-lg text-right">
-                    <h1 className="text-3xl font-bold text-gray-800 mb-4">داشبۆردی بەڕێوەبردنی یانەی وەرزشی</h1>
+                    <h1 className="text-3xl font-bold text-gray-800 mb-4">داشبۆردی بەڕێوەبردنی ڕێستۆرانت</h1>
                     <p className="text-gray-600">بەخێربێیت، {user.name} | {user.role}</p>
                 </div>
 

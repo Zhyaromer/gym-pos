@@ -5,7 +5,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
-import Navbar from '../components/layout/Nav';
+import Navbar from '../../components/layout/Nav';
 import axios from 'axios';
 
 const Receipt = forwardRef(({
@@ -664,6 +664,7 @@ const TransactionView = () => {
             <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
               گەڕان بە ژمارەی داواکاری
               <Search className="w-6 h-6 mr-2" />
+              ORD-2025-1003
             </h1>
 
             <div className="flex flex-col md:flex-row gap-4 mb-4">
