@@ -10,11 +10,10 @@ import {
     DollarSign,
     ClipboardList,
     ShoppingCart,
-    Settings,
-    Bell,
+    Database ,
     BadgeDollarSign,
     FileBarChart,
-    TrendingUp,
+    Clock,
     Ticket,
     Coins,
     ReceiptTextIcon
@@ -44,6 +43,25 @@ export default function GymDashboard() {
             icon: <UserSearch size={24} />,
             color: "bg-gradient-to-r from-blue-500 to-indigo-600",
             link: "/membership-check"
+        },
+        ,
+        {
+            title: 'ئیشتراکەکان (کارمەند)',
+            icon: <ReceiptTextIcon size={24} />,
+            color: "bg-gradient-to-r from-blue-500 to-indigo-600",
+            link: "/today_members"
+        },
+        {
+            title: 'ئیشتراکەکان (بەڕیوبەر)',
+            icon: <ReceiptTextIcon size={24} />,
+            color: "bg-gradient-to-r from-blue-500 to-indigo-600",
+            link: "/today_members_admin"
+        },
+        {
+            title: 'کاتی هاتنی یاریزانەکان ',
+            icon: <Clock size={24} />,
+            color: "bg-gradient-to-r from-blue-500 to-indigo-600",
+            link: "/entery_time"
         },
         {
             title: "زیادکردنی کارمەند",
@@ -112,23 +130,17 @@ export default function GymDashboard() {
             link: "/pooltickets"
         },
         {
-            title: "قازانج",
-            icon: <TrendingUp size={24} />,
-            color: "bg-gradient-to-r from-emerald-500 to-green-600",
-            link: "/profit"
-        },
-        {
             title: "ڕاپۆرت",
             icon: <FileBarChart size={24} />,
             color: "bg-gradient-to-r from-cyan-500 to-teal-600",
             link: "/report"
         },
         {
-            title: "ئاگادارییەکان",
-            icon: <Bell size={24} />,
-            color: "bg-gradient-to-r from-pink-500 to-rose-600",
-            link: "/users"
-        }
+            title: "باک ئەپ",
+            icon: <Database size={24} />,
+            color: "bg-gradient-to-r from-amber-500 to-orange-600",
+            link: "/backup"
+        },
     ];
 
     return (
