@@ -12,7 +12,6 @@ const memberRoute = require('./routes/member/memberRoute')
 const employeeRoute = require('./routes/employee/employeesRoute')
 const sallesRoute = require('./routes/sales/salesRoute')
 const inventoryRoute = require('./routes/inventory/inventoryRoute')
-const attendenceRoute = require('./routes/attendance/attendenceRoute');
 const expensesRoute = require('./routes/expense/expensesRoute');
 const poolRoute = require('./routes/pool/poolRoute');
 const membership_plansRoute = require('./routes/membership_plans/membership_plansRoute');
@@ -32,7 +31,6 @@ app.use('/members',memberRoute);
 app.use('/employees',employeeRoute);
 app.use('/sales',sallesRoute);
 app.use('/inventory',inventoryRoute);
-app.use('/attendence',attendenceRoute);
 app.use('/expenses',expensesRoute);
 app.use('/pool',poolRoute);
 app.use('/membership_plans',membership_plansRoute);

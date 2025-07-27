@@ -76,12 +76,6 @@ export default function GymDashboard() {
             link: "/employees"
         },
         {
-            title: "موچەی کارمەندەکان",
-            icon: <DollarSign size={24} />,
-            color: "bg-gradient-to-r from-purple-500 to-pink-600",
-            link: "/salarypayments"
-        },
-        {
             title: "فرۆشتن",
             icon: <ShoppingCart size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
@@ -104,12 +98,6 @@ export default function GymDashboard() {
             icon: <ReceiptTextIcon size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
             link: "/recptioin"
-        },
-        {
-            title: "خیابات",
-            icon: <ClipboardList size={24} />,
-            color: "bg-gradient-to-r from-red-500 to-rose-600",
-            link: "/attendence"
         },
         {
             title: "نرخەکان",

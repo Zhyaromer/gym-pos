@@ -7,11 +7,9 @@ import MembershipCheck from './Pages/MembershipCheck'
 import AddMember from './Pages/AddMember'
 import AddEmployee from './Pages/AddEmployee'
 import Employee from './Pages/Employee'
-import SalaryPayments from './Pages/SalaryPayments'
 import Selling from './Pages/Selling'
 import Inventory from './Pages/Inventory'
 import AddInventory from './Pages/AddInventory'
-import Attendence from './Pages/Attendence'
 import Pricing from './Pages/Pricing'
 import PoolTickets from './Pages/PoolTickets'
 import Expenses from './Pages/Expenses'
@@ -31,11 +29,9 @@ function App() {
         <Route path="/AddMember" element={<AddMember />} />
         <Route path="/AddEmployee" element={<AddEmployee />} />
         <Route path="/employees" element={<Employee />} />
-        <Route path="/salarypayments" element={<SalaryPayments />} />
         <Route path="/selling" element={<Selling />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/addinventory" element={<AddInventory />} />
-        <Route path="/attendence" element={<Attendence />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/pooltickets" element={<PoolTickets />} />
         <Route path="/expenses" element={<Expenses />} />
