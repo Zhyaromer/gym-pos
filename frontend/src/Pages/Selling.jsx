@@ -6,6 +6,7 @@ import { forwardRef } from 'react';
 import { ShoppingCart, CheckCircle, Minus, Plus, X, Percent, Search, Tag, ShoppingCartIcon } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/layout/Nav';
+import { useAuth } from "../contexts/AuthContext";
 
 const ProductCard = ({ product, addToCart }) => {
   return (
@@ -298,7 +299,7 @@ const Receipt = forwardRef(({ orderNumber, items, subtotal, discount, total, pay
               {new Date().toLocaleString()}
             </p>
             <p style={{ margin: '3px 0', fontSize: '11px' }}>
-              Cashier: عەلی
+              Cashier: {useAuth().user.name}
             </p>
           </div>
         </div>
@@ -777,6 +778,8 @@ export default function GymPOSSalesDashboard() {
   const submitOrder = async (orderDetails) => {
     try {
       const res = await axios.post(`http://localhost:3000/sales/buyingproducts`, orderDetails);
+      console.log('Order response:', res.data);
+      console.log('orderDetails:', orderDetails);
 
       if (res.status = 201) {
         alert("order completed successfully");

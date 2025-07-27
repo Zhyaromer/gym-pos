@@ -6,11 +6,8 @@ import {
     UserCircle,
     UserPlus2,
     Package,
-    PlusCircle,
-    DollarSign,
-    ClipboardList,
     ShoppingCart,
-    Database ,
+    Database,
     BadgeDollarSign,
     FileBarChart,
     Clock,
@@ -20,10 +17,11 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Nav';
+import { useAuth } from "../contexts/AuthContext";
 
 export default function GymDashboard() {
     const navigate = useNavigate();
-    const [user, setUser] = useState({ name: "جۆن دۆ", role: "بەڕێوەبەر" });
+    const { user } = useAuth();
 
     const dashboardItems = [
         {
@@ -88,12 +86,6 @@ export default function GymDashboard() {
             link: "/inventory"
         },
         {
-            title: "زیادکردنی بەرهەم",
-            icon: <PlusCircle size={24} />,
-            color: "bg-gradient-to-r from-amber-500 to-orange-600",
-            link: "/addinventory"
-        },
-        {
             title: "گەڕان بۆ وەسڵ",
             icon: <ReceiptTextIcon size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
@@ -131,6 +123,13 @@ export default function GymDashboard() {
         },
     ];
 
+    const currentTime = new Date().toLocaleDateString('ckb-IQ', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
             <Navbar />
@@ -140,12 +139,12 @@ export default function GymDashboard() {
             </div>
 
             <div className="container mx-auto p-6">
-                <div className="mb-8 bg-white rounded-xl p-6 shadow-lg text-right">
-                    <h1 className="text-3xl font-bold text-gray-800 mb-4">داشبۆردی بەڕێوەبردنی یانەی وەرزشی</h1>
-                    <p className="text-gray-600">بەخێربێیت، {user.name} | {user.role}</p>
-                </div>
+                {/* <div className="mb-8 bg-white rounded-xl p-6 shadow-md text-right border border-gray-100">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">داشبۆردی بەڕێوەبردنی یانەی وەرزشی</h1>
+                    <p className="text-gray-500 text-sm md:text-base">بەخێربێیت بۆ سیستەمەکە، {user.name} | {user.role}</p>
+                </div> */}
 
-                <div dir="rtl" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 cursor-pointer">
+                <div dir="rtl" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-12 cursor-pointer">
                     {dashboardItems.map((item, index) => (
                         <div
                             key={index}

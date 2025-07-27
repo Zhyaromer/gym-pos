@@ -18,6 +18,7 @@ const getAllEmployee = async (req, res) => {
             role,
             salary,
             img,
+            is_active,
             created_at,
             last_updated
         FROM 

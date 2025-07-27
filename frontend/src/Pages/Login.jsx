@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   User, 
   Lock, 
@@ -7,6 +8,7 @@ import {
 } from 'lucide-react';
 
 export default function Login() {
+  const { login } = useAuth();
   const [credentials, setCredentials] = useState({
     username: '',
     password: ''
@@ -33,20 +35,17 @@ export default function Login() {
     
     setIsLoading(true);
     
-    // Simulate API call
     try {
-      // Replace with actual authentication logic
-      setTimeout(() => {
-        // For demo purposes, hardcoded credentials check
-        if (credentials.username === 'admin' && credentials.password === 'admin') {
-          window.location.href = '/dashboard'; 
-        } else {
-          setError('ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە');
-          setIsLoading(false);
-        }
-      }, 1000);
+      const result = await login(credentials.username, credentials.password);
+      
+      if (result.success) {
+        window.location.href = '/dashboard';
+      } else {
+        setError(result.error || 'ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە');
+      }
     } catch (err) {
       setError('هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵ بدەوە');
+    } finally {
       setIsLoading(false);
     }
   };

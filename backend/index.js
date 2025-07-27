@@ -3,11 +3,10 @@ const app = express()
 const port = 3000
 const path = require('path')
 require("dotenv").config();
-const db = require('./config/mysql/mysqlconfig')
 const cors = require('cors');
-const passport = require("passport");
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const authRoute = require('./routes/auth/authRoute')
 const memberRoute = require('./routes/member/memberRoute')
 const employeeRoute = require('./routes/employee/employeesRoute')
 const sallesRoute = require('./routes/sales/salesRoute')
@@ -18,15 +17,21 @@ const membership_plansRoute = require('./routes/membership_plans/membership_plan
 const categoryRoute = require('./routes/category/categoryRoute');
 const get_all_expensess_category = require('./routes/expenses_category/expenses_categoryRoute');
 const receptionRoute = require('./routes/reception/receptionRoute');
+
 app.use(cors({
     origin : process.env.frontendurl,
     credentials : true
 }))
 
+app.use(cookieParser());
 app.use(bodyParser.json())
 app.use(express.json());
 app.use('/imgs', express.static(path.join(__dirname, 'imgs')))
 
+// Auth routes (public)
+app.use('/auth', authRoute);
+
+// Protected routes
 app.use('/members',memberRoute);
 app.use('/employees',employeeRoute);
 app.use('/sales',sallesRoute);

@@ -2,6 +2,7 @@ const db = require("../../config/mysql/mysqlconfig");
 
 const add_item = async (req, res) => {
     let { barcode, quantity, transaction_id } = req.body;
+    const employee_id = req.user.e_id; // Get employee ID from authenticated user
 
     if ([barcode, quantity, transaction_id].some(v => v === undefined || v === null)) {
         return res.status(400).json({ error: 'all fields are required' });
@@ -18,7 +19,7 @@ const add_item = async (req, res) => {
     const sql1 = `SELECT product_id, stock, name, selling_price FROM products WHERE barcode = ? FOR UPDATE`;
     const sql2 = ` insert into transaction_items (transaction_id, product_id, barcode, name, selling_price, quantity) values (?, ?, ?, ?, ?, ?)`;
     const sql3 = `UPDATE products SET stock = stock - ? WHERE barcode = ?`;
-    const sql4 = `select discount_type,discount_value,total_amount,final_amount from transactions where transaction_id = ?`;
+            const sql4 = `select discount_type,discount_value,total_amount,final_amount,e_id from transactions where transaction_id = ?`;
 
     const connection = await db.getConnection();
 
@@ -73,6 +74,13 @@ const add_item = async (req, res) => {
         }
 
         const transaction = rows4[0];
+        
+        // Check if the employee is authorized to modify this transaction
+        if (transaction.e_id !== employee_id) {
+            await connection.rollback();
+            return res.status(403).json({ message: "You are not authorized to modify this transaction" });
+        }
+        
         const total_price = Number(product.selling_price) * Number(quantity);
         let total_amount = Number(transaction.total_amount || 0) + Number(total_price || 0);
 

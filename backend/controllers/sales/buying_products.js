@@ -1,10 +1,11 @@
 const db = require("../../config/mysql/mysqlconfig");
 
 const buying_products = async (req, res) => {
-    const { e_id, carts, orderNumber, discount_type, discount_value, total_amount, final_amount } = req.body;
+    const { carts, orderNumber, discount_type, discount_value, total_amount, final_amount } = req.body;
+    const employee_id = req.user.e_id;
 
-    if (!e_id) {
-        return res.status(400).json({ message: "Employee ID is required" });
+    if (!employee_id) {
+        return res.status(400).json({ message: "Employee authentication required" });
     }
 
     if (!orderNumber) {
@@ -27,7 +28,7 @@ const buying_products = async (req, res) => {
         const sql1 = `
         select name from employees where e_id = ?`;
 
-        const [rows1] = await connection.query(sql1, [e_id]);
+        const [rows1] = await connection.query(sql1, [employee_id]);
 
         if (rows1.length === 0) {
             await connection.rollback();
@@ -42,15 +43,15 @@ const buying_products = async (req, res) => {
         let discount_type_val = discount_type;
         let discount_value_val = discount_value;
         if (discount_type && discount_value == "") {
-            discount_type_val = 'none';
+            discount_type_val = 0;
             discount_value_val = 0;
         } else if (discount_type == "amount") {
-            discount_type_val = 'fixed_amount';
+            discount_type_val = 2;
         } else if (discount_type == "percentage") {
-            discount_type_val = 'percentage';
+            discount_type_val = 1;
         }
 
-        const [result] = await connection.query(sql2, [orderNumber, e_id, employee_name, discount_type_val, discount_value_val, total_amount, final_amount]);
+        const [result] = await connection.query(sql2, [orderNumber, employee_id, employee_name, discount_type_val, discount_value_val, total_amount, final_amount]);
 
         if (result.affectedRows === 0) {
             await connection.rollback();

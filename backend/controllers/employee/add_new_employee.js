@@ -65,7 +65,7 @@ const add_new_employee = async (req, res) => {
 
     try {
         const sql = `insert into employees (name,email,password,date_of_birth,gender,phoneNumber,emergencyphoneNumber,address,role,salary,
-        working_date,img) values (?,?,?,?,?,?,?,?,?,?,?,?)`;
+        working_date,img,is_active) values (?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -81,7 +81,8 @@ const add_new_employee = async (req, res) => {
             role, 
             salary, 
             startWorkingDate, 
-            imgPath
+            imgPath,
+            true // is_active default to true
         ]);
 
         if (rows.affectedRows > 0) {
