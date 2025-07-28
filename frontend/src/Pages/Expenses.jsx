@@ -5,7 +5,7 @@ import {
   Plus,
   Edit,
   Trash2,
-  ArrowUpDown,
+  FolderOpen ,
   Save,
   X,
   Calendar,
@@ -168,9 +168,11 @@ export default function Expenses() {
 
         if (res.status === 200) {
           alert('خەرجییەکە بەسەرکەوە');
-          setExpenses([
-            ...expenses
-          ]);
+
+          const updatedExpensesRes = await axios.get(`http://localhost:3000/expenses/get_expenses`);
+          setExpenses(updatedExpensesRes.data.data);
+          setExpensesTotal(updatedExpensesRes.data.total);
+
           setNewExpense({
             expenses_date: new Date().toISOString().split('T')[0],
             expenses_category_id: '',
@@ -205,11 +207,12 @@ export default function Expenses() {
 
         if (res.status === 200) {
           alert('خەرجییەکە بەسەرکەوە');
-          setExpenses(expenses.map(expense =>
-            expense.expenses_id === editingExpense ? { ...data, category_name: categories.find(category => category.expenses_category_id == editedValues.expenses_category_id).name } : expense
-          ));
+
+          const updatedExpensesRes = await axios.get(`http://localhost:3000/expenses/get_expenses`);
+          setExpenses(updatedExpensesRes.data.data);
+          setExpensesTotal(updatedExpensesRes.data.total);
+
           setEditingExpense(null);
-          setExpensesTotal(expensesTotal + (editedValues.price - expenses.find(expense => expense.expenses_id === editedValues.expenses_id).price));
         }
       } catch (error) {
         console.error('Error updating expense:', error);
@@ -227,8 +230,10 @@ export default function Expenses() {
         const res = await axios.delete(`http://localhost:3000/expenses/delete_expenses/${id}`)
         if (res.status === 200) {
           alert('خەرجییەکە بەسەرکەوە');
-          setExpenses(expenses.filter(expense => expense.expenses_id !== id));
-          setExpensesTotal(expensesTotal - expenses.find(expense => expense.expenses_id === id).price);
+
+          const updatedExpensesRes = await axios.get(`http://localhost:3000/expenses/get_expenses`);
+          setExpenses(updatedExpensesRes.data.data);
+          setExpensesTotal(updatedExpensesRes.data.total);
         }
       } catch (error) {
         console.error('Error deleting expense:', error);
@@ -363,52 +368,43 @@ export default function Expenses() {
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+            <table className="w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-sm">
+              <thead className="bg-gray-100">
                 <tr>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div className="flex items-center cursor-pointer justify-end">
-                      بەروار
-                      <ArrowUpDown size={14} className="mr-1" />
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div className="flex items-center cursor-pointer justify-end">
-                      جۆر
-                      <ArrowUpDown size={14} className="mr-1" />
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div className="flex items-center cursor-pointer justify-end">
-                      بڕ
-                      <ArrowUpDown size={14} className="mr-1" />
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700 uppercase tracking-wider">
                     وەسف
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                    جۆری خەرجی
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                    بڕی پارە
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                    بەروار
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-700 uppercase tracking-wider">
                     کردارەکان
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-200">
                 {filteredExpenses.length > 0 ? (
                   filteredExpenses.map(expense => (
-                    <tr key={expense.expenses_id} className="hover:bg-gray-50">
+                    <tr key={expense.expenses_id} className="hover:bg-gray-50 transition-colors duration-150">
                       {editingExpense === expense.expenses_id ? (
                         <>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4">
                             <input
-                              type="date"
-                              className="w-full px-2 py-1 border rounded"
-                              value={editedValues.expenses_date}
-                              onChange={(e) => setEditedValues({ ...editedValues, expenses_date: e.target.value })}
+                              type="text"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                              value={editedValues.name}
+                              onChange={(e) => setEditedValues({ ...editedValues, name: e.target.value })}
                             />
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4">
                             <select
-                              className="w-full px-2 py-1 border rounded"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                               value={editedValues.expenses_category_id}
                               onChange={(e) => setEditedValues({ ...editedValues, expenses_category_id: e.target.value })}
                             >
@@ -418,66 +414,74 @@ export default function Expenses() {
                               ))}
                             </select>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4">
                             <input
                               type="number"
-                              className="w-full px-2 py-1 border rounded"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                               value={editedValues.price}
                               onChange={(e) => setEditedValues({ ...editedValues, price: parseFloat(e.target.value) || 0 })}
                             />
                           </td>
                           <td className="px-6 py-4">
                             <input
-                              type="text"
-                              className="w-full px-2 py-1 border rounded"
-                              value={editedValues.name}
-                              onChange={(e) => setEditedValues({ ...editedValues, name: e.target.value })}
+                              type="date"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                              value={editedValues.expenses_date}
+                              onChange={(e) => setEditedValues({ ...editedValues, expenses_date: e.target.value })}
                             />
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
-                            <button
-                              onClick={saveEditing}
-                              className="text-green-600 hover:text-green-900 ml-3"
-                            >
-                              <Save size={18} />
-                            </button>
-                            <button
-                              onClick={cancelEditing}
-                              className="text-gray-600 hover:text-gray-900"
-                            >
-                              <X size={18} />
-                            </button>
+                          <td className="px-6 py-4 whitespace-nowrap text-left">
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={saveEditing}
+                                className="p-1.5 text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                              >
+                                <Save size={18} />
+                              </button>
+                              <button
+                                onClick={cancelEditing}
+                                className="p-1.5 text-white bg-gray-500 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                              >
+                                <X size={18} />
+                              </button>
+                            </div>
                           </td>
                         </>
                       ) : (
                         <>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            {formatDate(expense.expenses_date)}
+                          <td dir='rtl' className="px-6 py-4 text-right text-gray-800 font-medium">
+                            {expense.name}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+
+                          <td dir='rtl' className="px-6 py-4 whitespace-nowrap text-right">
+                            <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                               {expense.category_name}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap font-medium text-right">
+
+                          <td dir='rtl' className="px-6 py-4 whitespace-nowrap font-medium text-right text-gray-900">
                             {((expense.price / 1) * 1000).toLocaleString()} د.ع
                           </td>
-                          <td className="px-6 py-4 text-right">
-                            {expense.name}
+
+                          <td dir='rtl' className="px-6 py-4 whitespace-nowrap text-right text-gray-500">
+                            {formatDate(expense.expenses_date)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
-                            <button
-                              onClick={() => startEditing(expense)}
-                              className="text-indigo-600 hover:text-indigo-900 ml-3"
-                            >
-                              <Edit size={18} />
-                            </button>
-                            <button
-                              onClick={() => deleteExpense(expense.expenses_id)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              <Trash2 size={18} />
-                            </button>
+
+                          <td dir='rtl' className="px-6 py-4 whitespace-nowrap text-left">
+                            <div className="flex items-center space-x-3">
+                              <button
+                                onClick={() => startEditing(expense)}
+                                className="p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              >
+                                <Edit size={18} />
+                              </button>
+                              <button
+                                onClick={() => deleteExpense(expense.expenses_id)}
+                                className="p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
                           </td>
                         </>
                       )}
@@ -485,8 +489,12 @@ export default function Expenses() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                      هیچ خەرجییەک نەدۆزرایەوە. خەرجییەکی نوێ زیاد بکە بۆ دەستپێکردن.
+                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500 bg-gray-50">
+                      <div className="flex flex-col items-center justify-center">
+                        <FolderOpen className="w-8 h-8 text-gray-400 mb-2" />
+                        <p className="text-sm">هیچ خەرجییەک نەدۆزرایەوە</p>
+                        <p className="text-xs text-gray-400 mt-1">خەرجییەکی نوێ زیاد بکە بۆ دەستپێکردن</p>
+                      </div>
                     </td>
                   </tr>
                 )}
