@@ -18,6 +18,7 @@ import AddingExpenses from './Pages/AddingExpenses'
 import ProfitAnalysisPage from './Pages/Profit'
 import CostsAnalysisPage from './Pages/Report'
 import Recptioin from './Pages/Recptioin';
+import LoginHistory from './Pages/LoginHistory';
 
 function App() {
   return (
@@ -98,6 +99,11 @@ function App() {
           <Route path="/recptioin" element={
             <ProtectedRoute>
               <Recptioin />
+            </ProtectedRoute>
+          } />
+          <Route path="/login-history" element={
+            <ProtectedRoute>
+              <LoginHistory />
             </ProtectedRoute>
           } />
         </Routes>

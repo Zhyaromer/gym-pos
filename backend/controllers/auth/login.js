@@ -1,6 +1,7 @@
 const db = require("../../config/mysql/mysqlconfig");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const LoginTrack = require("./login_track");
 
 const login = async (req, res) => {
     const { email, password } = req.body;
@@ -26,13 +27,21 @@ const login = async (req, res) => {
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
+        // Track login
+        try {
+            await LoginTrack.addLoginRecord(employee.e_id);
+        } catch (trackError) {
+            console.error('Error tracking login:', trackError);
+            // Don't fail the login if tracking fails
+        }
+
         // Create JWT token
         const token = jwt.sign(
-            { 
-                e_id: employee.e_id, 
-                name: employee.name, 
-                email: employee.email, 
-                role: employee.role 
+            {
+                e_id: employee.e_id,
+                name: employee.name,
+                email: employee.email,
+                role: employee.role
             },
             process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: '8h' }

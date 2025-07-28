@@ -13,7 +13,8 @@ import {
     Clock,
     Ticket,
     Coins,
-    ReceiptTextIcon
+    ReceiptTextIcon,
+    History
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Nav';
@@ -120,6 +121,12 @@ export default function GymDashboard() {
             icon: <Database size={24} />,
             color: "bg-gradient-to-r from-amber-500 to-orange-600",
             link: "/backup"
+        },
+        {
+            title: "مێژووی چوونەژوورەوە",
+            icon: <History size={24} />,
+            color: "bg-gradient-to-r from-indigo-500 to-purple-600",
+            link: "/login-history"
         },
     ];
 
